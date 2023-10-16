@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+
+/* Style for the table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+table thead {
+    color: #5D5D5D;
+}
+
+table th {
+    padding: 26px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    font-weight: 700;
+
+}
+
+table td {
+    padding: 24px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 14px;
+
+}
+
+/* Change the row background color when hovered */
+table tbody tr:hover {
+    background-color: #0575E6;
+    color: #ffffff;
+}
+
+/* Style for table rows */
+table tbody tr {
+    padding: 10px;
+    background-color: #ffffff;
+    transition: background-color 0.3s;
+}

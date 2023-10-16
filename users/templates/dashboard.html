@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <title> Dashboard | Farmland Bakery (M) Sdn. Bhd. </title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/table_style.css' %}">
+    <!-- Boxicons CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   </head>
+<body>
+  {% include 'sidebar.html' %}
+  <section class="home-section">
+    {% include 'header.html' %}
+    <div class="main-content">
+      <table>
+        <thead>
+            <tr>
+                <th>No. Code</th>
+                <th>Date Created</th>
+                <th>Status</th>
+                <th>Current Activity</th>
+                <th>Est. Time</th>
+                <th>Next Activity</th>
+                <th>Est. Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>001</td>
+                <td>2023-10-15</td>
+                <td>In Progress</td>
+                <td>Task A</td>
+                <td>2 hours</td>
+                <td>Task B</td>
+                <td>3 hours</td>
+            </tr>
+            <tr>
+                <td>002</td>
+                <td>2023-10-16</td>
+                <td>Completed</td>
+                <td>Task X</td>
+                <td>4 hours</td>
+                <td>Task Y</td>
+                <td>2 hours</td>
+            </tr>
+                <!-- Add more rows as needed -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <script src="{% static 'js/sidebar.js' %}"></script>
+</body>
+</html>

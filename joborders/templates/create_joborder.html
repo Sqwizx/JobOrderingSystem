@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/create.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+    <!-- Boxicons CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+
+<body>
+    {% include 'sidebar.html' %}
+    <section class="home-section">
+        {% include 'create_header.html' %}
+        <div class="main-content">
+          <div class="container">
+            <div class="left-column">
+              <div class="big-card">
+                <div class="tab">
+                  {% for info in date_info %}
+                    <button class="tablinks {% if forloop.first %} active {% endif %}" onclick="openTab(event, '{{ info.day }}')"><span class="date-text">{{ info.date }}</span> <br> {{ info.day }}</button>
+                  {% endfor %}
+                </div>
+                {% for info in date_info %}
+                <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                    <p>Recipe List</p>
+                    <div class="content-container">
+                        <div class="card">
+                            <div class="first-column">
+                                <div class="tab-recipes" id="recipe-tabs-{{ forloop.counter0 }}">
+                                    <!-- Existing recipe tabs go here -->
+                                </div>
+                                <button class="add-recipe-tab" id="add-recipe-button-{{ forloop.counter0 }}">+ Add Recipe</button>
+                            </div>
+                        </div>
+                        <div class="second-column" id="recipe-details">
+                            <!-- Recipe details form will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+                <div id="myModal-{{ forloop.counter0 }}" class="modal">
+                    <!-- Modal content -->
+                    <div class="modal-content">
+                        <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
+                        <form id="recipeForm">
+                            <label for="recipeName">Recipe Name:</label><br>
+                            <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete=off><br><br>
+                            <input type="submit" value="Submit">
+                        </form>
+                    </div>
+                </div>
+              {% endfor %}
+              </div>
+            </div>
+            <div class="right-column">
+              <div class="small-card">
+                <!-- Content for small card 1 -->
+              </div>
+              <div class="small-card">
+                <!-- Content for small card 2 -->
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script src="{% static 'js/calendar.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  var current_date = '{{ current_date }}'; 
+</script>
+    <script src="{% static 'js/recipe.js' %}"></script>
+</body>
+</html>

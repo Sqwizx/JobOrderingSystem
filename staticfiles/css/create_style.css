@@ -1,0 +1,251 @@
+.container {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 10px;
+    /* Adjust the gap between the cards */
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.big-card {
+    background-color: #f2f2f2;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(4, 66, 168, 1);
+}
+
+.right-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.small-card {
+    background-color: #f2f2f2;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(4, 66, 168, 1);
+}
+
+.tab {
+    overflow: hidden;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid gray;
+    width: 100%;
+    /* Set the width to 100% */
+    display: flex;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.tab button {
+    flex: 1;
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 30px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+.tab button:hover {
+    background-color: rgba(4, 66, 168, 0.2);
+}
+
+.tab button.active {
+    background-color: rgba(4, 66, 168, 0.2);
+    border-left: 1px solid rgba(4, 66, 168, 1);
+    border-right: 1px solid rgba(4, 66, 168, 1);
+    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    color: rgba(4, 66, 168, 1)
+}
+
+.tab button:first-child.active {
+    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    border-right: 1px solid rgba(4, 66, 168, 1);
+    border-left: none;
+
+}
+
+.tab button:last-child.active {
+    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    border-left: 1px solid rgba(4, 66, 168, 1);
+    border-right: none;
+}
+
+
+.tabcontent {
+    display: none;
+    padding: 20px 20px;
+    border-top: none;
+}
+
+.tabcontent.active {
+    display: block;
+}
+
+.date-text {
+    font-size: 20px;
+    font-weight: 400;
+    /* Adjust the font size as needed */
+}
+
+.content-container {
+    display: flex;
+}
+
+.first-column {
+    flex: 1;
+}
+
+.second-column {
+    flex: 3;
+}
+
+.card {
+    width: 100%;
+    height: 200px;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    border: 1px solid rgba(4, 66, 168, 1);
+}
+
+.tab-recipes {
+    display: flex;
+    flex-direction: column;
+}
+
+.tablinks-recipes {
+    background-color: #f1f1f1;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: 0.3s;
+    font-size: 16px;
+    border-top-left-radius: 10px;
+    text-align: left;
+}
+
+.add-recipe-tab {
+    background-color: #f1f1f1;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: 0.3s;
+    font-size: 16px;
+    color: gray;
+}
+
+.add-recipe-tab:hover {
+    background-color: rgba(4, 66, 168, 0.2);
+}
+
+.tablinks-recipes:hover {
+    background-color: rgba(4, 66, 168, 0.2);
+}
+
+.tablinks-recipes:first-child {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.tablinks-recipes:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+.tablinks-recipes.active {
+    background-color: rgba(4, 66, 168, 0.2);
+    color: rgba(4, 66, 168, 1);
+    border-bottom: 1px solid rgba(4, 66, 168, 1);
+}
+
+/* The Modal */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 100;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0);
+    /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 30%;
+    height: 50%;
+    border-radius: 10px;
+    /* Could be more or less, depending on screen size */
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: lighter;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 
+#recipeForm {
+    display: flex;
+    flex-direction: column;
+} */
+
+.modal input[type="text"] {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s;
+
+    /* Add spacing between form elements */
+}
+
+.modal button {
+    border: none;
+}
+
+.modal input[type="submit"] {
+    width: 100%;
+    padding: 10px 15px;
+    color: white;
+    background-color: #0442a8;
+    border-radius: 10px;
+    transition: border-color 0.3s;
+}
+
+/* Add focus styles for the input fields */
+.modal input[type="text"]:focus {
+    border-color: #0442a8;
+}
