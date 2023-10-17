@@ -2,7 +2,7 @@
     display: grid;
     grid-template-columns: 3fr 1fr;
     gap: 10px;
-    /* Adjust the gap between the cards */
+    /* height: 80vh; */
 }
 
 .left-column {
@@ -97,6 +97,7 @@
 
 .content-container {
     display: flex;
+    min-height: 60vh;
 }
 
 .first-column {
@@ -108,29 +109,32 @@
 }
 
 .card {
-    width: 100%;
-    height: 300px;
     background-color: #f2f2f2;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
     overflow: auto;
+    height: 60vh;
+    overflow-x: hidden;
 }
 
 .tab-recipes {
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 .tablinks-recipes {
     background-color: #f1f1f1;
     border: none;
-    outline: none;
     cursor: pointer;
     padding: 10px 20px;
     transition: 0.3s;
     font-size: 16px;
-    border-top-left-radius: 10px;
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 146px;
 }
 
 .add-recipe-tab {
@@ -157,11 +161,11 @@
     border-top-right-radius: 10px;
 }
 
-.tablinks-recipes:not(:first-child):not(:last-child) {
-    border-radius: 0;
+.tablinks-recipes.opened:not(:first-child) {
+    border-top: 1px solid rgba(4, 66, 168, 1);
 }
 
-.tablinks-recipes.active {
+.tablinks-recipes.opened {
     background-color: rgba(4, 66, 168, 0.2);
     color: rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1);
@@ -249,5 +253,51 @@
 
 /* Add focus styles for the input fields */
 .modal input[type="text"]:focus {
+    border-color: #0442a8;
+}
+
+/* FORM CSS */
+.left-div {
+    align-items: center;
+    flex: 1;
+    padding: 10px;
+}
+
+.right-div {
+    align-items: center;
+    flex: 1;
+    padding: 10px;
+}
+
+.recipe-form {
+    padding-left: 20px;
+    display: flex;
+}
+
+.recipe-form input[type="text"] {
+    width: 300px;
+    padding: 10px 10px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.3s;
+}
+
+.recipe-form input[type="text"]:focus {
+    border-color: #0442a8;
+}
+
+.recipe-form input[type="datetime-local"] {
+    width: 300px;
+    padding: 10px 10px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.3s;
+}
+
+.recipe-form input[type="datetime-local"]:focus {
     border-color: #0442a8;
 }

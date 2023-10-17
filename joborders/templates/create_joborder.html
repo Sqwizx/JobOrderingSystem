@@ -71,10 +71,11 @@
 
     <script src="{% static 'js/sidebar.js' %}"></script>
     <script src="{% static 'js/calendar.js' %}"></script>
+    <script>
+      var current_date = '{{ current_date }}'; 
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-  var current_date = '{{ current_date }}'; 
-</script>
     <script src="{% static 'js/recipe.js' %}"></script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@
 
 .html {
     background-color: #dcdcdc;
+    height: 100vh;
 }
 
 * {
@@ -309,5 +310,6 @@
     padding: 20px;
     background-color: #DCDCDC;
     min-height: 300px;
+    height: 100%;
     /* Set a minimum height for the content area */
 }
