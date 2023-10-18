@@ -301,3 +301,11 @@
 .recipe-form input[type="datetime-local"]:focus {
     border-color: #0442a8;
 }
+
+#change-date {
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    border: 1px solid #0442a8;
+}

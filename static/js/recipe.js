@@ -1,20 +1,34 @@
-function openDatePicker() {
-    var firstTab = document.querySelector('.tab button');
-    var hiddenDatePicker = document.getElementById('hidden-calendar');
-    hiddenDatePicker.style.display = 'none'; // Hide the date picker initially
+var calendarInstance; // Define the calendarInstance outside the function
+var selectedDate;
 
-    firstTab.addEventListener('click', function () {
-        hiddenDatePicker.style.display = 'block'; // Show the date picker when the first tab is clicked
-        var calendarInstance = flatpickr("#hidden-calendar", {
-            onChange: function (selectedDates, dateStr) {
-                const newDate = formatDateToYYYYMMDD(dateStr);
-                if (newDate) {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', `?selected_date=${newDate}`, true);
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState === XMLHttpRequest.DONE) {
-                            if (xhr.status === 200) {
-                                try {
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    var calendarInstance; // Initialize the calendar instance variable
+
+    // Function to format the date to yyyy-mm-dd format
+    function formatDateToYYYYMMDD(dateStr) {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function openCalendarInstance() {
+        if (!calendarInstance) {
+            calendarInstance = flatpickr("#change-date", {
+                minDate: "today",
+                defaultDate: "today",
+                onChange: function (selectedDates, dateStr) {
+                    selectedDate = selectedDates[0];
+                    const newDate = formatDateToYYYYMMDD(dateStr);
+                    if (newDate) {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', `?selected_date=${newDate}`, true);
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState === XMLHttpRequest.DONE) {
+                                if (xhr.status === 200) {
                                     const response = JSON.parse(xhr.responseText);
                                     if (response && response.date_info) {
                                         const dateButtons = document.querySelectorAll('.tab button');
@@ -27,35 +41,37 @@ function openDatePicker() {
                                                 }
                                             }
                                         });
+                                    } else {
+                                        console.error('Invalid response received.');
                                     }
-                                } catch (e) {
-                                    console.error('Error parsing JSON response:', e);
+                                } else {
+                                    console.error('Error occurred while updating the date.');
                                 }
-                            } else {
-                                console.error('Request failed with status:', xhr.status);
                             }
-                        }
-                    };
-                    xhr.send();
+                        };
+                        xhr.send();
+                    }
                 }
+            });
+            calendarInstance.open();
+            document.querySelector(".flatpickr-input").classList.add("active");
+        } else {
+            if (calendarInstance.isOpen) {
                 calendarInstance.close();
+                document.querySelector(".flatpickr-input").classList.remove("active");
+            } else {
+                calendarInstance.open();
+                document.querySelector(".flatpickr-input").classList.add("active");
             }
+        }
+    }
+
+    var changeDateButton = document.getElementById('change-date');
+    if (changeDateButton) {
+        changeDateButton.addEventListener('click', function () {
+            openCalendarInstance();
         });
-    });
-}
-
-
-// Function to format the date to yyyy-mm-dd format
-function formatDateToYYYYMMDD(dateStr) {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-
-document.addEventListener('DOMContentLoaded', function () {
+    }
     // Get the container for recipe tabs
     var recipeTabsContainer = document.querySelectorAll(".tabcontent");
     var recipeFormObjects = {}; // Store recipe form objects
@@ -156,10 +172,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function addDaysToDate(tabIdx) {
-        var today = new Date();
-        var result = new Date(today);
-        result.setDate(today.getDate() + tabIdx);
-        return formatDateTime(result);
+        if (selectedDate) {
+            var result = new Date(selectedDate);
+            result.setDate(selectedDate.getDate() + tabIdx);
+            return formatDateTime(result);
+        } else {
+            return formatDateTime(new Date());
+        }
     }
 
     function createRecipeForm(recipeName, tabIdx) {

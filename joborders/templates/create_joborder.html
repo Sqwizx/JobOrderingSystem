@@ -20,14 +20,15 @@
     <section class="home-section">
         {% include 'create_header.html' %}
         <div class="main-content">
+          <button id="change-date"><i class="fa-regular fa-calendar fa-bounce"></i> Change Start Date</button>
           <div class="container">
             <div class="left-column">
               <div class="big-card">
                 <div class="tab">
                   {% for info in date_info %}
                       {% if forloop.first %}
-                      <button class="tablinks" onclick="openTab(event, '{{ info.day }}'); openDatePicker()">
-                        <i class="fa-regular fa-calendar fa-bounce"></i><br><span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
+                      <button id="first-tablink" class="tablinks active" onclick="openTab(event, '{{ info.day }}')">
+                      <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
                     </button>
                       {% else %}
                           <button class="tablinks" onclick="openTab(event, '{{ info.day }}')">
@@ -36,7 +37,6 @@
                       {% endif %}
                   {% endfor %}
               </div>
-                <input id="hidden-calendar" style="display: none;"></input>
                 {% for info in date_info %}
                 <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
                     <p>Recipe List</p>
