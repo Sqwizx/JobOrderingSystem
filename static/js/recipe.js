@@ -15,6 +15,35 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${year}-${month}-${day}`;
     }
 
+    function refreshRecipeForms() {
+        var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
+        allRecipeButtons.forEach(function (button, index) {
+            var recipeName = button.textContent;
+            displayRecipeDetails(recipeName, index);
+        });
+    }
+
+    // Function to create a delete icon
+    function createDeleteIcon(recipeName, index) {
+        var deleteIcon = document.createElement('i');
+        deleteIcon.classList.add('fa', 'fa-trash');
+        deleteIcon.setAttribute('aria-hidden', 'true');
+        deleteIcon.style.fontSize = '12px';
+
+        deleteIcon.addEventListener('click', function () {
+            // Add your delete logic here
+            console.log(`Deleting recipe ${recipeName} at index ${index}`);
+            var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
+            allRecipeButtons.forEach(function (button) {
+                if (button.textContent === recipeName) {
+                    button.parentNode.removeChild(button); // Remove the button from the DOM
+                }
+            });
+        });
+
+        return deleteIcon;
+    }
+
     function openCalendarInstance() {
         if (!calendarInstance) {
             calendarInstance = flatpickr("#change-date", {
@@ -38,6 +67,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 if (dateText) {
                                                     dateText.innerHTML = info.date;
                                                     dateButtons[index].innerHTML = `<span class="date-text">${info.date}</span><br>${info.day}`;
+                                                    refreshRecipeForms();
+                                                    // Update the client and color fields
+                                                    var currentRecipeForm = document.querySelector('.recipe-form');
+                                                    if (currentRecipeForm) {
+                                                        var clientSelect = currentRecipeForm.querySelector('select[name="client"]');
+                                                        var dateTimePicker = currentRecipeForm.querySelector('input[name="dateTimePicker"]');
+                                                        if (clientSelect && dateTimePicker) {
+                                                            updateColorSetField(clientSelect.value, dateTimePicker.value, index, currentRecipeForm.id);
+                                                            // Trigger the change event for the client select element
+                                                            var event = new Event('change');
+                                                            clientSelect.dispatchEvent(event);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         });
@@ -141,6 +183,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 newRecipeButton.classList.add('tablinks-recipes');
                 newRecipeButton.textContent = recipeName;
 
+                // var deleteIcon = document.createElement('i');
+                // deleteIcon.classList.add('fa', 'fa-trash');
+                // deleteIcon.setAttribute('aria-hidden', 'true');
+                // deleteIcon.style.fontSize = '12px';
+
+                // Creating the delete text
+                var deleteText = document.createElement("span");
+                deleteText.textContent = "Delete";
+                deleteText.classList.add("delete-recipe");
+
+                newRecipeButton.appendChild(document.createElement('br'));
+                // newRecipeButton.appendChild(deleteIcon);
+                // newRecipeButton.appendChild(deleteText);
+
                 newRecipeButton.addEventListener('click', function () {
                     displayRecipeDetails(recipeName, index);
                     setActiveTab(newRecipeButton);
@@ -151,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (tabRecipes) {
                         tabRecipes.appendChild(newRecipeButton);
                     }
+                    setActiveTab(newRecipeButton); // Set the newly created button as active
                 }
 
                 var modal = document.getElementById(`myModal-${index}`);
@@ -208,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var nameLabel = document.createElement("label");
         nameLabel.htmlFor = `recipeName-${uniqueFormId}`;
-        nameLabel.textContent = "Recipe Name:";
+        nameLabel.textContent = "Recipe Name";
 
         var nameInput = document.createElement("input");
         nameInput.type = "text";
@@ -220,9 +277,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var br = document.createElement("br");
 
+        var clientLabel = document.createElement("label");
+        clientLabel.htmlFor = `client-${uniqueFormId}`;
+        clientLabel.textContent = "Client";
+
+        var clientSelect = document.createElement("select");
+        clientSelect.id = `client-${uniqueFormId}`;
+        clientSelect.name = "client";
+
+        var clientOptions = ["GFS", "GBKL"];
+        clientOptions.forEach(function (option) {
+            var clientOption = document.createElement("option");
+            clientOption.value = option;
+            clientOption.textContent = option;
+            clientSelect.appendChild(clientOption);
+        });
+
+        var colorSetLabel = document.createElement("label");
+        colorSetLabel.htmlFor = `colorSet-${uniqueFormId}`;
+        colorSetLabel.textContent = "Color Set";
+
+        var colorSetField = document.createElement("input");
+        colorSetField.type = "text";
+        colorSetField.id = `colorSet-${uniqueFormId}`;
+        colorSetField.name = "colorSet";
+        colorSetField.disabled = true;
+
         var datetimeLabel = document.createElement("label");
         datetimeLabel.htmlFor = `dateTimePicker-${uniqueFormId}`;
-        datetimeLabel.textContent = "Production Date:";
+        datetimeLabel.textContent = "Production Date";
 
         // Add a date-time picker
         var dateTimePicker = document.createElement("input");
@@ -243,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var formattedDate = formatDateTime(selectedDate);
                 dateTimePicker.value = formattedDate;
                 savedDateTimeValues[uniqueFormId] = selectedDate;
+                updateColorSetField(clientSelect.value, selectedDate, tabIdx, uniqueFormId);
             }
         });
 
@@ -251,6 +335,14 @@ document.addEventListener('DOMContentLoaded', function () {
         leftDiv.appendChild(nameLabel);
         leftDiv.appendChild(br.cloneNode());
         leftDiv.appendChild(nameInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(clientLabel);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(clientSelect);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(colorSetLabel);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(colorSetField);
         leftDiv.appendChild(br.cloneNode());
 
         rightDiv.appendChild(datetimeLabel);
@@ -264,13 +356,38 @@ document.addEventListener('DOMContentLoaded', function () {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
         currentRecipeDetailsContainer.appendChild(form);
 
+        var defaultClient = "GFS";
+        // Trigger update for default client
+        updateColorSetField(defaultClient, addDaysToDate(tabIdx), tabIdx, uniqueFormId);
+
+        clientSelect.addEventListener("change", function () {
+            updateColorSetField(this.value, dateTimePicker.value, tabIdx, uniqueFormId);
+        });
+
         return form;
     }
+
+    function updateColorSetField(client, selectedDate, tabIdx, uniqueFormId) {
+        var dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+        var colorSets = {
+            GFS: ["WHITE", "TAN", "ORANGE", "YELLOW", "BLUE", "DARK GREEN", "RED"],
+            GBKL: ["TAN", "BLUE", "YELLOW", "ORANGE", "GREEN", "RED", "WHITE"]
+        };
+        var openCalendarInstance = new Date(selectedDate);
+        var selectedDayOfWeek = dayOfWeek[(openCalendarInstance.getDay() + tabIdx) % 7];
+        var colorSet = colorSets[client];
+        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek);
+        var selectedColor = colorSet[colorIndex % colorSet.length];
+        var colorSetField = document.getElementById(`colorSet-${uniqueFormId}`);
+        colorSetField.value = selectedColor;
+    }
+
     // Function to handle the creation and displaying of the recipe form
     function displayRecipeDetails(recipeName, tabIdx) {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
         if (recipeFormObjects[recipeName] && recipeFormObjects[recipeName][tabIdx]) {
             var existingForm = recipeFormObjects[recipeName][tabIdx];
+            updateFormWithDate(existingForm, tabIdx); // Update the date field in the form
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(existingForm);
         } else {
@@ -280,6 +397,42 @@ document.addEventListener('DOMContentLoaded', function () {
             recipeFormObjects[recipeName][tabIdx] = newRecipeForm; // Store the form in the dictionary
         }
     }
+
+    function updateFormWithDate(form, tabIdx) {
+        var formId = form.id;
+        var uniqueFormId = formId;
+
+        var dateTimePicker = form.querySelector(`#dateTimePicker-${uniqueFormId}`);
+        if (dateTimePicker) {
+            var defaultDateTime = addDaysToDate(tabIdx);
+            flatpickr(dateTimePicker, {
+                enableTime: false,
+                dateFormat: "d/m/Y",
+                defaultDate: savedDateTimeValues[uniqueFormId] || defaultDateTime,
+                onChange: function (selectedDates) {
+                    var selectedDate = selectedDates[0];
+                    var formattedDate = formatDateTime(selectedDate);
+                    dateTimePicker.value = formattedDate;
+                    savedDateTimeValues[uniqueFormId] = selectedDate;
+
+                    // Trigger a 'change' event to ensure the field updates in real time
+                    var event = new Event('change', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    dateTimePicker.dispatchEvent(event);
+                }
+            });
+            dateTimePicker.value = defaultDateTime;
+            dateTimePicker.addEventListener('change', function () {
+                var dateValue = dateTimePicker.value;
+                savedDateTimeValues[uniqueFormId] = new Date(dateValue);
+                // Manually update the value of the input field
+                dateTimePicker.value = formatDateTime(savedDateTimeValues[uniqueFormId]);
+            });
+        }
+    }
+
 
 
     function setActiveTab(clickedButton) {
