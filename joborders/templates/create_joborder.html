@@ -70,8 +70,21 @@
             </div>
             <div class="right-column">
               <div class="small-card">
-                <!-- Content for small card 1 -->
+                <p>Product List</p>
+                <button id="open-product-modal">Add Product</button>
               </div>
+              <div id="productModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" id="closeProductModal">&times;</span>
+                    <form id="productForm">
+                        <label for="productName">Product Name:</label><br>
+                        <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                        <label for="productQuantity">Product Quantity:</label><br>
+                        <input type="number" id="productQuantity" name="productQuantity" required autocomplete="off"><br><br>
+                        <input type="submit" value="Submit">
+                    </form>
+                </div>
+            </div>
               <div class="small-card">
                 <!-- Content for small card 2 -->
               </div>

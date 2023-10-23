@@ -16,32 +16,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function refreshRecipeForms() {
+        // Event listener for all recipe buttons
         var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
-        allRecipeButtons.forEach(function (button, index) {
-            var recipeName = button.textContent;
-            displayRecipeDetails(recipeName, index);
-        });
-    }
-
-    // Function to create a delete icon
-    function createDeleteIcon(recipeName, index) {
-        var deleteIcon = document.createElement('i');
-        deleteIcon.classList.add('fa', 'fa-trash');
-        deleteIcon.setAttribute('aria-hidden', 'true');
-        deleteIcon.style.fontSize = '12px';
-
-        deleteIcon.addEventListener('click', function () {
-            // Add your delete logic here
-            console.log(`Deleting recipe ${recipeName} at index ${index}`);
-            var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
-            allRecipeButtons.forEach(function (button) {
-                if (button.textContent === recipeName) {
-                    button.parentNode.removeChild(button); // Remove the button from the DOM
-                }
+        allRecipeButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var recipeName = button.textContent;
+                var tabIndex = Array.from(allRecipeButtons).indexOf(button);
+                printProductsByRecipe(recipeName, tabIndex);
             });
         });
-
-        return deleteIcon;
     }
 
     function openCalendarInstance() {
@@ -396,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
             currentRecipeDetailsContainer.appendChild(newRecipeForm);
             recipeFormObjects[recipeName][tabIdx] = newRecipeForm; // Store the form in the dictionary
         }
+        printProductsByRecipe(recipeName, tabIdx); // Display the products for the current recipe
     }
 
     function updateFormWithDate(form, tabIdx) {
@@ -435,6 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+    // Function to switch active tab
     function setActiveTab(clickedButton) {
         var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
         allRecipeButtons.forEach(function (button) {
@@ -443,6 +428,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
         clickedButton.classList.toggle('opened');
+
+        var recipeName = clickedButton.textContent;
+        var tabIndex = Array.from(allRecipeButtons).indexOf(clickedButton);
+        printProductsByRecipe(recipeName, tabIndex); // Update the product list when the tab is switched
     }
 
     function formatDateTime(date) {
@@ -455,6 +444,141 @@ document.addEventListener('DOMContentLoaded', function () {
         var selectedDayName = dayOfWeek[date.getDay()];
 
         return `${selectedDayName}, ${selectedDay} ${selectedMonth} ${selectedYear}`;
+    }
+
+    // Initialize the product array
+    var productsByRecipe = {};
+
+    // Initialize product array for each tab
+    var productsByRecipeTab = {};
+
+    // Event listener for the product form
+    var productForm = document.getElementById('productForm');
+    if (productForm) {
+        productForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var productName = document.getElementById('productName').value;
+            var productQuantity = document.getElementById('productQuantity').value;
+
+            var activeRecipe = document.querySelector('.tablinks-recipes.opened');
+            if (activeRecipe) {
+                var activeRecipeName = activeRecipe.textContent;
+                var activeTabIndex = Array.from(document.querySelectorAll('.tablinks-recipes')).indexOf(activeRecipe);
+
+                if (!productsByRecipeTab[activeTabIndex]) {
+                    productsByRecipeTab[activeTabIndex] = {};
+                }
+
+                if (!productsByRecipeTab[activeTabIndex][activeRecipeName]) {
+                    productsByRecipeTab[activeTabIndex][activeRecipeName] = [];
+                }
+
+                var productDetails = {
+                    name: productName,
+                    quantity: productQuantity
+                };
+
+                productsByRecipeTab[activeTabIndex][activeRecipeName].push(productDetails);
+                printProductsByRecipe(activeRecipeName, activeTabIndex); // Display the updated products for the current recipe and tab
+
+                // Close the modal after submission
+                var productModal = document.getElementById('productModal');
+                if (productModal) {
+                    productModal.style.display = 'none';
+                }
+                // Reset the form fields
+                productForm.reset();
+            } else {
+                console.error('Please select a recipe before adding products.');
+            }
+        });
+    }
+
+    function printProductsByRecipe(recipeName, tabIdx) {
+        var productContainer = document.querySelector('.product-container');
+
+        if (!productContainer) {
+            productContainer = document.createElement('div');
+            productContainer.classList.add('product-container');
+            var smallCard = document.querySelector('.small-card');
+            if (smallCard) {
+                smallCard.appendChild(productContainer);
+            }
+        }
+
+        productContainer.innerHTML = '';
+
+        if (productsByRecipeTab[tabIdx] && productsByRecipeTab[tabIdx][recipeName]) {
+            productsByRecipeTab[tabIdx][recipeName].forEach(function (product, index) {
+                var productItem = document.createElement('div');
+                productItem.classList.add('product-item');
+
+                var productInfo = document.createElement('p');
+                productInfo.textContent = `${product.name} - Quantity: ${product.quantity}`;
+                productItem.appendChild(productInfo);
+
+                var editIcon = document.createElement('i');
+                editIcon.classList.add('fa', 'fa-edit', 'product-icon');
+                editIcon.setAttribute('aria-hidden', 'true');
+                editIcon.addEventListener('click', function () {
+                    openEditModal(recipeName, index);
+                });
+                productItem.appendChild(editIcon);
+
+                var deleteIcon = document.createElement('i');
+                deleteIcon.classList.add('fa', 'fa-trash', 'product-icon');
+                deleteIcon.setAttribute('aria-hidden', 'true');
+                deleteIcon.addEventListener('click', function () {
+                    deleteProduct(recipeName, index, tabIdx);
+                });
+                productItem.appendChild(deleteIcon);
+
+                productContainer.appendChild(productItem);
+            });
+        }
+    }
+
+    // Function to open the edit modal for a product
+    function openEditModal(recipeName, index) {
+        var product = productsByRecipe[recipeName][index]; // Retrieve the product based on the recipe name and index
+        var editModal = document.getElementById('editModal'); // Assuming the modal has the ID 'editModal'
+
+        // Assuming the modal has input fields with IDs 'editProductName' and 'editProductQuantity'
+        var productNameInput = document.getElementById('editProductName');
+        var productQuantityInput = document.getElementById('editProductQuantity');
+
+        if (editModal && productNameInput && productQuantityInput) {
+            productNameInput.value = product.name; // Set the initial value for the product name
+            productQuantityInput.value = product.quantity; // Set the initial value for the product quantity
+            // Code to display the edit modal
+            editModal.style.display = 'block';
+        }
+    }
+
+    // Function to delete a product
+    function deleteProduct(recipeName, index, tabIndex) {
+        if (productsByRecipeTab[tabIndex] && productsByRecipeTab[tabIndex][recipeName]) {
+            productsByRecipeTab[tabIndex][recipeName].splice(index, 1); // Remove the product from the array
+            printProductsByRecipe(recipeName, tabIndex); // Update the displayed products for the recipe and tab
+        }
+    }
+
+    // Event listener for opening the product modal
+    var openProductModalButton = document.getElementById('open-product-modal');
+    if (openProductModalButton) {
+        openProductModalButton.addEventListener('click', function () {
+            var activeRecipe = document.querySelector('.tablinks-recipes.opened');
+            if (activeRecipe) {
+                var recipeName = activeRecipe.textContent;
+                var productModal = document.getElementById('productModal');
+                if (productModal) {
+                    productModal.style.display = 'block';
+                }
+                printProductsByRecipe(recipeName); // Call the function to print the products for the current recipe
+            } else {
+                console.error('Please select a recipe before adding products.');
+            }
+        });
     }
 });
 
