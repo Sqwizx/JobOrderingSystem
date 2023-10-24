@@ -81,6 +81,13 @@
                         <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
                         <label for="productQuantity">Product Quantity:</label><br>
                         <input type="number" id="productQuantity" name="productQuantity" required autocomplete="off"><br><br>
+                        <label for="client">Client:</label><br>
+                        <select id="client" name="client">
+                            <option value="GFS">GFS</option>
+                            <option value="GBKL">GBKL</option>
+                        </select><br><br>
+                        <label for="colorSet">Color Set:</label><br>
+                        <input type="text" id="colorSet" name="colorSet" disabled><br><br>
                         <input type="submit" value="Submit">
                     </form>
                 </div>
@@ -95,7 +102,7 @@
 
     <script src="{% static 'js/sidebar.js' %}"></script>
     <script src="{% static 'js/calendar.js' %}"></script>
-    <script src="{% static 'js/recipe.js' %}"></script>
+    <script src="{% static 'js/create_jo.js' %}"></script>
 
 </body>
 </html>

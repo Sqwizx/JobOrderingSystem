@@ -4,7 +4,6 @@ var selectedDate;
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    var calendarInstance; // Initialize the calendar instance variable
 
     // Function to format the date to yyyy-mm-dd format
     function formatDateToYYYYMMDD(dateStr) {
@@ -16,14 +15,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function refreshRecipeForms() {
-        // Event listener for all recipe buttons
         var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
-        allRecipeButtons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                var recipeName = button.textContent;
-                var tabIndex = Array.from(allRecipeButtons).indexOf(button);
-                printProductsByRecipe(recipeName, tabIndex);
-            });
+        allRecipeButtons.forEach(function (button, index) {
+            var recipeName = button.textContent;
+            displayRecipeDetails(recipeName, index);
         });
     }
 
@@ -50,19 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 if (dateText) {
                                                     dateText.innerHTML = info.date;
                                                     dateButtons[index].innerHTML = `<span class="date-text">${info.date}</span><br>${info.day}`;
+                                                    updateColorSetField(clientSelect.value, selectedDate); // Trigger color set update
                                                     refreshRecipeForms();
-                                                    // Update the client and color fields
-                                                    var currentRecipeForm = document.querySelector('.recipe-form');
-                                                    if (currentRecipeForm) {
-                                                        var clientSelect = currentRecipeForm.querySelector('select[name="client"]');
-                                                        var dateTimePicker = currentRecipeForm.querySelector('input[name="dateTimePicker"]');
-                                                        if (clientSelect && dateTimePicker) {
-                                                            updateColorSetField(clientSelect.value, dateTimePicker.value, index, currentRecipeForm.id);
-                                                            // Trigger the change event for the client select element
-                                                            var event = new Event('change');
-                                                            clientSelect.dispatchEvent(event);
-                                                        }
-                                                    }
                                                 }
                                             }
                                         });
@@ -75,6 +59,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         };
                         xhr.send();
+                        updateColorSetField(clientSelect.value, selectedDate); // Trigger color set update
+                        refreshRecipeForms();
                     }
                 }
             });
@@ -120,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var modal = document.getElementById(`myModal-${index}`);
             if (modal) {
                 modal.style.display = 'block';
+                console.log(`Recipe created: ${modal.id}`);
             }
         });
     });
@@ -212,13 +199,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function addDaysToDate(tabIdx) {
+        var result;
         if (selectedDate) {
-            var result = new Date(selectedDate);
-            result.setDate(selectedDate.getDate() + tabIdx);
-            return formatDateTime(result);
+            result = new Date(selectedDate);
         } else {
-            return formatDateTime(new Date());
+            result = new Date();
         }
+        result.setDate(result.getDate() + tabIdx);
+        return formatDateTime(result);
     }
 
     function createRecipeForm(recipeName, tabIdx) {
@@ -260,32 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var br = document.createElement("br");
 
-        var clientLabel = document.createElement("label");
-        clientLabel.htmlFor = `client-${uniqueFormId}`;
-        clientLabel.textContent = "Client";
-
-        var clientSelect = document.createElement("select");
-        clientSelect.id = `client-${uniqueFormId}`;
-        clientSelect.name = "client";
-
-        var clientOptions = ["GFS", "GBKL"];
-        clientOptions.forEach(function (option) {
-            var clientOption = document.createElement("option");
-            clientOption.value = option;
-            clientOption.textContent = option;
-            clientSelect.appendChild(clientOption);
-        });
-
-        var colorSetLabel = document.createElement("label");
-        colorSetLabel.htmlFor = `colorSet-${uniqueFormId}`;
-        colorSetLabel.textContent = "Color Set";
-
-        var colorSetField = document.createElement("input");
-        colorSetField.type = "text";
-        colorSetField.id = `colorSet-${uniqueFormId}`;
-        colorSetField.name = "colorSet";
-        colorSetField.disabled = true;
-
         var datetimeLabel = document.createElement("label");
         datetimeLabel.htmlFor = `dateTimePicker-${uniqueFormId}`;
         datetimeLabel.textContent = "Production Date";
@@ -319,14 +281,6 @@ document.addEventListener('DOMContentLoaded', function () {
         leftDiv.appendChild(br.cloneNode());
         leftDiv.appendChild(nameInput);
         leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(clientLabel);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(clientSelect);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(colorSetLabel);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(colorSetField);
-        leftDiv.appendChild(br.cloneNode());
 
         rightDiv.appendChild(datetimeLabel);
         rightDiv.appendChild(br.cloneNode());
@@ -350,19 +304,33 @@ document.addEventListener('DOMContentLoaded', function () {
         return form;
     }
 
-    function updateColorSetField(client, selectedDate, tabIdx, uniqueFormId) {
+    function updateColorSetField(client, selectedDate, tabIdx) {
         var dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
         var colorSets = {
             GFS: ["WHITE", "TAN", "ORANGE", "YELLOW", "BLUE", "DARK GREEN", "RED"],
             GBKL: ["TAN", "BLUE", "YELLOW", "ORANGE", "GREEN", "RED", "WHITE"]
         };
-        var openCalendarInstance = new Date(selectedDate);
-        var selectedDayOfWeek = dayOfWeek[(openCalendarInstance.getDay() + tabIdx) % 7];
+
+        var openCalendarInstanceDate = new Date(selectedDate);
+        var selectedDayOfWeek = dayOfWeek[openCalendarInstanceDate.getDay()];
         var colorSet = colorSets[client];
-        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek);
+        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek) + tabIdx; // Updated the color index based on the tab index
         var selectedColor = colorSet[colorIndex % colorSet.length];
-        var colorSetField = document.getElementById(`colorSet-${uniqueFormId}`);
-        colorSetField.value = selectedColor;
+
+        var colorSetField = document.getElementById('colorSet');
+        if (colorSetField) {
+            colorSetField.value = selectedColor;
+        }
+    }
+
+
+    // Event listener for the client select element
+    var clientSelect = document.getElementById('client'); // Assuming 'client' is the ID of the client select element
+    if (clientSelect) {
+        clientSelect.addEventListener("change", function () {
+            var selectedClient = this.value;
+            updateColorSetField(selectedClient, selectedDate);
+        });
     }
 
     // Function to handle the creation and displaying of the recipe form
@@ -452,45 +420,70 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize product array for each tab
     var productsByRecipeTab = {};
 
-    // Event listener for the product form
-    var productForm = document.getElementById('productForm');
+    // Event listener for the product form submission
     if (productForm) {
+        var productIndexToEdit = -1; // Initialize the product index to edit
         productForm.addEventListener('submit', function (event) {
             event.preventDefault();
             var productName = document.getElementById('productName').value;
             var productQuantity = document.getElementById('productQuantity').value;
+            var client = document.getElementById('client').value;
+            var colorSet = document.getElementById('colorSet').value;
 
             var activeRecipe = document.querySelector('.tablinks-recipes.opened');
             if (activeRecipe) {
                 var activeRecipeName = activeRecipe.textContent;
                 var activeTabIndex = Array.from(document.querySelectorAll('.tablinks-recipes')).indexOf(activeRecipe);
-
-                if (!productsByRecipeTab[activeTabIndex]) {
-                    productsByRecipeTab[activeTabIndex] = {};
+                if (productIndexToEdit !== -1) {
+                    // Update the existing product with the edited information
+                    productsByRecipeTab[activeTabIndex][activeRecipeName][productIndexToEdit] = {
+                        name: productName,
+                        quantity: productQuantity,
+                        client: client,
+                        color: colorSet
+                    };
+                    productIndexToEdit = -1; // Reset the product index to edit
+                    console.log(`Product updated: Recipe - ${activeRecipeName}, Index - ${productIndexToEdit}`);
+                } else {
+                    // Add the new product to the array
+                    if (!productsByRecipeTab[activeTabIndex]) {
+                        productsByRecipeTab[activeTabIndex] = {};
+                    }
+                    if (!productsByRecipeTab[activeTabIndex][activeRecipeName]) {
+                        productsByRecipeTab[activeTabIndex][activeRecipeName] = [];
+                    }
+                    productsByRecipeTab[activeTabIndex][activeRecipeName].push({
+                        name: productName,
+                        quantity: productQuantity,
+                        client: client,
+                        color: colorSet
+                    });
+                    console.log(`Product created: Recipe - ${activeRecipeName}`);
                 }
 
-                if (!productsByRecipeTab[activeTabIndex][activeRecipeName]) {
-                    productsByRecipeTab[activeTabIndex][activeRecipeName] = [];
-                }
-
-                var productDetails = {
-                    name: productName,
-                    quantity: productQuantity
-                };
-
-                productsByRecipeTab[activeTabIndex][activeRecipeName].push(productDetails);
                 printProductsByRecipe(activeRecipeName, activeTabIndex); // Display the updated products for the current recipe and tab
+                updateColorSetField(client, selectedDate, activeTabIndex); // Update the color set field based on the client, selected date, and activeTabIndex
 
-                // Close the modal after submission
                 var productModal = document.getElementById('productModal');
                 if (productModal) {
-                    productModal.style.display = 'none';
+                    productModal.style.display = 'none'; // Close the modal
                 }
-                // Reset the form fields
-                productForm.reset();
+                productForm.reset(); // Reset the form fields
             } else {
                 console.error('Please select a recipe before adding products.');
             }
+        });
+    }
+
+    // Event listener for closing the product modal
+    var closeProductModalButton = document.getElementById('closeProductModal');
+    if (closeProductModalButton) {
+        closeProductModalButton.addEventListener('click', function () {
+            var productModal = document.getElementById('productModal');
+            if (productModal) {
+                productModal.style.display = 'none';
+            }
+            productForm.reset(); // Reset the form fields
         });
     }
 
@@ -538,28 +531,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Function to open the edit modal for a product
+    // Function to open the modal with existing product information
     function openEditModal(recipeName, index) {
-        var product = productsByRecipe[recipeName][index]; // Retrieve the product based on the recipe name and index
-        var editModal = document.getElementById('editModal'); // Assuming the modal has the ID 'editModal'
+        var productNameField = document.getElementById('productName');
+        var productQuantityField = document.getElementById('productQuantity');
+        var clientField = document.getElementById('client');
+        var colorSetField = document.getElementById('colorSet');
 
-        // Assuming the modal has input fields with IDs 'editProductName' and 'editProductQuantity'
-        var productNameInput = document.getElementById('editProductName');
-        var productQuantityInput = document.getElementById('editProductQuantity');
+        var activeRecipe = document.querySelector('.tablinks-recipes.opened');
+        if (activeRecipe) {
+            var activeTabIndex = Array.from(document.querySelectorAll('.tablinks-recipes')).indexOf(activeRecipe);
+            if (productsByRecipeTab[activeTabIndex] && productsByRecipeTab[activeTabIndex][recipeName]) {
+                var product = productsByRecipeTab[activeTabIndex][recipeName][index];
+                if (product) {
+                    productNameField.value = product.name;
+                    productQuantityField.value = product.quantity;
+                    clientField.value = product.client;
+                    colorSetField.value = product.color;
+                    // Store the index of the product being edited
+                    productIndexToEdit = index;
+                }
+            }
+        }
 
-        if (editModal && productNameInput && productQuantityInput) {
-            productNameInput.value = product.name; // Set the initial value for the product name
-            productQuantityInput.value = product.quantity; // Set the initial value for the product quantity
-            // Code to display the edit modal
-            editModal.style.display = 'block';
+        var productModal = document.getElementById('productModal');
+        if (productModal) {
+            productModal.style.display = 'block';
         }
     }
 
     // Function to delete a product
-    function deleteProduct(recipeName, index, tabIndex) {
-        if (productsByRecipeTab[tabIndex] && productsByRecipeTab[tabIndex][recipeName]) {
-            productsByRecipeTab[tabIndex][recipeName].splice(index, 1); // Remove the product from the array
-            printProductsByRecipe(recipeName, tabIndex); // Update the displayed products for the recipe and tab
+    function deleteProduct(recipeName, index) {
+        var activeRecipe = document.querySelector('.tablinks-recipes.opened');
+        if (activeRecipe) {
+            var activeTabIndex = Array.from(document.querySelectorAll('.tablinks-recipes')).indexOf(activeRecipe);
+            if (productsByRecipeTab[activeTabIndex] && productsByRecipeTab[activeTabIndex][recipeName]) {
+                productsByRecipeTab[activeTabIndex][recipeName].splice(index, 1); // Remove the product from the array
+                printProductsByRecipe(recipeName, activeTabIndex); // Update the displayed products for the recipe and tab
+                console.log(`Product deleted: Recipe - ${recipeName}, Index - ${index}`);
+            }
         }
     }
 
@@ -574,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (productModal) {
                     productModal.style.display = 'block';
                 }
-                printProductsByRecipe(recipeName); // Call the function to print the products for the current recipe
+                printProductsByRecipe(recipeName, this.tabIndex); // Call the function to print the products for the current recipe
             } else {
                 console.error('Please select a recipe before adding products.');
             }

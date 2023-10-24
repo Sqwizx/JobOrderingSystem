@@ -23,14 +23,11 @@ class Revision(models.Model):
         return self.revisionId
 
 class Recipe(models.Model):
-    def yesterday():
-        return date.today() - timedelta(days=1)
-    
     recipeId = models.CharField(max_length=50)
     recipeSalesOrder = models.PositiveIntegerField(null=True)
     recipeProdRate = models.PositiveIntegerField(null=True)
     recipeBatchSize = models.PositiveIntegerField(null=True)
-    recipeProdDate = models.DateField(default=yesterday)
+    recipeProdDate = models.DateField()
     recipeKwikLokColor = models.CharField(max_length=50,null=True)
     recipeBatches = models.PositiveIntegerField(null=True)
     recipeCycleTime = models.DurationField(null=True)
@@ -60,12 +57,12 @@ class Activity(models.Model):
 class JobOrder(models.Model):
     jobOrderId = models.CharField(max_length=50)
     jobOrderCreatedDate = models.DateTimeField(default=timezone.now)
-    totalSalesOrder = models.PositiveIntegerField()
-    jobOrderStatus = models.CharField(max_length=50)
-    currentActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='current')
-    nextActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='next')
-    jobOrderRevision = models.ForeignKey(Revision, on_delete=models.CASCADE, related_name="job_revision")
-    recipeId = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='job_recipe')
+    totalSalesOrder = models.PositiveIntegerField(null=True)
+    jobOrderStatus = models.CharField(max_length=50, null=True)
+    currentActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='current', null=True)
+    nextActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='next', null=True)
+    jobOrderRevision = models.ForeignKey(Revision, on_delete=models.CASCADE, related_name="job_revision", null=True)
+    recipeId = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='job_recipe', null=True)
     userId = models.ForeignKey(User, on_delete=models.CASCADE, related_name = 'user_job')
 
     def __str__(self):
