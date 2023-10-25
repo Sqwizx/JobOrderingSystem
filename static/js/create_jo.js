@@ -1,8 +1,6 @@
 var calendarInstance; // Define the calendarInstance outside the function
 var selectedDate;
 
-
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // Function to format the date to yyyy-mm-dd format
@@ -45,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 if (dateText) {
                                                     dateText.innerHTML = info.date;
                                                     dateButtons[index].innerHTML = `<span class="date-text">${info.date}</span><br>${info.day}`;
-                                                    updateColorSetField(clientSelect.value, selectedDate); // Trigger color set update
+                                                    updateColorSetField(clientSelect.value, selectedDate); // Move this line here
                                                     refreshRecipeForms();
                                                 }
                                             }
@@ -59,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         };
                         xhr.send();
-                        updateColorSetField(clientSelect.value, selectedDate); // Trigger color set update
                         refreshRecipeForms();
                     }
                 }
@@ -139,6 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (modal) {
                         modal.style.display = 'none'; // Close the modal
                     }
+                    recipeForm.reset();
                     // Set the active tab to the existing tab only if it's not already active
                     var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
                     allRecipeButtons.forEach(function (button) {
@@ -153,19 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 newRecipeButton.classList.add('tablinks-recipes');
                 newRecipeButton.textContent = recipeName;
 
-                // var deleteIcon = document.createElement('i');
-                // deleteIcon.classList.add('fa', 'fa-trash');
-                // deleteIcon.setAttribute('aria-hidden', 'true');
-                // deleteIcon.style.fontSize = '12px';
-
-                // Creating the delete text
-                var deleteText = document.createElement("span");
-                deleteText.textContent = "Delete";
-                deleteText.classList.add("delete-recipe");
-
                 newRecipeButton.appendChild(document.createElement('br'));
-                // newRecipeButton.appendChild(deleteIcon);
-                // newRecipeButton.appendChild(deleteText);
 
                 newRecipeButton.addEventListener('click', function () {
                     displayRecipeDetails(recipeName, index);
@@ -271,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 var formattedDate = formatDateTime(selectedDate);
                 dateTimePicker.value = formattedDate;
                 savedDateTimeValues[uniqueFormId] = selectedDate;
-                updateColorSetField(clientSelect.value, selectedDate, tabIdx, uniqueFormId);
             }
         });
 
@@ -293,18 +278,21 @@ document.addEventListener('DOMContentLoaded', function () {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
         currentRecipeDetailsContainer.appendChild(form);
 
-        var defaultClient = "GFS";
-        // Trigger update for default client
-        updateColorSetField(defaultClient, addDaysToDate(tabIdx), tabIdx, uniqueFormId);
-
-        clientSelect.addEventListener("change", function () {
-            updateColorSetField(this.value, dateTimePicker.value, tabIdx, uniqueFormId);
-        });
-
+        // Event listener for opening the product modal
+        var openProductModalButton = document.getElementById('open-product-modal');
+        if (openProductModalButton) {
+            openProductModalButton.addEventListener('click', function () {
+                updateColorSetField(clientSelect.value, dateTimePicker.value, tabIdx);
+            });
+        }
         return form;
     }
 
     function updateColorSetField(client, selectedDate, tabIdx) {
+        console.log('Updating color set with:');
+        console.log('Client:', client);
+        console.log('Selected Date:', selectedDate);
+        console.log('Tab Index:', tabIdx);
         var dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
         var colorSets = {
             GFS: ["WHITE", "TAN", "ORANGE", "YELLOW", "BLUE", "DARK GREEN", "RED"],
@@ -314,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var openCalendarInstanceDate = new Date(selectedDate);
         var selectedDayOfWeek = dayOfWeek[openCalendarInstanceDate.getDay()];
         var colorSet = colorSets[client];
-        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek) + tabIdx; // Updated the color index based on the tab index
+        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek) + tabIdx;
         var selectedColor = colorSet[colorIndex % colorSet.length];
 
         var colorSetField = document.getElementById('colorSet');
@@ -322,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function () {
             colorSetField.value = selectedColor;
         }
     }
-
 
     // Event listener for the client select element
     var clientSelect = document.getElementById('client'); // Assuming 'client' is the ID of the client select element
@@ -385,22 +372,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
-
-    // Function to switch active tab
     function setActiveTab(clickedButton) {
-        var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
+        var isAlreadyOpened = clickedButton.classList.contains('opened');
+
+        // Get the parent tab container
+        var tabContainer = clickedButton.closest('.tabcontent');
+
+        // Get all tab buttons within the same tab container
+        var allRecipeButtons = tabContainer.querySelectorAll('.tablinks-recipes');
+
+        // Remove 'opened' class from all buttons within the same tab container
         allRecipeButtons.forEach(function (button) {
-            if (button !== clickedButton) {
-                button.classList.remove('opened');
-            }
+            button.classList.remove('opened');
         });
-        clickedButton.classList.toggle('opened');
+
+        // Add 'opened' class only to the clicked button if it's not already opened
+        if (!isAlreadyOpened) {
+            clickedButton.classList.add('opened');
+        }
 
         var recipeName = clickedButton.textContent;
         var tabIndex = Array.from(allRecipeButtons).indexOf(clickedButton);
         printProductsByRecipe(recipeName, tabIndex); // Update the product list when the tab is switched
     }
+
+    // Event listener for all recipe buttons
+    var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
+    allRecipeButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            setActiveTab(button);
+        });
+    });
 
     function formatDateTime(date) {
         var monthNames = ["Jan", "Feb", "March", "April", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -414,8 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${selectedDayName}, ${selectedDay} ${selectedMonth} ${selectedYear}`;
     }
 
-    // Initialize the product array
-    var productsByRecipe = {};
+    // PRODUCTS HERE
 
     // Initialize product array for each tab
     var productsByRecipeTab = {};
@@ -486,6 +487,8 @@ document.addEventListener('DOMContentLoaded', function () {
             productForm.reset(); // Reset the form fields
         });
     }
+
+    var productContainers = {};
 
     function printProductsByRecipe(recipeName, tabIdx) {
         var productContainer = document.querySelector('.product-container');
