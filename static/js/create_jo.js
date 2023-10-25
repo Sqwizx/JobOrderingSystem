@@ -289,6 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateColorSetField(client, selectedDate, tabIdx) {
+        var selectedDate = selectedDate;
         console.log('Updating color set with:');
         console.log('Client:', client);
         console.log('Selected Date:', selectedDate);
@@ -373,21 +374,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setActiveTab(clickedButton) {
-        var isAlreadyOpened = clickedButton.classList.contains('opened');
-
         // Get the parent tab container
         var tabContainer = clickedButton.closest('.tabcontent');
 
         // Get all tab buttons within the same tab container
         var allRecipeButtons = tabContainer.querySelectorAll('.tablinks-recipes');
 
-        // Remove 'opened' class from all buttons within the same tab container
-        allRecipeButtons.forEach(function (button) {
-            button.classList.remove('opened');
-        });
+        // Check if the clicked button is already opened
+        var isAlreadyOpened = clickedButton.classList.contains('opened');
 
-        // Add 'opened' class only to the clicked button if it's not already opened
         if (!isAlreadyOpened) {
+            // Remove 'opened' class from all buttons within the same tab container
+            allRecipeButtons.forEach(function (button) {
+                button.classList.remove('opened');
+            });
+
+            // Add 'opened' class to the clicked button
             clickedButton.classList.add('opened');
         }
 
@@ -488,8 +490,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    var productContainers = {};
-
     function printProductsByRecipe(recipeName, tabIdx) {
         var productContainer = document.querySelector('.product-container');
 
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 deleteIcon.classList.add('fa', 'fa-trash', 'product-icon');
                 deleteIcon.setAttribute('aria-hidden', 'true');
                 deleteIcon.addEventListener('click', function () {
-                    deleteProduct(recipeName, index, tabIdx);
+                    deleteProduct(recipeName, index, tabIdx); // Pass the correct tabIdx here
                 });
                 productItem.appendChild(deleteIcon);
 
@@ -533,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     }
+
 
     // Function to open the modal with existing product information
     function openEditModal(recipeName, index) {
