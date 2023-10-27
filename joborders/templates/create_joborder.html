@@ -27,11 +27,11 @@
                 <div class="tab">
                   {% for info in date_info %}
                       {% if forloop.first %}
-                      <button id="first-tablink" class="tablinks active" onclick="openTab(event, '{{ info.day }}')">
+                      <button id="first-tablink"  data-day="{{ info.day }}" class="tablinks active">
                       <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
                     </button>
                       {% else %}
-                          <button class="tablinks" onclick="openTab(event, '{{ info.day }}')">
+                          <button data-day="{{ info.day }}" class="tablinks">
                               <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
                           </button>
                       {% endif %}
@@ -39,7 +39,7 @@
               </div>
                 {% for info in date_info %}
                 <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
-                    <p>Recipe List</p>
+                    <p id="recipe-list">Recipe List</p>
                     <div class="content-container">
                         <div class="card">
                             <div class="first-column">
@@ -70,8 +70,11 @@
             </div>
             <div class="right-column">
               <div class="small-card">
-                <p>Product List</p>
-                <button id="open-product-modal">Add Product</button>
+                <p id="product-list">Product List</p>
+                <div class="product-container">
+                  <!-- This is where your product items will be displayed -->
+              </div>
+                <button id="open-product-modal">+ Add Product</button>
               </div>
               <div id="productModal" class="modal">
                 <div class="modal-content">
@@ -92,6 +95,14 @@
                     </form>
                 </div>
             </div>
+            <div id="alertModal" class="modal">
+              <div class="modal-content">
+                  <span class="close" id="closeAlertModal">&times;</span>
+                  <p>Are you sure you want to delete the recipe <strong id="recipeNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+                  <button id="confirmDelete">Confirm</button>
+                  <button id="cancelDelete">Cancel</button>
+              </div>
+          </div>          
               <div class="small-card">
                 <!-- Content for small card 2 -->
               </div>
