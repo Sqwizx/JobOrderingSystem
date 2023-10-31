@@ -13,9 +13,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
 </head>
-
 <body>
+  <div id="scrollContainer" class="scroll-area">
     {% include 'sidebar.html' %}
     <section class="home-section">
         {% include 'create_header.html' %}
@@ -59,7 +61,7 @@
                     <div class="modal-content">
                         <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
                         <form id="recipeForm">
-                            <label for="recipeName">Recipe Name:</label><br>
+                            <label for="recipeName">Recipe Name</label><br>
                             <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete=off><br><br>
                             <input type="submit" value="Submit">
                         </form>
@@ -76,25 +78,64 @@
               </div>
                 <button id="open-product-modal">+ Add Product</button>
               </div>
+              
               <div id="productModal" class="modal">
-                <div class="modal-content">
+                <div class="modal-content" id="productModalContent">
                     <span class="close" id="closeProductModal">&times;</span>
                     <form id="productForm">
-                        <label for="productName">Product Name:</label><br>
+                      <div class="left-div">
+                        <label for="productName">Product Name</label><br>
                         <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
-                        <label for="productQuantity">Product Quantity:</label><br>
-                        <input type="number" id="productQuantity" name="productQuantity" required autocomplete="off"><br><br>
-                        <label for="client">Client:</label><br>
-                        <select id="client" name="client">
-                            <option value="GFS">GFS</option>
-                            <option value="GBKL">GBKL</option>
-                        </select><br><br>
-                        <label for="colorSet">Color Set:</label><br>
-                        <input type="text" id="colorSet" name="colorSet" disabled><br><br>
+            
+                        <label for="salesOrder">Sales Order</label><br>
+                        <input type="text" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
+            
+                        <div class="product-price-group">
+                          <label for="productPrice">Product Price</label>
+                          <div class="price-container">
+                              <select id="currency" name="currency">
+                                  <option value="SGD">SGD</option>
+                                  <option value="MYR">MYR</option>
+                              </select>
+                              <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0">
+                          </div>
+                      </div>
+                      <br>
+                        <div class="client-color-group">
+                          <label for="client">Client/Color</label>
+                          <div class="client-color-container">
+                              <select id="client" name="client">
+                                  <option value="GFS">GFS</option>
+                                  <option value="GBKL">GBKL</option>
+                              </select>
+                              <input type="text" id="colorSet" name="colorSet" disabled placeholder="Color Set">
+                          </div>
+                          <br>
+
+                          <label for="expiryDate">Expiry Date</label>
+                        <input type="text" id="expiryDate" name="expiryDate" required autocomplete="off"><br><br>
+                      </div>
+                      </div>                    
+  
+                      <div class="right-div">
+                        <label for="saleDate">Sale Date</label><br>
+                        <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
+            
+                        <label for="noOfSlices">No. of Slices</label><br>
+                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+            
+                        <label for="thickness">Thickness</label><br>
+                        <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+            
+                        <label for="remarks">Remarks</label><br>
+                        <textarea id="remarks" name="remarks" rows="4" cols="50"></textarea><br><br>
+            
                         <input type="submit" value="Submit">
+                      </div>
                     </form>
                 </div>
             </div>
+            
             <div id="alertModal" class="modal">
               <div class="modal-content">
                   <span class="close" id="closeAlertModal">&times;</span>
@@ -110,10 +151,10 @@
           </div>
         </div>
     </section>
-
+    <script src="{% static 'js/scrollbar.js' %}"></script>
     <script src="{% static 'js/sidebar.js' %}"></script>
     <script src="{% static 'js/calendar.js' %}"></script>
     <script src="{% static 'js/create_jo.js' %}"></script>
-
+  </div>
 </body>
 </html>

@@ -4,7 +4,8 @@ var selectedDate;
 document.addEventListener('DOMContentLoaded', function () {
     let activeRecipe = {
         name: null,
-        tabIndex: null
+        tabIndex: null,
+        dateTimePicker: null
     };
 
     // Function to format the date to yyyy-mm-dd format
@@ -265,6 +266,15 @@ document.addEventListener('DOMContentLoaded', function () {
         checkAndToggleProductModalButton();
         console.log(`Recipe "${recipeName}" deleted.`);
         alertModal.style.display = 'none'; // Close the modal
+
+        // Delete associated products of the recipe
+        if (productsByRecipe[deleteParams.index] && productsByRecipe[deleteParams.index][deleteParams.recipeName]) {
+            delete productsByRecipe[deleteParams.index][deleteParams.recipeName];
+            console.log(`Deleted products associated with recipe: ${deleteParams.recipeName}`);
+
+            // Refresh or update the UI after deletion
+            printProductsByRecipe(deleteParams.recipeName, deleteParams.index);
+        }
     }
 
     function cancelDeletion() {
@@ -288,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function createRecipeForm(recipeName, tabIdx) {
+
         if (!recipeFormObjects[recipeName]) {
             recipeFormObjects[recipeName] = {};
         }
@@ -385,6 +396,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         console.log(`Created new form with id: ${form.id}`);
+
+        activeRecipe.dateTimePicker = dateTimePicker;
+        activeRecipe.tabIndex = tabIdx;
+
         return form;
     }
 
@@ -413,13 +428,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Event listener for the client select element
-    var clientSelect = document.getElementById('client'); // Assuming 'client' is the ID of the client select element
+    var clientSelect = document.getElementById('client');
     if (clientSelect) {
         clientSelect.addEventListener("change", function () {
             var selectedClient = this.value;
-            updateColorSetField(selectedClient, selectedDate);
+
+            if (activeRecipe.dateTimePicker && activeRecipe.tabIndex !== null) {
+                updateColorSetField(selectedClient, activeRecipe.dateTimePicker.value, activeRecipe.tabIndex);
+            } else {
+                // Handle cases where the active recipe details are not set
+                console.error("Active recipe details are not set. Cannot update the ColorSetField.");
+            }
         });
     }
+
 
     // Function to handle the creation and displaying of the recipe form
     function displayRecipeDetails(recipeName, tabIdx) {
@@ -546,7 +568,6 @@ document.addEventListener('DOMContentLoaded', function () {
         printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
     }
 
-
     function formatDateTime(date) {
         var monthNames = ["Jan", "Feb", "March", "April", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         var dayOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -560,8 +581,58 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // PRODUCTS HERE
+
     // Initialize product array for each tab
     var productsByRecipe = {};
+
+    function getProductionDateMinValue() {
+        if (activeRecipe.dateTimePicker && activeRecipe.dateTimePicker.value) {
+            var dateValue = new Date(activeRecipe.dateTimePicker.value);
+            return formatDateTime(dateValue);
+        }
+        return new Date(); // default to current date
+    }
+
+
+    // Initialize Flatpickr for expiryDate
+    flatpickr('#expiryDate', {
+        enableTime: false,
+        dateFormat: "l, d M Y",
+        minDate: getProductionDateMinValue(),
+        defaultDate: getProductionDateMinValue(),
+        onChange: function (selectedDates) {
+            // Additional logic for when expiryDate changes, if needed
+        }
+    });
+
+    // Initialize Flatpickr for saleDate
+    flatpickr('#saleDate', {
+        enableTime: false,
+        dateFormat: "l, d M Y",
+        minDate: getProductionDateMinValue(),
+        defaultDate: "N/A",
+        onChange: function (selectedDates) {
+            // Additional logic for when saleDate changes, if needed
+        }
+    });
+
+    if (activeRecipe.dateTimePicker) {
+        activeRecipe.dateTimePicker.addEventListener('change', function () {
+            var newDateValue = getProductionDateMinValue();
+
+            var expiryFlatpickr = document.getElementById('expiryDate')._flatpickr;
+            if (expiryFlatpickr) {
+                expiryFlatpickr.set('minDate', newDateValue);
+                expiryFlatpickr.set('defaultDate', newDateValue);
+            }
+
+            var saleFlatpickr = document.getElementById('saleDate')._flatpickr;
+            if (saleFlatpickr) {
+                saleFlatpickr.set('minDate', newDateValue);
+                saleFlatpickr.set('defaultDate', newDateValue);
+            }
+        });
+    }
 
     // Event listener for the product form submission
     if (productForm) {
@@ -570,9 +641,17 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
 
             var productName = document.getElementById('productName').value;
-            var productQuantity = document.getElementById('productQuantity').value;
             var client = document.getElementById('client').value;
             var colorSet = document.getElementById('colorSet').value;
+            var expiryDate = document.getElementById('expiryDate').value;
+            var saleDate = document.getElementById('saleDate').value;
+            saleDate = saleDate ? saleDate : null;
+            var salesOrder = document.getElementById('salesOrder').value;
+            var currency = document.getElementById('currency').value;
+            var noOfSlices = parseInt(document.getElementById('noOfSlices').value, 10);
+            var productPrice = parseFloat(document.getElementById('productPrice').value);
+            var thickness = document.getElementById('thickness').value;
+            var remarks = document.getElementById('remarks').value;
 
             if (activeRecipe.name) {
                 if (!productsByRecipe[activeRecipe.tabIndex]) {
@@ -587,20 +666,39 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Update the existing product with the edited information
                     productsByRecipe[activeRecipe.tabIndex][activeRecipe.name][productIndexToEdit] = {
                         name: productName,
-                        quantity: productQuantity,
                         client: client,
-                        color: colorSet
+                        color: colorSet,
+                        expiryDate: expiryDate,
+                        saleDate: saleDate,
+                        salesOrder: salesOrder,
+                        productPrice: productPrice,
+                        currency: currency,
+                        noOfSlices: noOfSlices,
+                        thickness: thickness,
+                        remarks: remarks
                     };
                     console.log(`Product updated: Recipe - ${activeRecipe.name}, Index - ${productIndexToEdit}`);
                     productIndexToEdit = -1; // Reset the product index to edit
                 } else {
                     // Add the new product to the array
-                    productsByRecipe[activeRecipe.tabIndex][activeRecipe.name].push({
+                    var newProduct = {
                         name: productName,
-                        quantity: productQuantity,
                         client: client,
-                        color: colorSet
-                    });
+                        color: colorSet,
+                        expiryDate: expiryDate,
+                        saleDate: saleDate,
+                        salesOrder: salesOrder,
+                        productPrice: productPrice,
+                        currency: currency,
+                        noOfSlices: noOfSlices,
+                        thickness: thickness,
+                        remarks: remarks
+                    };
+                    productsByRecipe[activeRecipe.tabIndex][activeRecipe.name].push(newProduct);
+
+                    // Log the created product object
+                    console.log(newProduct);
+
                     console.log(`Product created: Recipe - ${activeRecipe.name} ${activeRecipe.tabIndex}`);
                 }
 
@@ -700,19 +798,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openEditModal(tabIndex, recipeName, index) {
         var productNameField = document.getElementById('productName');
-        var productQuantityField = document.getElementById('productQuantity');
         var clientField = document.getElementById('client');
         var colorSetField = document.getElementById('colorSet');
+        var expiryDate = document.getElementById('expiryDate');
+        var saleDate = document.getElementById('saleDate');
+        saleDate = saleDate ? saleDate : null;
+        var salesOrder = document.getElementById('salesOrder');
+        var productPrice = document.getElementById('productPrice');
+        var currency = document.getElementById('currency');
+        var noOfSlices = document.getElementById('noOfSlices');
+        var thickness = document.getElementById('thickness');
+        var remarks = document.getElementById('remarks');
 
         if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
             var product = productsByRecipe[tabIndex][recipeName][index];
             if (product) {
                 productNameField.value = product.name;
-                productQuantityField.value = product.quantity;
                 clientField.value = product.client;
                 colorSetField.value = product.color;
+                expiryDate.value = product.expiryDate;
+                saleDate.value = product.saleDate;
+                salesOrder.value = product.salesOrder;
+                productPrice.value = product.productPrice;
+                currency.value = product.currency;
+                noOfSlices.value = product.noOfSlices;
+                thickness.value = product.thickness;
+                remarks.value = product.remarks;
                 productIndexToEdit = index;  // Store the index of the product being edited
             }
+        }
+
+        var flatpickrInstance = flatpickr("#saleDate");
+
+        if (product.saleDate) {
+            flatpickrInstance.setDate(product.saleDate);
+        } else {
+            flatpickrInstance.clear();  // This will make it show the "N/A" placeholder
         }
 
         var productModal = document.getElementById('productModal');
@@ -755,6 +876,23 @@ document.addEventListener('DOMContentLoaded', function () {
             if (activeRecipe) {
                 var recipeName = activeRecipe.textContent;
                 var tabIndex = activeRecipe.getAttribute('data-tab-index');
+
+                // Update the default and min dates for the Flatpickr instances
+                var newDateValue = getProductionDateMinValue();
+
+                var expiryFlatpickr = document.getElementById('expiryDate')._flatpickr;
+                if (expiryFlatpickr) {
+                    expiryFlatpickr.set('minDate', newDateValue);
+                    expiryFlatpickr.set('defaultDate', newDateValue);
+                }
+
+                var saleFlatpickr = document.getElementById('saleDate')._flatpickr;
+                if (saleFlatpickr) {
+                    saleFlatpickr.set('minDate', newDateValue);
+                    saleFlatpickr.set('defaultDate', newDateValue);
+                }
+
+                // Display the modal
                 var productModal = document.getElementById('productModal');
                 if (productModal) {
                     productModal.style.display = 'block';
@@ -766,19 +904,39 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Event listener for closing the alert modal
-    var closeModalBtn = document.getElementById('closeAlertModal');
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', function () {
-            var alertModal = document.getElementById('alertModal');
-            if (alertModal) {
-                alertModal.style.display = 'none';
-            }
+    document.getElementById("productPrice").addEventListener("input", function () {
+        let val = this.value.replace(/[^0-9]/g, '');
+
+        // Ensure there are exactly 4 digits
+        while (val.length < 4) {
+            val = '0' + val;
+        }
+
+        // Reconstruct the value so that the entered digits replace the zeros from right to left
+        let formattedValue = (parseInt(val.substring(0, 2)) + '.' + parseInt(val.substring(2, 4))).toString();
+
+        this.value = formattedValue;
+    });
+
+    // Add event listener for Recipe Name input
+    document.querySelectorAll("[id^=recipeName-]").forEach(function (input) {
+        // Convert to uppercase and restrict non-alphanumeric on input event
+        input.addEventListener("input", function (e) {
+            this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
         });
-    }
+    });
+
+    // Add event listener for Product Name input
+    document.getElementById("productName").addEventListener("input", function () {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+
 });
 
 window.addEventListener('beforeunload', function (e) {
     e.preventDefault();
     e.returnValue = 'Are you sure you want to leave? You have unsaved changes.';
 });
+
+
+

@@ -1,3 +1,20 @@
+.os-scrollbar-handle {
+    background-color: rgba(4, 66, 168, 1) !important;
+}
+
+.os-scrollbar {
+    margin: 2px;
+}
+
+.scroll-area {
+    height: 100vh;
+}
+
+.scroll-wrapper {
+    height: 100%;
+    overflow: hidden;
+}
+
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
@@ -35,10 +52,10 @@
 
 .small-card {
     background-color: #f2f2f2;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    height: 300px;
+    height: 298px;
     display: flex;
     flex-direction: column;
     /* stack children vertically */
@@ -121,6 +138,20 @@
     flex: 3;
 }
 
+#recipe-details {
+    max-width: 80%;
+    /* Adjust as necessary */
+    width: 100%;
+}
+
+.left-div {
+    margin-left: 5vh;
+}
+
+.right-div {
+    margin-left: 10vh;
+}
+
 .card {
     background-color: #f2f2f2;
     border-radius: 10px;
@@ -159,6 +190,9 @@
     transition: 0.3s;
     font-size: 16px;
     color: gray;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+
 }
 
 .add-recipe-tab:hover {
@@ -198,7 +232,7 @@
     /* Full width */
     height: 100%;
     /* Full height */
-    overflow: auto;
+    overflow: hidden;
     /* Enable scroll if needed */
     background-color: rgb(0, 0, 0);
     /* Fallback color */
@@ -240,6 +274,7 @@
     flex-direction: column;
 }
 
+.modal input[type="number"],
 .modal input[type="text"] {
     width: 100%;
     padding: 10px 15px;
@@ -340,6 +375,12 @@ select option {
     border: 1px solid #0442a8;
 }
 
+.delete-container:hover .delete-icon,
+.delete-container:hover .delete-text {
+    color: red;
+    transition: color 0.2s;
+}
+
 .delete-icon,
 .delete-text {
     display: inline-block;
@@ -350,12 +391,6 @@ select option {
 .delete-container {
     color: #0442a8;
     cursor: pointer;
-}
-
-.delete-container:hover {
-    color: red;
-    cursor: pointer;
-    transition: color 0.2s;
 }
 
 
@@ -412,11 +447,13 @@ select option {
 
 /* Hover colors for the icons */
 .fa-edit:hover {
+    transition: color 0.2s;
     color: orange;
 }
 
 .fa-trash:hover {
     color: red;
+    transition: color 0.2s;
 }
 
 
@@ -424,18 +461,6 @@ select option {
 .icon-container {
     align-self: center;
 } */
-
-#alertModal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-}
 
 /* The Modal */
 #alertModal {
@@ -470,4 +495,138 @@ select option {
     height: 50%;
     border-radius: 10px;
     /* Could be more or less, depending on screen size */
+}
+
+/* Updating the recipeForm styles to work with productForm */
+#productForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Create two columns for the form */
+#productForm .form-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+#productForm .left-div,
+#productForm .right-div {
+    align-items: center;
+    flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.modal input[type="date"],
+.modal textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s;
+    margin-bottom: 10px;
+}
+
+.modal textarea {
+    resize: vertical;
+    /* Allows user to resize textarea vertically */
+}
+
+.modal input[type="date"]:focus,
+.modal textarea:focus {
+    border-color: #0442a8;
+}
+
+#productModal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 102;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: hidden;
+    /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0);
+    /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+#productModalContent {
+    background-color: #fefefe;
+    margin: 2% auto;
+    /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 70%;
+    height: 85%;
+    border-radius: 10px;
+    /* Could be more or less, depending on screen size */
+}
+
+.product-price-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-container {
+    display: flex;
+    align-items: start;
+}
+
+.price-container select,
+.price-container input[type="number"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color 0.3s;
+    border-radius: 10px;
+}
+
+.price-container input[type="number"]:focus,
+.price-container select:focus {
+    border-color: #0442a8;
+}
+
+.price-container select {
+    width: 100px;
+    margin-right: 10px;
+}
+
+.client-color-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.client-color-container {
+    display: flex;
+    align-items: start;
+}
+
+.client-color-container select,
+.client-color-container input[type="text"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color 0.3s;
+    border-radius: 10px;
+}
+
+.client-color-container input[type="text"]:focus,
+.client-color-container select:focus {
+    border-color: #0442a8;
+}
+
+.client-color-container select {
+    width: 100px;
+    margin-right: 10px;
 }
