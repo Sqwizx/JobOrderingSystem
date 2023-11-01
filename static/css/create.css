@@ -10,11 +10,6 @@
     height: 100vh;
 }
 
-.scroll-wrapper {
-    height: 100%;
-    overflow: hidden;
-}
-
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
@@ -152,6 +147,12 @@
     margin-left: 10vh;
 }
 
+.card .os-content,
+.card .os-viewport {
+    border-radius: 10px;
+}
+
+
 .card {
     background-color: #f2f2f2;
     border-radius: 10px;
@@ -190,9 +191,7 @@
     transition: 0.3s;
     font-size: 16px;
     color: gray;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-
+    width: 146px;
 }
 
 .add-recipe-tab:hover {
@@ -395,7 +394,7 @@ select option {
 
 
 /* FOR PRODUCT LIST */
-#open-product-modal {
+.add-product-button {
     background-color: #f1f1f1;
     border: none;
     outline: none;
@@ -407,7 +406,7 @@ select option {
     width: 100%;
 }
 
-#open-product-modal:hover {
+.add-product-button:hover {
     background-color: rgba(4, 66, 168, 0.2);
 }
 

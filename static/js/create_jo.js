@@ -1,5 +1,6 @@
 var calendarInstance; // Define the calendarInstance outside the function
 var selectedDate;
+var activeDay = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     let activeRecipe = {
@@ -248,10 +249,11 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('The button is not defined or is null.');
         }
 
-        const recipeFormID = `recipeForm-${recipeName}-${index}-${formCounters[index]}`;
+        const recipeFormID = `recipeForm-${recipeName}-${index}`;
         const associatedRecipeForm = document.getElementById(recipeFormID);
         if (associatedRecipeForm) {
             associatedRecipeForm.remove();
+            console.log(document.getElementById(recipeFormID));
             console.log(`Recipe form "${recipeName}" with ID "${recipeFormID}" deleted.`);
         }
 
@@ -263,9 +265,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        checkAndToggleProductModalButton();
         console.log(`Recipe "${recipeName}" deleted.`);
         alertModal.style.display = 'none'; // Close the modal
+
+        updateAddProductButtonDisplay();
 
         // Delete associated products of the recipe
         if (productsByRecipe[deleteParams.index] && productsByRecipe[deleteParams.index][deleteParams.recipeName]) {
@@ -275,7 +278,30 @@ document.addEventListener('DOMContentLoaded', function () {
             // Refresh or update the UI after deletion
             printProductsByRecipe(deleteParams.recipeName, deleteParams.index);
         }
+
+        if (activeDay) {
+            activateFirstRecipeInMainTab(activeDay);
+        } else {
+            console.error("Current day is not set");
+        }
     }
+
+    function updateAddProductButtonDisplay() {
+        var activeTab = document.querySelector('.tabcontent[style*="display: block"]');
+        if (activeTab) {
+            var recipeButtons = activeTab.querySelectorAll('.tablinks-recipes');
+            var addProductButtonId = `add-product-for-${activeRecipe.name}-${activeRecipe.tabIndex}`;
+            var addProductButton = document.getElementById(addProductButtonId);
+
+            // Check the number of recipe buttons
+            if (recipeButtons.length === 0 && addProductButton) {
+                addProductButton.style.display = 'none';
+            } else if (addProductButton) {
+                addProductButton.style.display = 'block';
+            }
+        }
+    }
+
 
     function cancelDeletion() {
         const alertModal = document.getElementById('alertModal');
@@ -311,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         formCounters[tabIdx]++;
 
-        var formId = `recipeForm-${recipeName}-${tabIdx}-${formCounters[tabIdx]}`;
+        var formId = `recipeForm-${recipeName}-${tabIdx}`;
         var uniqueFormId = `${formId}`;
 
         var existingForm = document.getElementById(uniqueFormId);
@@ -367,10 +393,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 var formattedDate = formatDateTime(selectedDate);
                 dateTimePicker.value = formattedDate;
                 savedDateTimeValues[uniqueFormId] = selectedDate;
+                activeRecipe.dateTimePicker = selectedDate; // Updating the activeRecipe object with the new dateTimePicker value
+                updateColorSetField(clientSelect.value, dateTimePicker.selectedDates[0], tabIdx);
             }
         });
 
         dateTimePicker.value = defaultDateTime;
+        activeRecipe.dateTimePicker = dateTimePicker.value;
 
         leftDiv.appendChild(nameLabel);
         leftDiv.appendChild(br.cloneNode());
@@ -388,27 +417,62 @@ document.addEventListener('DOMContentLoaded', function () {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
         currentRecipeDetailsContainer.appendChild(form);
 
-        // Event listener for opening the product modal
-        var openProductModalButton = document.getElementById('open-product-modal');
-        if (openProductModalButton) {
-            openProductModalButton.addEventListener('click', function () {
-                updateColorSetField(clientSelect.value, dateTimePicker.value, tabIdx);
-            });
-        }
-        console.log(`Created new form with id: ${form.id}`);
+        var addProductButton = document.createElement("button");
+        addProductButton.type = "button";
+        addProductButton.textContent = `+ Add Product for ${recipeName}`;
+        addProductButton.classList.add("add-product-button");
+        addProductButton.id = `add-product-for-${recipeName}-${tabIdx}`;
 
-        activeRecipe.dateTimePicker = dateTimePicker;
-        activeRecipe.tabIndex = tabIdx;
+        var productContainer = document.querySelector('.product-container');
+        productContainer.insertAdjacentElement('afterend', addProductButton);
+
+        console.log(`Created new form with id: ${form.id}`);
 
         return form;
     }
 
+    document.querySelector('.right-column').addEventListener('click', function (event) {
+        updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
+
+        // Check if the clicked element has the class 'add-product-button'
+        if (event.target.classList.contains('add-product-button')) {
+            // Your logic when the button is clicked:
+            if (activeRecipe.name && activeRecipe.tabIndex !== null) {
+                var currentRecipeName = activeRecipe.name;
+                var currentTabIndex = activeRecipe.tabIndex;
+                console.log(`Opened product modal for recipe name ${currentRecipeName} at tab index ${currentTabIndex}`);
+
+                // Display the modal
+                var productModal = document.getElementById('productModal');
+                if (productModal) {
+                    productModal.style.display = 'block';
+                }
+
+                // Initialize the flatpickr instances every time the modal is opened:
+                var saleDateInput = document.getElementById('saleDate');
+                var expiryDateInput = document.getElementById('expiryDate');
+
+                var defaultSaleDate = addDaysToDate(currentTabIndex); // Logic to get default sale date
+                var minDateValue = addDaysToDate(currentTabIndex);
+                var defaultExpiryDate = addDaysToDate(currentTabIndex); // Logic to get default expiry date
+
+                initializeFlatpickr(saleDateInput, defaultSaleDate, minDateValue);
+                initializeFlatpickr(expiryDateInput, defaultExpiryDate, minDateValue);
+                updateAddProductButtonDisplay();
+
+            } else {
+                console.log(`Not found`);
+                return;
+            }
+        }
+    });
+
     function updateColorSetField(client, selectedDate, tabIdx) {
-        var selectedDate = selectedDate;
         console.log('Updating color set with:');
         console.log('Client:', client);
         console.log('Selected Date:', selectedDate);
         console.log('Tab Index:', tabIdx);
+
         var dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
         var colorSets = {
             GFS: ["WHITE", "TAN", "ORANGE", "YELLOW", "BLUE", "DARK GREEN", "RED"],
@@ -417,15 +481,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var openCalendarInstanceDate = new Date(selectedDate);
         var selectedDayOfWeek = dayOfWeek[openCalendarInstanceDate.getDay()];
-        var colorSet = colorSets[client];
-        var colorIndex = dayOfWeek.indexOf(selectedDayOfWeek) + tabIdx;
-        var selectedColor = colorSet[colorIndex % colorSet.length];
+
+        // Directly set the colorIndex based on the dayOfWeek
+        var colorIndex = openCalendarInstanceDate.getDay();
+
+        var selectedColor = colorSets[client][colorIndex];
+
+        console.log('Selected Day of Week:', selectedDayOfWeek);
+        console.log('Calculated Color Index:', colorIndex);
+        console.log('Selected Color:', selectedColor);
 
         var colorSetField = document.getElementById('colorSet');
         if (colorSetField) {
             colorSetField.value = selectedColor;
         }
     }
+
 
     // Event listener for the client select element
     var clientSelect = document.getElementById('client');
@@ -434,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var selectedClient = this.value;
 
             if (activeRecipe.dateTimePicker && activeRecipe.tabIndex !== null) {
-                updateColorSetField(selectedClient, activeRecipe.dateTimePicker.value, activeRecipe.tabIndex);
+                updateColorSetField(selectedClient, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
             } else {
                 // Handle cases where the active recipe details are not set
                 console.error("Active recipe details are not set. Cannot update the ColorSetField.");
@@ -506,6 +577,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openTab(event, day) {
         event.stopPropagation();
+
+        // Hide all "Add Product" buttons:
+        var allAddProductButtons = document.querySelectorAll('.add-product-button');
+        allAddProductButtons.forEach(function (btn) {
+            btn.style.display = 'none';
+        });
+
         // Close all tab contents
         var allTabContents = document.querySelectorAll('.tabcontent');
         allTabContents.forEach(function (content) {
@@ -522,6 +600,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById(day).style.display = "block";
         event.currentTarget.classList.add("active");
 
+        activeDay = day;
+
+        // Display the button for the active tab
+        checkAndToggleProductModalButton();
+
         // Now, automatically activate the first recipe within the opened main tab
         activateFirstRecipeInMainTab(day);
     }
@@ -533,6 +616,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (firstRecipeButton) {
                 setActiveTab(firstRecipeButton);
             }
+        }
+    }
+
+    function initializeFlatpickr(inputElement, defaultDate, minDate) {
+        if (inputElement) {
+            flatpickr(inputElement, {
+                enableTime: false,
+                dateFormat: "l, d M Y",
+                defaultDate: defaultDate,
+                minDate: minDate
+            });
         }
     }
 
@@ -563,9 +657,28 @@ document.addEventListener('DOMContentLoaded', function () {
         activeRecipe.name = recipeName;
         activeRecipe.tabIndex = mainTabIndex;  // Use the mainTabIndex instead of recipeButtonIndex
 
-        console.log(`Currently active recipe: ${activeRecipe.name}, Tab Index: ${activeRecipe.tabIndex}`);
+        var selectedDate = addDaysToDate(mainTabIndex);
 
-        printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
+        activeRecipe.dateTimePicker = selectedDate;
+
+        console.log(`Currently active recipe: ${recipeName}, Tab Index: ${mainTabIndex}, Date: ${selectedDate}`);
+
+        updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
+
+        // Hide all "Add Product" buttons:
+        var allAddProductButtons = document.querySelectorAll('.add-product-button');
+        allAddProductButtons.forEach(function (btn) {
+            btn.style.display = 'none';
+        });
+
+        // Display only the button related to the currently active recipe:
+        var activeButtonId = `add-product-for-${recipeName}-${mainTabIndex}`;
+        var activeButton = document.getElementById(activeButtonId);
+        if (activeButton) {
+            activeButton.style.display = 'block';
+        }
+
+        printProductsByRecipe(recipeName, mainTabIndex);
     }
 
     function formatDateTime(date) {
@@ -584,55 +697,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize product array for each tab
     var productsByRecipe = {};
-
-    function getProductionDateMinValue() {
-        if (activeRecipe.dateTimePicker && activeRecipe.dateTimePicker.value) {
-            var dateValue = new Date(activeRecipe.dateTimePicker.value);
-            return formatDateTime(dateValue);
-        }
-        return new Date(); // default to current date
-    }
-
-
-    // Initialize Flatpickr for expiryDate
-    flatpickr('#expiryDate', {
-        enableTime: false,
-        dateFormat: "l, d M Y",
-        minDate: getProductionDateMinValue(),
-        defaultDate: getProductionDateMinValue(),
-        onChange: function (selectedDates) {
-            // Additional logic for when expiryDate changes, if needed
-        }
-    });
-
-    // Initialize Flatpickr for saleDate
-    flatpickr('#saleDate', {
-        enableTime: false,
-        dateFormat: "l, d M Y",
-        minDate: getProductionDateMinValue(),
-        defaultDate: "N/A",
-        onChange: function (selectedDates) {
-            // Additional logic for when saleDate changes, if needed
-        }
-    });
-
-    if (activeRecipe.dateTimePicker) {
-        activeRecipe.dateTimePicker.addEventListener('change', function () {
-            var newDateValue = getProductionDateMinValue();
-
-            var expiryFlatpickr = document.getElementById('expiryDate')._flatpickr;
-            if (expiryFlatpickr) {
-                expiryFlatpickr.set('minDate', newDateValue);
-                expiryFlatpickr.set('defaultDate', newDateValue);
-            }
-
-            var saleFlatpickr = document.getElementById('saleDate')._flatpickr;
-            if (saleFlatpickr) {
-                saleFlatpickr.set('minDate', newDateValue);
-                saleFlatpickr.set('defaultDate', newDateValue);
-            }
-        });
-    }
 
     // Event listener for the product form submission
     if (productForm) {
@@ -793,7 +857,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         }
-
     }
 
     function openEditModal(tabIndex, recipeName, index) {
@@ -852,57 +915,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    var openProductModalButton = document.getElementById('open-product-modal');
-
     function checkAndToggleProductModalButton() {
-        var recipeButtons = document.querySelectorAll('.tablinks-recipes');
-        if (recipeButtons.length == 0) {
-            // If there are no recipe buttons, hide the open-product-modal button
-            openProductModalButton.style.display = 'none';
-            console.log("Button toggled off")
-        } else {
-            // Otherwise, show it
-            openProductModalButton.style.display = 'block';
-            console.log("Button toggled on")
+        // Find the active tab
+        var activeTab = document.querySelector('.tabcontent[style*="display: block"]');
+        if (activeTab) {
+            // Check if there are any recipe buttons within the active tab
+            var recipeButtons = activeTab.querySelectorAll('.tablinks-recipes');
+            // Find the add-product-button within the active tab
+            var addProductButton = activeTab.querySelector('.add-product-button');
+
+            if (recipeButtons.length > 0) {
+                // If there are recipe buttons in the active tab, show the add-product-button
+                if (addProductButton) {
+                    addProductButton.style.display = 'block';
+                }
+            }
         }
     }
 
     // Initially check and set visibility of the button
     checkAndToggleProductModalButton();
-
-    if (openProductModalButton) {
-        openProductModalButton.addEventListener('click', function () {
-            var activeRecipe = document.querySelector('.tablinks-recipes.opened');
-            if (activeRecipe) {
-                var recipeName = activeRecipe.textContent;
-                var tabIndex = activeRecipe.getAttribute('data-tab-index');
-
-                // Update the default and min dates for the Flatpickr instances
-                var newDateValue = getProductionDateMinValue();
-
-                var expiryFlatpickr = document.getElementById('expiryDate')._flatpickr;
-                if (expiryFlatpickr) {
-                    expiryFlatpickr.set('minDate', newDateValue);
-                    expiryFlatpickr.set('defaultDate', newDateValue);
-                }
-
-                var saleFlatpickr = document.getElementById('saleDate')._flatpickr;
-                if (saleFlatpickr) {
-                    saleFlatpickr.set('minDate', newDateValue);
-                    saleFlatpickr.set('defaultDate', newDateValue);
-                }
-
-                // Display the modal
-                var productModal = document.getElementById('productModal');
-                if (productModal) {
-                    productModal.style.display = 'block';
-                }
-                printProductsByRecipe(recipeName, tabIndex);
-            } else {
-                return;
-            }
-        });
-    }
 
     document.getElementById("productPrice").addEventListener("input", function () {
         let val = this.value.replace(/[^0-9]/g, '');
@@ -937,6 +969,3 @@ window.addEventListener('beforeunload', function (e) {
     e.preventDefault();
     e.returnValue = 'Are you sure you want to leave? You have unsaved changes.';
 });
-
-
-
