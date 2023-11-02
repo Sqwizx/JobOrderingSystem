@@ -242,12 +242,12 @@
 /* Modal Content/Box */
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 10% auto;
     /* 15% from the top and centered */
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
-    height: 50%;
+    height: 60%;
     border-radius: 10px;
     /* Could be more or less, depending on screen size */
 }
@@ -321,6 +321,7 @@
     display: flex;
 }
 
+.recipe-form input[type="number"],
 .recipe-form input[type="text"] {
     width: 300px;
     padding: 10px 10px;
@@ -331,6 +332,7 @@
     transition: border-color 0.3s;
 }
 
+.recipe-form input[type="number"]:focus,
 .recipe-form input[type="text"]:focus {
     border-color: #0442a8;
 }
