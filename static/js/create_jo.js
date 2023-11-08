@@ -3,6 +3,9 @@ var selectedDate;
 var activeDay = null;
 
 document.addEventListener('DOMContentLoaded', function () {
+
+    checkFormsAndToggleSaveButton()
+
     let activeRecipe = {
         name: null,
         tabIndex: null,
@@ -135,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const formIndex = Array.from(recipeForms).indexOf(this);
         const enteredRecipeNameElem = document.getElementById(`recipeName-${formIndex}`);
-        const recipeCycleTimeValue = document.getElementById(`recipeCycleTime-${formIndex}`).value;
+        const timeVariable = document.getElementById(`timeVariable-${formIndex}`).value;
         const recipeWeightValue = document.getElementById(`recipeWeight-${formIndex}`).value;
 
         const enteredRecipeName = enteredRecipeNameElem?.value.trim();
@@ -145,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isExistingRecipeForm(enteredRecipeName, formIndex)) {
             handleExistingRecipe(enteredRecipeName, formIndex);
         } else {
-            handleNewRecipe(enteredRecipeName, formIndex, recipeCycleTimeValue, recipeWeightValue);
+            handleNewRecipe(enteredRecipeName, formIndex, timeVariable, recipeWeightValue);
         }
 
         closeModal(formIndex);
@@ -161,11 +164,11 @@ document.addEventListener('DOMContentLoaded', function () {
         setActiveTabByName(recipeName);
     }
 
-    function handleNewRecipe(recipeName, index, recipeCycleTimeValue, recipeWeightValue) {
+    function handleNewRecipe(recipeName, index, timeVariable, recipeWeightValue) {
         const newRecipeButton = createRecipeTabButton(recipeName, index);
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
-        displayRecipeDetails(recipeName, index, recipeCycleTimeValue, recipeWeightValue);
+        displayRecipeDetails(recipeName, index, timeVariable, recipeWeightValue);
         setActiveTabByName(recipeName);
         checkAndToggleProductModalButton();
     }
@@ -260,6 +263,15 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(`Recipe form "${recipeName}" with ID "${recipeFormID}" deleted.`);
         }
 
+        const addProductButtonId = `add-product-for-${recipeName}-${index}`;
+        const addProductButton = document.getElementById(addProductButtonId);
+        if (addProductButton) {
+            addProductButton.remove(); // Remove the 'Add Product' button for the deleted recipe
+            console.log(`Add Product button with ID "${addProductButtonId}" deleted.`);
+        } else {
+            console.error('The Add Product button is not defined or is null.');
+        }
+
         // Delete associated data.
         if (recipeFormObjects[recipeName]) {
             delete recipeFormObjects[recipeName][index];
@@ -270,6 +282,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log(`Recipe "${recipeName}" deleted.`);
         alertModal.style.display = 'none'; // Close the modal
+
+        checkFormsAndToggleSaveButton()
 
         updateAddProductButtonDisplay();
 
@@ -326,12 +340,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return formatDateTime(result);
     }
 
-    function createRecipeForm(recipeName, tabIdx, recipeCycleTimeValue, recipeWeightValue) {
+    function createRecipeForm(recipeName, tabIdx, timeVariable, recipeWeightValue) {
 
-        var recipeCycleTimeValue = recipeCycleTimeValue;
-        var recipeWeightValue = recipeWeightValue;
-
-        console.log(`Recipe Cycle Time and Weight: ${recipeCycleTimeValue} and ${recipeWeightValue}`)
+        console.log(`Recipe Cycle Time and Weight: ${timeVariable} and ${recipeWeightValue}`)
 
         if (!recipeFormObjects[recipeName]) {
             recipeFormObjects[recipeName] = {};
@@ -455,7 +466,18 @@ document.addEventListener('DOMContentLoaded', function () {
         stdTimeInput.id = `stdTime-${uniqueFormId}`;
         stdTimeInput.name = "stdTime";
         stdTimeInput.pattern = "[0-9]{2}:[0-9]{2}:[0-9]{2}"; // Added this line for the pattern
-        stdTimeInput.value = "00:00:00"; // Default value
+        stdTimeInput.placeholder = "00:00:00"; // Default value
+        stdTimeInput.disabled = true;
+
+        // total Tray
+        // var totalTrayLabel = document.createElement("label");
+        // totalTrayLabel.htmlFor = `totalTray-${uniqueFormId}`;
+        // totalTrayLabel.textContent = "Total Tray";
+
+        // var totalTrayInput = document.createElement("input");
+        // totalTrayInput.type = "number";
+        // totalTrayInput.id = `totalTray-${uniqueFormId}`;
+        // totalTrayInput.name = "totalTray";
 
         leftDiv.appendChild(productionRateLabel);
         leftDiv.appendChild(productionRateInput);
@@ -463,11 +485,14 @@ document.addEventListener('DOMContentLoaded', function () {
         leftDiv.appendChild(salesOrderLabel);
         leftDiv.appendChild(salesOrderInput);
         leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(wasteLabel);
-        leftDiv.appendChild(wasteInput);
-        leftDiv.appendChild(br.cloneNode());
         leftDiv.appendChild(stdTimeLabel);
         leftDiv.appendChild(stdTimeInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(wasteLabel);
+        leftDiv.appendChild(wasteInput);
+        // leftDiv.appendChild(br.cloneNode());
+        // leftDiv.appendChild(totalTrayLabel);
+        // leftDiv.appendChild(totalTrayInput);
 
         // Std. Batch Size
         var batchSizeLabel = document.createElement("label");
@@ -500,7 +525,8 @@ document.addEventListener('DOMContentLoaded', function () {
         cycleTimeInput.id = `cycleTime-${uniqueFormId}`;
         cycleTimeInput.name = "cycleTime";
         cycleTimeInput.pattern = "[0-9]{2}:[0-9]{2}:[0-9]{2}"; // Added this line for the pattern
-        cycleTimeInput.value = "00:00:00";  // Default value
+        cycleTimeInput.placeholder = "00:00:00";  // Default value
+        cycleTimeInput.disabled = true;
 
         // Sponge Start Time
         var spongeStartTimeLabel = document.createElement("label");
@@ -516,6 +542,16 @@ document.addEventListener('DOMContentLoaded', function () {
             dateFormat: "d/m/Y H:i"
         });
 
+        // total trolley
+        // var totalTrolleyLabel = document.createElement("label");
+        // totalTrolleyLabel.htmlFor = `totalTrolley-${uniqueFormId}`;
+        // totalTrolleyLabel.textContent = "Total Trolley";
+
+        // var totalTrolleyInput = document.createElement("input");
+        // totalTrolleyInput.type = "number";
+        // totalTrolleyInput.id = `totalTrolley-${uniqueFormId}`;
+        // totalTrolleyInput.name = "totalTrolley";
+
         rightDiv.appendChild(batchSizeLabel);
         rightDiv.appendChild(batchSizeInput);
         rightDiv.appendChild(br.cloneNode());
@@ -527,11 +563,33 @@ document.addEventListener('DOMContentLoaded', function () {
         rightDiv.appendChild(br.cloneNode());
         rightDiv.appendChild(spongeStartTimeLabel);
         rightDiv.appendChild(spongeStartTimePicker);
+        // rightDiv.appendChild(br.cloneNode());
+        // rightDiv.appendChild(totalTrolleyLabel);
+        // rightDiv.appendChild(totalTrolleyInput);
+
+        // Create a hidden input field for the timeVariable
+        var timeVariableInput = document.createElement("input");
+        timeVariableInput.type = "hidden";
+        timeVariableInput.id = `timeVariable-${uniqueFormId}`;
+        timeVariableInput.name = "timeVariable";
+        timeVariableInput.value = timeVariable;
+        form.appendChild(timeVariableInput);
+
+        // Create a hidden input field for the timeVariable
+        var recipeWeightInput = document.createElement("input");
+        recipeWeightInput.type = "hidden";
+        recipeWeightInput.id = `recipeWeight-${uniqueFormId}`;
+        recipeWeightInput.name = "recipeWeight";
+        recipeWeightInput.value = recipeWeightValue;
+        form.appendChild(recipeWeightInput);
+
+        console.log(`Time Variable: ${timeVariableInput.value}`);
+        console.log(`Weight Variable: ${recipeWeightInput.value}`);
 
         form.appendChild(leftDiv);
         form.appendChild(rightDiv);
         // Append the new form to the existing recipes list
-        var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
+        var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
         currentRecipeDetailsContainer.appendChild(form);
 
         var addProductButton = document.createElement("button");
@@ -544,17 +602,129 @@ document.addEventListener('DOMContentLoaded', function () {
         productContainer.insertAdjacentElement('afterend', addProductButton);
 
         // Add input event listeners to the necessary fields
-        salesOrderInput.addEventListener('change', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput));
-        wasteInput.addEventListener('input', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput));
-        batchSizeInput.addEventListener('input', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput));
+        salesOrderInput.addEventListener('change', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
+
+        wasteInput.addEventListener('input', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
+
+        batchSizeInput.addEventListener('input', () => {
+            calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable);
+            calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
+            calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+        });
+
+        // Event listener for productionRateInput to calculate cycle time when it changes
+        productionRateInput.addEventListener('input', () => {
+            calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
+            calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+        });
+
+        // Event listener for when batchesInput changes
+        batchesInput.addEventListener('input', () => {
+            // Ensure that cycleTime has been calculated
+            calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
+            // Now calculate stdTime
+            calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+        });
 
         console.log(`Created new form with id: ${form.id}`);
+
+        let formCreated = false;
+
+        if (!formCreated) {
+            // Set the flag to true as we have created a form
+            formCreated = true;
+            // Show the save button
+            showSaveButton();
+        }
 
         return form;
     }
 
+    function showSaveButton() {
+        // Assuming you have only one save button with the 'save-all-button' class
+        var saveButton = document.querySelector('.save-all-button');
+        if (saveButton) {
+            saveButton.style.display = 'block'; // This will make the button visible
+        }
+    }
+
+    // Call this function when a form is removed, to check if we should hide the save button
+    function checkFormsAndToggleSaveButton() {
+        // Check if there are any forms left
+        var forms = document.querySelectorAll('.recipe-form');
+        if (forms.length === 0) {
+            // If no forms are left, hide the save button and reset the flag
+            hideSaveButton();
+            formCreated = false;
+        }
+    }
+
+    function hideSaveButton() {
+        var saveButton = document.querySelector('.save-all-button');
+        if (saveButton) {
+            saveButton.style.display = 'none'; // This will hide the button
+        }
+    }
+
+    // Helper function to convert time in format hh:mm:ss to seconds
+    function convertToSeconds(hhmmss) {
+        const [hours, minutes, seconds] = hhmmss.split(':').map(Number);
+        return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    // Helper function to convert time in seconds to format hh:mm:ss
+    function convertToHHMMSS(totalSeconds) {
+        let seconds = Math.round(totalSeconds % 60);
+        let minutes = Math.floor((totalSeconds % 3600) / 60);
+        const hours = Math.floor(totalSeconds / 3600);
+
+        // If rounding seconds goes to 60, we need to add a minute
+        if (seconds === 60) {
+            minutes += 1;
+            seconds = 0;
+        }
+
+        // If adding a minute goes to 60, we need to add an hour
+        if (minutes === 60) {
+            hours += 1;
+            minutes = 0;
+        }
+
+        return [
+            hours.toString().padStart(2, '0'),
+            minutes.toString().padStart(2, '0'),
+            seconds.toString().padStart(2, '0'),
+        ].join(':');
+    }
+
+    // Function to calculate and update the stdTime field
+    function calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput) {
+        const batches = parseInt(batchesInput.value, 10) || 0;
+        const cycleTimeSeconds = convertToSeconds(cycleTimeInput.value);
+        const additionalTime = Math.round(batches / 16) * 720; // rounded(batchesInput/16) * 720 seconds
+
+        const totalStdTimeSeconds = batches * cycleTimeSeconds + additionalTime;
+        stdTimeInput.value = convertToHHMMSS(totalStdTimeSeconds);
+    }
+
+    // Assume this function is defined in the context where cycleTimeInput, productionRateInput, and timeVariable are available
+    function calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput) {
+        console.log(`Time Variable: ${timeVariableInput.value} for calculateCycleTime`);
+        const batchSizeValue = parseFloat(batchSizeInput.value) || 0;
+        const productionRateValue = parseFloat(productionRateInput.value) || 0;
+
+        if (batchSizeValue > 0 && productionRateValue > 0) {
+            const timeVariableInSeconds = convertToSeconds(timeVariableInput.value);
+            const cycleTimeInSeconds = (batchSizeValue / productionRateValue) * timeVariableInSeconds;
+            cycleTimeInput.value = convertToHHMMSS(cycleTimeInSeconds);
+        } else {
+            cycleTimeInput.value = "00:00:00"; // Default or error value
+        }
+    }
+
     // Function to calculate batches to produce
-    function calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput) {
+    function calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariableInput) {
+        console.log(`Time Variable: ${timeVariableInput.value}`);
         var salesOrderValue = parseFloat(salesOrderInput.value) || 0;
         var wastePercentage = parseFloat(wasteInput.value) / 100 || 0.02; // default to 2%
         var batchSizeValue = parseFloat(batchSizeInput.value) || 1; // default to 1 to avoid division by zero
@@ -564,6 +734,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Rounding up to the nearest whole number
         batchesInput.value = Math.ceil(batches);
+
+        batchesInput.dispatchEvent(new Event('input'));
     }
 
     function formatDurationInput(inputElem) {
@@ -601,13 +773,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.addEventListener('input', function (e) {
-        if (e.target.matches('[name="stdTime"], [name="cycleTime"]')) {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"]')) {
             formatDurationInput(e.target);
         }
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.target.matches('[name="stdTime"], [name="cycleTime"]') && e.key == 'Backspace' || e.key == 'Delete') {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"]') && e.key == 'Backspace' || e.key == 'Delete') {
             e.preventDefault(); // Prevent default backspace behavior
             e.target.value = '00:00:00'; // Clear the input field
         }
@@ -700,15 +872,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Function to handle the creation and displaying of the recipe form
-    function displayRecipeDetails(recipeName, tabIdx, recipeCycleTimeValue, recipeWeightValue) {
-        var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.second-column');
+    function displayRecipeDetails(recipeName, tabIdx, timeVariable, recipeWeightValue) {
+        var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
         if (recipeFormObjects[recipeName] && recipeFormObjects[recipeName][tabIdx]) {
             var existingForm = recipeFormObjects[recipeName][tabIdx];
             updateFormWithDate(existingForm, tabIdx); // Update the date field in the form
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(existingForm);
         } else {
-            var newRecipeForm = createRecipeForm(recipeName, tabIdx, recipeCycleTimeValue, recipeWeightValue);
+            var newRecipeForm = createRecipeForm(recipeName, tabIdx, timeVariable, recipeWeightValue);
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(newRecipeForm);
             recipeFormObjects[recipeName][tabIdx] = newRecipeForm; // Store the form in the dictionary
@@ -999,8 +1171,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     let wasteInputForBatchCalc = currentRecipeForm.querySelector('[name="waste"]');
                     let batchSizeInputForBatchCalc = currentRecipeForm.querySelector('[name="batchSize"]');
                     let batchesInputForBatchCalc = currentRecipeForm.querySelector('[name="batches"]');
+                    let timeVariable = currentRecipeForm.querySelector('[name="timeVariable"]');
 
-                    calculateBatchesToProduce(salesOrderInputForBatchCalc, wasteInputForBatchCalc, batchSizeInputForBatchCalc, batchesInputForBatchCalc);
+                    calculateBatchesToProduce(salesOrderInputForBatchCalc, wasteInputForBatchCalc, batchSizeInputForBatchCalc, batchesInputForBatchCalc, timeVariable);
                 }
 
                 var productModal = document.getElementById('productModal');

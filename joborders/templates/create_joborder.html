@@ -1,170 +1,169 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/create.css' %}">
-    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
-    <!-- Boxicons CDN Link -->
-    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
-</head>
-<body>
-  <div id="scrollContainer" class="scroll-area">
-    {% include 'sidebar.html' %}
-    <section class="home-section">
-        {% include 'create_header.html' %}
-        <div class="main-content">
-          <button id="change-date"><i class="fa-regular fa-calendar fa-bounce"></i> Change Start Date</button>
-          <div class="container">
-            <div class="left-column">
-              <div class="big-card">
-                <div class="tab">
-                  {% for info in date_info %}
-                      {% if forloop.first %}
-                      <button id="first-tablink"  data-day="{{ info.day }}" class="tablinks active">
-                      <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
-                    </button>
-                      {% else %}
-                          <button data-day="{{ info.day }}" class="tablinks">
-                              <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
-                          </button>
-                      {% endif %}
-                  {% endfor %}
-              </div>
-                {% for info in date_info %}
-                <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
-                    <p id="recipe-list">Recipe List</p>
-                    <div class="content-container">
-                        <div class="card">
-                            <div class="first-column">
-                                <div class="tab-recipes" id="recipe-tabs-{{ forloop.counter0 }}">
+   <head>
+      <meta charset="UTF-8">
+      <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
+      {% load static %}
+      <link rel="stylesheet" href="{% static 'css/create.css' %}">
+      <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+      <!-- Boxicons CDN Link -->
+      <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+   </head>
+   <body>
+      <div id="scrollContainer" class="scroll-area">
+         {% include 'sidebar.html' %}
+         <section class="home-section">
+            {% include 'create_header.html' %}
+            <div class="main-content">
+               <button id="change-date"><i class="fa-regular fa-calendar fa-bounce"></i> Change Start Date</button>
+               <div class="container">
+                  <div class="left-column">
+                     <div class="big-card">
+                        <div class="tab">
+                           {% for info in date_info %}
+                           {% if forloop.first %}
+                           <button id="first-tablink"  data-day="{{ info.day }}" class="tablinks active">
+                           <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
+                           </button>
+                           {% else %}
+                           <button data-day="{{ info.day }}" class="tablinks">
+                           <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
+                           </button>
+                           {% endif %}
+                           {% endfor %}
+                        </div>
+                        {% for info in date_info %}
+                        <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                        <p id="recipe-list">Recipe List</p>
+                        <div class="content-container">
+                           <div class="card">
+                              <div class="first-column">
+                                 <div class="tab-recipes" id="recipe-tabs-{{ forloop.counter0 }}">
                                     <!-- Existing recipe tabs go here -->
-                                </div>
-                                <button class="add-recipe-tab" id="add-recipe-button-{{ forloop.counter0 }}">+ Add Recipe</button>
-                            </div>
+                                 </div>
+                                 <button class="add-recipe-tab" id="add-recipe-button-{{ forloop.counter0 }}">+ Add Recipe</button>
+                              </div>
+                           </div>
+                           <div class="second-column">
+                              <div class="form-container" id="recipe-details">
+                              <!-- Recipe details form will be dynamically added here -->
+                              </div>
+                              <div class="footer" id="footer">
+                                <button class="save-all-button">Save</button>
+                               </div>
+                           </div>
                         </div>
-                        <div class="second-column" id="recipe-details">
-                            <!-- Recipe details form will be dynamically added here -->
+                     </div>
+                     <div id="myModal-{{ forloop.counter0 }}" class="modal">
+                        <!-- Modal content -->
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
+                              <h1>Add Recipe</h1>
+                           </div>
+                           <br>
+                           <form id="recipeForm">
+                              <label for="recipeName">Recipe Name</label>
+                              <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
+                              <label for="weight">Weight</label>
+                              <input type="number" id="recipeWeight-{{ forloop.counter0 }}" name="recipeWeight" min="0" required><br>
+                              <label for="cycleTime">Cycle Time</label>
+                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br><br>
+                              <input type="submit" value="Submit">
+                           </form>
                         </div>
-                    </div>
-                </div>
-                <div id="myModal-{{ forloop.counter0 }}" class="modal">
-                    <!-- Modal content -->
-                    <div class="modal-content">
-                      <div class="modal-header">
-                      <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
-                      <h1>Add Recipe</h1>
-                      </div><br>
-                      <form id="recipeForm">
-                          <label for="recipeName">Recipe Name</label>
-                          <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
-                  
-                          <label for="weight">Weight</label>
-                          <input type="number" id="recipeWeight-{{ forloop.counter0 }}" name="recipeWeight" min="0" required><br>
-                  
-                          <label for="cycleTime">Cycle Time</label>
-                          <input type="text" id="recipeCycleTime-{{ forloop.counter0 }}" name="recipeCycleTime" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" required placeholder="00:00:00"><br><br>
-                  
-                          <input type="submit" value="Submit">
-                      </form>
+                     </div>
+                     {% endfor %}
                   </div>
-                </div>
-              {% endfor %}
-              </div>
+               </div>
+               <div class="right-column">
+                  <div class="small-card">
+                     <p id="product-list">Product List</p>
+                     <div class="product-container">
+                        <!-- This is where product items will be displayed -->
+                     </div>
+                     <!-- <button id="open-product-modal">+ Add Product</button> -->
+                  </div>
+                  <div id="productModal" class="modal">
+                     <div class="modal-content" id="productModalContent">
+                        <div id="modal-header">
+                           <span class="close" id="closeProductModal">&times;</span>
+                           <h1>Add Products</h1>
+                        </div>
+                        <form id="productForm">
+                           <div class="left-div">
+                              <label for="productName">Product Name</label><br>
+                              <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                              <label for="salesOrder">Sales Order</label><br>
+                              <input type="text" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
+                              <div class="product-price-group">
+                                 <label for="productPrice">Product Price</label>
+                                 <div class="price-container">
+                                    <select id="currency" name="currency">
+                                       <option value="SGD">SGD</option>
+                                       <option value="MYR">MYR</option>
+                                    </select>
+                                    <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0">
+                                 </div>
+                              </div><br>
+                              <div class="client-color-group">
+                                 <label for="client">Client/Color</label>
+                                 <div class="client-color-container">
+                                    <select id="client" name="client">
+                                       <option value="GFS">GFS</option>
+                                       <option value="GBKL">GBKL</option>
+                                    </select>
+                                    <input type="text" id="colorSet" name="colorSet" disabled placeholder="Color Set">
+                                 </div>
+                                 <br>
+                                 <label for="expiryDate">Expiry Date</label>
+                                 <input type="text" id="expiryDate" name="expiryDate" required autocomplete="off">
+                              </div><br>
+                           </div>
+                           <div class="right-div">
+                              <label for="saleDate">Sale Date</label><br>
+                              <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
+                              <label for="noOfSlices">No. of Slices</label><br>
+                              <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+                              <label for="thickness">Thickness</label><br>
+                              <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+                              <label for="totalTray">Total Tray</label><br>
+                              <input type="number" id="totalTray" name="totalTray" required autocomplete="off"><br><br>
+                              <label for="totalTrolley">Total Trolley</label><br>
+                              <input type="number" id="totalTrolley" name="totalTrolley" required autocomplete="off"><br><br>
+                              <label for="remarks">Remarks</label><br>
+                              <textarea id="remarks" name="remarks" rows="7" cols="60"></textarea><br><br>
+                              <input type="submit" value="Submit">
+                           </div>
+                        </form>
+                     </div>
+                  </div>
+                  <div id="alertModal" class="modal">
+                     <div class="modal-content">
+                        <span class="close" id="closeAlertModal">&times;</span>
+                        <p>Are you sure you want to delete the recipe <strong id="recipeNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+                        <button id="confirmDelete">Confirm</button>
+                        <button id="cancelDelete">Cancel</button>
+                     </div>
+                  </div>
+                  <div class="small-card">
+                     <!-- Content for small card 2 -->
+                  </div>
+               </div>
             </div>
-            <div class="right-column">
-              <div class="small-card">
-                <p id="product-list">Product List</p>
-                <div class="product-container">
-                  <!-- This is where your product items will be displayed -->
-              </div>
-                <!-- <button id="open-product-modal">+ Add Product</button> -->
-              </div>
-              
-              <div id="productModal" class="modal">
-                <div class="modal-content" id="productModalContent">
-                    <span class="close" id="closeProductModal">&times;</span>
-                    <form id="productForm">
-                      <div class="left-div">
-                        <label for="productName">Product Name</label><br>
-                        <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
-            
-                        <label for="salesOrder">Sales Order</label><br>
-                        <input type="text" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
-            
-                        <div class="product-price-group">
-                          <label for="productPrice">Product Price</label>
-                          <div class="price-container">
-                              <select id="currency" name="currency">
-                                  <option value="SGD">SGD</option>
-                                  <option value="MYR">MYR</option>
-                              </select>
-                              <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0">
-                          </div>
-                      </div>
-                      <br>
-                        <div class="client-color-group">
-                          <label for="client">Client/Color</label>
-                          <div class="client-color-container">
-                              <select id="client" name="client">
-                                  <option value="GFS">GFS</option>
-                                  <option value="GBKL">GBKL</option>
-                              </select>
-                              <input type="text" id="colorSet" name="colorSet" disabled placeholder="Color Set">
-                          </div>
-                          <br>
-
-                          <label for="expiryDate">Expiry Date</label>
-                        <input type="text" id="expiryDate" name="expiryDate" required autocomplete="off"><br><br>
-                      </div>
-                      </div>                    
-  
-                      <div class="right-div">
-                        <label for="saleDate">Sale Date</label><br>
-                        <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
-            
-                        <label for="noOfSlices">No. of Slices</label><br>
-                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
-            
-                        <label for="thickness">Thickness</label><br>
-                        <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
-            
-                        <label for="remarks">Remarks</label><br>
-                        <textarea id="remarks" name="remarks" rows="7" cols="60"></textarea><br><br>
-            
-                        <input type="submit" value="Submit">
-                      </div>
-                    </form>
-                </div>
-            </div>
-            
-            <div id="alertModal" class="modal">
-              <div class="modal-content">
-                  <span class="close" id="closeAlertModal">&times;</span>
-                  <p>Are you sure you want to delete the recipe <strong id="recipeNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
-                  <button id="confirmDelete">Confirm</button>
-                  <button id="cancelDelete">Cancel</button>
-              </div>
-          </div>          
-              <div class="small-card">
-                <!-- Content for small card 2 -->
-              </div>
-            </div>
-          </div>
-        </div>
-    </section>
-    <script src="{% static 'js/scrollbar.js' %}"></script>
-    <script src="{% static 'js/sidebar.js' %}"></script>
-    <script src="{% static 'js/calendar.js' %}"></script>
-    <script src="{% static 'js/create_jo.js' %}"></script>
-  </div>
-</body>
+      </div>
+      </section>
+      <script src="{% static 'js/scrollbar.js' %}"></script>
+      <script src="{% static 'js/sidebar.js' %}"></script>
+      <script src="{% static 'js/calendar.js' %}"></script>
+      <script src="{% static 'js/create_jo.js' %}"></script>
+      </div>
+   </body>
 </html>

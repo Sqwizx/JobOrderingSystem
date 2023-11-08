@@ -14,7 +14,6 @@
     display: grid;
     grid-template-columns: 3fr 1fr;
     gap: 10px;
-    /* height: 80vh; */
 }
 
 .left-column {
@@ -36,12 +35,12 @@
 }
 
 #product-list {
-    color: gray;
+    color: #808080;
     padding: 15px;
 }
 
 #recipe-list {
-    color: gray;
+    color: #808080;
     padding-bottom: 10px;
 }
 
@@ -53,15 +52,14 @@
     height: 298px;
     display: flex;
     flex-direction: column;
-    /* stack children vertically */
 }
 
 .tab {
+    position: relative;
     overflow: hidden;
     background-color: #f1f1f1;
     border-bottom: 1px solid gray;
     width: 100%;
-    /* Set the width to 100% */
     display: flex;
     border-top-right-radius: 10px;
     border-top-left-radius: 10px;
@@ -74,27 +72,26 @@
     outline: none;
     cursor: pointer;
     padding: 14px 30px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 17px;
 }
 
 .tab button:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
 }
 
 .tab button.active {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
     border-left: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1);
-    color: rgba(4, 66, 168, 1)
+    color: rgba(4, 66, 168, 1);
 }
 
 .tab button:first-child.active {
     border-bottom: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
     border-left: none;
-
 }
 
 .tab button:last-child.active {
@@ -102,7 +99,6 @@
     border-left: 1px solid rgba(4, 66, 168, 1);
     border-right: none;
 }
-
 
 .tabcontent {
     display: none;
@@ -117,13 +113,18 @@
 .date-text {
     font-size: 20px;
     font-weight: 400;
-    /* Adjust the font size as needed */
 }
 
 .content-container {
     display: flex;
-    min-height: 60vh;
+    height: 60vh;
 }
+
+.save-all-button:hover {
+    background-color: rgb(5, 57, 139);
+    transition: all 0.3s ease;
+}
+
 
 .first-column {
     flex: 1;
@@ -131,12 +132,54 @@
 
 .second-column {
     flex: 3;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    height: 100%;
+    width: 100%;
 }
 
-#recipe-details {
-    max-width: 80%;
-    /* Adjust as necessary */
+.footer {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1vh 5vh;
+    position: relative;
+    /* Needed for absolute positioning of the pseudo-element */
+}
+
+/* Style for the Save Recipes button */
+.save-all-button {
+    padding: 10px 25px;
+    background-color: rgba(4, 66, 168, 1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100px;
+    align-self: flex-end;
+    display: none;
+    /* Adjust as needed to create space between the form and the button */
+}
+
+/* Style for the Save Recipes button */
+.save-all-button::after {
+    padding: 10px 25px;
+    background-color: rgba(4, 66, 168, 1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100px;
+    align-self: flex-end;
+    /* Adjust as needed to create space between the form and the button */
+}
+
+.form-container {
     width: 100%;
+    overflow: hidden;
 }
 
 .left-div {
@@ -151,7 +194,6 @@
 .card .os-viewport {
     border-radius: 10px;
 }
-
 
 .card {
     background-color: #f2f2f2;
@@ -173,7 +215,7 @@
     border: none;
     cursor: pointer;
     padding: 10px 20px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 16px;
     text-align: left;
     white-space: nowrap;
@@ -188,18 +230,18 @@
     outline: none;
     cursor: pointer;
     padding: 10px 20px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 16px;
-    color: gray;
+    color: #808080;
     width: 146px;
 }
 
 .add-recipe-tab:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
 }
 
 .tablinks-recipes:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
 }
 
 .tablinks-recipes:first-child {
@@ -212,47 +254,34 @@
 }
 
 .tablinks-recipes.opened {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
     color: rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1);
 }
 
-/* The Modal */
 .modal {
     display: none;
-    /* Hidden by default */
     position: fixed;
-    /* Stay in place */
     z-index: 102;
-    /* Sit on top */
     left: 0;
     top: 0;
     width: 100%;
-    /* Full width */
     height: 100%;
-    /* Full height */
     overflow: hidden;
-    /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0);
-    /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Black w/ opacity */
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4);
 }
 
-/* Modal Content/Box */
 .modal-content {
     background-color: #fefefe;
     margin: 10% auto;
-    /* 15% from the top and centered */
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
     height: 60%;
     border-radius: 10px;
-    /* Could be more or less, depending on screen size */
 }
 
-/* Close Button */
 .close {
     color: #aaa;
     float: right;
@@ -262,11 +291,10 @@
 
 .close:hover,
 .close:focus {
-    color: black;
+    color: #000;
     text-decoration: none;
     cursor: pointer;
 }
-
 
 #recipeForm {
     display: flex;
@@ -280,9 +308,7 @@
     border: 2px solid #ccc;
     border-radius: 10px;
     outline: none;
-    transition: border-color 0.3s;
-
-    /* Add spacing between form elements */
+    transition: border-color .3s;
 }
 
 .modal button {
@@ -292,18 +318,16 @@
 .modal input[type="submit"] {
     width: 100%;
     padding: 10px 15px;
-    color: white;
+    color: #fff;
     background-color: #0442a8;
     border-radius: 10px;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease-in-out;
 }
 
-/* Add focus styles for the input fields */
 .modal input[type="text"]:focus {
     border-color: #0442a8;
 }
 
-/* FORM CSS */
 .left-div {
     align-items: center;
     flex: 1;
@@ -329,7 +353,7 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color 0.3s;
+    transition: border-color .3s;
 }
 
 .recipe-form input[type="number"]:focus,
@@ -344,7 +368,7 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color 0.3s;
+    transition: border-color .3s;
 }
 
 .recipe-form input[type="datetime-local"]:focus {
@@ -359,7 +383,6 @@ select {
     border-radius: 10px;
 }
 
-/* Style for the options within the select element */
 select option {
     padding: 6px;
 }
@@ -378,8 +401,8 @@ select option {
 
 .delete-container:hover .delete-icon,
 .delete-container:hover .delete-text {
-    color: red;
-    transition: color 0.2s;
+    color: #f00;
+    transition: color .2s;
 }
 
 .delete-icon,
@@ -394,32 +417,30 @@ select option {
     cursor: pointer;
 }
 
-
-/* FOR PRODUCT LIST */
 .add-product-button {
     background-color: #f1f1f1;
     border: none;
     outline: none;
     cursor: pointer;
     padding: 15px 0px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 16px;
-    color: gray;
+    color: #808080;
     width: 100%;
 }
 
 .add-product-button:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
 }
 
 .product-item:first-child {
     margin-top: 10px;
-    border-top: 1px solid rgba(128, 128, 128, 0.234);
+    border-top: 1px solid rgba(128, 128, 128, .234);
 }
 
 .product-item {
     width: 100%;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.234);
+    border-bottom: 1px solid rgba(128, 128, 128, .234);
     padding: 10px 15px;
     display: flex;
     justify-content: space-between;
@@ -433,11 +454,9 @@ select option {
 .product-info-container {
     display: flex;
     flex-direction: column;
-    /* Add this */
     align-items: start;
 }
 
-/* Initial colors for the icons */
 .fa-edit {
     color: #0442a8;
 }
@@ -446,66 +465,45 @@ select option {
     color: #0442a8;
 }
 
-/* Hover colors for the icons */
 .fa-edit:hover {
-    transition: color 0.2s;
-    color: orange;
+    transition: color .2s;
+    color: #ffa500;
 }
 
 .fa-trash:hover {
-    color: red;
-    transition: color 0.2s;
+    color: #f00;
+    transition: color .2s;
 }
 
-
-/* 
-.icon-container {
-    align-self: center;
-} */
-
-/* The Modal */
 #alertModal {
     display: none;
-    /* Hidden by default */
     position: fixed;
-    /* Stay in place */
     z-index: 102;
-    /* Sit on top */
     left: 0;
     top: 0;
     width: 100%;
-    /* Full width */
     height: 100%;
-    /* Full height */
     overflow: auto;
-    /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0);
-    /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Black w/ opacity */
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4);
 }
 
-/* Modal Content/Box */
 .modal-content #alertModal {
     background-color: #fefefe;
     margin: 15% auto;
-    /* 15% from the top and centered */
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
     height: 50%;
     border-radius: 10px;
-    /* Could be more or less, depending on screen size */
 }
 
-/* Updating the recipeForm styles to work with productForm */
 #productForm {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-/* Create two columns for the form */
 #productForm .form-row {
     display: flex;
     justify-content: space-between;
@@ -515,8 +513,12 @@ select option {
 #productForm .right-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
+    /* padding: 10px; */
     box-sizing: border-box;
+}
+
+#productModalContent .right-div textarea {
+    resize: none;
 }
 
 .modal input[type="date"],
@@ -526,13 +528,12 @@ select option {
     border: 2px solid #ccc;
     border-radius: 10px;
     outline: none;
-    transition: border-color 0.3s;
+    transition: border-color .3s;
     margin-bottom: 10px;
 }
 
 .modal textarea {
     resize: vertical;
-    /* Allows user to resize textarea vertically */
 }
 
 .modal input[type="date"]:focus,
@@ -542,36 +543,27 @@ select option {
 
 #productModal {
     display: none;
-    /* Hidden by default */
     position: fixed;
-    /* Stay in place */
     z-index: 102;
-    /* Sit on top */
     left: 0;
     top: 0;
     width: 100%;
-    /* Full width */
     height: 100%;
-    /* Full height */
     overflow: hidden;
-    /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0);
-    /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Black w/ opacity */
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4);
 }
 
-/* Modal Content/Box */
 #productModalContent {
     background-color: #fefefe;
-    margin: 2% auto;
-    /* 15% from the top and centered */
+    margin: 3% auto;
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 70%;
     height: 85%;
     border-radius: 10px;
-    /* Could be more or less, depending on screen size */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .product-price-group {
@@ -589,7 +581,7 @@ select option {
     border: 2px solid #ccc;
     padding: 10px;
     outline: none;
-    transition: border-color 0.3s;
+    transition: border-color .3s;
     border-radius: 10px;
 }
 
@@ -618,7 +610,7 @@ select option {
     border: 2px solid #ccc;
     padding: 10px;
     outline: none;
-    transition: border-color 0.3s;
+    transition: border-color .3s;
     border-radius: 10px;
 }
 
