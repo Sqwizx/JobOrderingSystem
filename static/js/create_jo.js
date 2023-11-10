@@ -1,6 +1,15 @@
 var calendarInstance; // Define the calendarInstance outside the function
 var selectedDate;
 var activeDay = null;
+const spongeMixing = 6 * 60;
+const fermentation = 3 * 3600;
+const doughMixing = 6 * 60; // 6 minutes
+const floorTime = 6 * 60; // 6 minutes
+const makeUpTime = 15 * 60; // 15 minutes
+const finalProof = 1 * 3600 + 5 * 60; // 1 hour and 5 minutes
+const baking = 22 * 60; // 22 minutes
+const cooling = 1 * 3600 + 15 * 60; // 1 hour and 15 minutes
+const packing = 5 * 60; // 5 minutes
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -11,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tabIndex: null,
         dateTimePicker: null
     };
+    localStorage.setItem('activeRecipe', JSON.stringify(activeRecipe));
 
     // Function to format the date to yyyy-mm-dd format
     function formatDateToYYYYMMDD(dateStr) {
@@ -139,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const formIndex = Array.from(recipeForms).indexOf(this);
         const enteredRecipeNameElem = document.getElementById(`recipeName-${formIndex}`);
         const timeVariable = document.getElementById(`timeVariable-${formIndex}`).value;
-        const recipeWeightValue = document.getElementById(`recipeWeight-${formIndex}`).value;
 
         const enteredRecipeName = enteredRecipeNameElem?.value.trim();
 
@@ -148,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isExistingRecipeForm(enteredRecipeName, formIndex)) {
             handleExistingRecipe(enteredRecipeName, formIndex);
         } else {
-            handleNewRecipe(enteredRecipeName, formIndex, timeVariable, recipeWeightValue);
+            handleNewRecipe(enteredRecipeName, formIndex, timeVariable);
         }
 
         closeModal(formIndex);
@@ -164,11 +173,11 @@ document.addEventListener('DOMContentLoaded', function () {
         setActiveTabByName(recipeName);
     }
 
-    function handleNewRecipe(recipeName, index, timeVariable, recipeWeightValue) {
+    function handleNewRecipe(recipeName, index, timeVariable) {
         const newRecipeButton = createRecipeTabButton(recipeName, index);
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
-        displayRecipeDetails(recipeName, index, timeVariable, recipeWeightValue);
+        displayRecipeDetails(recipeName, index, timeVariable);
         setActiveTabByName(recipeName);
         checkAndToggleProductModalButton();
     }
@@ -330,19 +339,36 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('cancelDelete').addEventListener('click', cancelDeletion);
     document.getElementById('closeAlertModal').addEventListener('click', cancelDeletion);
 
-
-
-
     // Utility and helper functions
     function addDaysToDate(tabIdx) {
         const result = selectedDate ? new Date(selectedDate) : new Date();
         result.setDate(result.getDate() + tabIdx);
+        return formatDate(result);
+    }
+
+    function subtractDaysFromDateTime(tabIdx) {
+        const result = selectedDate ? new Date(selectedDate) : new Date();
+        result.setDate(result.getDate() + tabIdx - 1); // Add tabIdx days and subtract one for 'yesterday'
         return formatDateTime(result);
     }
 
-    function createRecipeForm(recipeName, tabIdx, timeVariable, recipeWeightValue) {
+    function yesterdayMinDate(tabIdx) {
+        // Create a new Date object for the current date/time
+        let minDate = new Date();
 
-        console.log(`Recipe Cycle Time and Weight: ${timeVariable} and ${recipeWeightValue}`)
+        // Subtract tabIdx - 1 days from the date
+        minDate.setDate(minDate.getDate() - (tabIdx + 1));
+
+        // Reset the time to midnight for the start of the day
+        minDate.setHours(0, 0, 0, 0);
+
+        return minDate;
+    }
+
+
+    function createRecipeForm(recipeName, tabIdx, timeVariable) {
+
+        console.log(`Recipe Cycle Time ${timeVariable}`)
 
         if (!recipeFormObjects[recipeName]) {
             recipeFormObjects[recipeName] = {};
@@ -403,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function () {
             defaultDate: savedDateTimeValues[uniqueFormId] || defaultDateTime,
             onChange: function (selectedDates) {
                 var selectedDate = selectedDates[0];
-                var formattedDate = formatDateTime(selectedDate);
+                var formattedDate = formatDate(selectedDate);
                 dateTimePicker.value = formattedDate;
                 savedDateTimeValues[uniqueFormId] = selectedDate;
                 activeRecipe.dateTimePicker = selectedDate; // Updating the activeRecipe object with the new dateTimePicker value
@@ -470,14 +496,25 @@ document.addEventListener('DOMContentLoaded', function () {
         stdTimeInput.disabled = true;
 
         // total Tray
-        // var totalTrayLabel = document.createElement("label");
-        // totalTrayLabel.htmlFor = `totalTray-${uniqueFormId}`;
-        // totalTrayLabel.textContent = "Total Tray";
+        var totalTrayLabel = document.createElement("label");
+        totalTrayLabel.htmlFor = `totalTray-${uniqueFormId}`;
+        totalTrayLabel.textContent = "Total Tray";
 
-        // var totalTrayInput = document.createElement("input");
-        // totalTrayInput.type = "number";
-        // totalTrayInput.id = `totalTray-${uniqueFormId}`;
-        // totalTrayInput.name = "totalTray";
+        var totalTrayInput = document.createElement("input");
+        totalTrayInput.type = "number";
+        totalTrayInput.id = `totalTray-${uniqueFormId}`;
+        totalTrayInput.name = "totalTray";
+        totalTrayInput.disabled = true;
+
+        // suction cup belt
+        var beltNoLabel = document.createElement("label");
+        beltNoLabel.htmlFor = `beltNo-${uniqueFormId}`;
+        beltNoLabel.textContent = "Suction Cup Belt No.";
+
+        var beltNoInput = document.createElement("input");
+        beltNoInput.type = "number";
+        beltNoInput.id = `beltNo-${uniqueFormId}`;
+        beltNoInput.name = "beltNo";
 
         leftDiv.appendChild(productionRateLabel);
         leftDiv.appendChild(productionRateInput);
@@ -490,9 +527,12 @@ document.addEventListener('DOMContentLoaded', function () {
         leftDiv.appendChild(br.cloneNode());
         leftDiv.appendChild(wasteLabel);
         leftDiv.appendChild(wasteInput);
-        // leftDiv.appendChild(br.cloneNode());
-        // leftDiv.appendChild(totalTrayLabel);
-        // leftDiv.appendChild(totalTrayInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(totalTrayLabel);
+        leftDiv.appendChild(totalTrayInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(beltNoLabel);
+        leftDiv.appendChild(beltNoInput);
 
         // Std. Batch Size
         var batchSizeLabel = document.createElement("label");
@@ -528,6 +568,8 @@ document.addEventListener('DOMContentLoaded', function () {
         cycleTimeInput.placeholder = "00:00:00";  // Default value
         cycleTimeInput.disabled = true;
 
+        var yesterdayDefaultDateTime = subtractDaysFromDateTime(tabIdx);
+
         // Sponge Start Time
         var spongeStartTimeLabel = document.createElement("label");
         spongeStartTimeLabel.htmlFor = `spongeStartTime-${uniqueFormId}`;
@@ -537,20 +579,66 @@ document.addEventListener('DOMContentLoaded', function () {
         spongeStartTimePicker.type = "text";
         spongeStartTimePicker.id = `spongeStartTime-${uniqueFormId}`;
         spongeStartTimePicker.name = "spongeStartTime";
+
         flatpickr(spongeStartTimePicker, {
             enableTime: true,
-            dateFormat: "d/m/Y H:i"
+            dateFormat: "d/m/Y H:i",
+            defaultDate: yesterdayDefaultDateTime,
+            minDate: yesterdayMinDate(tabIdx),
+            onValueUpdate: function (selectedDates) {
+                if (selectedDates.length > 0) {
+                    // Format the selected date/time using your custom formatDateTime function
+                    let formattedDate = formatDateTime(selectedDates[0]);
+
+                    // Set the input field to the formatted date immediately, before the user sees it
+                    spongeStartTimePicker.value = formattedDate;
+                }
+            },
+            onChange: function (selectedDates) {
+                if (selectedDates.length > 0) {
+                    let formattedDate = formatDateTime(selectedDates[0]);
+
+                    // Assuming stdTimeInput holds a value in seconds
+                    let stdTimeElement = document.getElementById(`stdTime-${uniqueFormId}`);
+                    let spongeEndTimeElement = document.getElementById(`spongeEndTime-${uniqueFormId}`);
+
+                    // Call calculateSpongeEndTime with the formatted start time
+                    calculateSpongeEndTime(formattedDate, stdTimeElement.value, spongeEndTimeElement);
+                }
+            }
         });
 
-        // total trolley
-        // var totalTrolleyLabel = document.createElement("label");
-        // totalTrolleyLabel.htmlFor = `totalTrolley-${uniqueFormId}`;
-        // totalTrolleyLabel.textContent = "Total Trolley";
+        spongeStartTimePicker.value = yesterdayDefaultDateTime;
 
-        // var totalTrolleyInput = document.createElement("input");
-        // totalTrolleyInput.type = "number";
-        // totalTrolleyInput.id = `totalTrolley-${uniqueFormId}`;
-        // totalTrolleyInput.name = "totalTrolley";
+        //Sponge End Time
+        var spongeEndTime = document.createElement("input");
+        spongeEndTime.type = "hidden";
+        spongeEndTime.id = `spongeEndTime-${uniqueFormId}`;
+        spongeEndTime.name = "spongeEndTime";
+        form.appendChild(spongeEndTime);
+
+        // total trolley
+        var totalTrolleyLabel = document.createElement("label");
+        totalTrolleyLabel.htmlFor = `totalTrolley-${uniqueFormId}`;
+        totalTrolleyLabel.textContent = "Total Trolley";
+
+        var totalTrolleyInput = document.createElement("input");
+        totalTrolleyInput.type = "number";
+        totalTrolleyInput.id = `totalTrolley-${uniqueFormId}`;
+        totalTrolleyInput.name = "totalTrolley";
+        totalTrolleyInput.disabled = true;
+
+        // Std. Cycle Time
+        var gapLabel = document.createElement("label");
+        gapLabel.htmlFor = `gap-${uniqueFormId}`;
+        gapLabel.textContent = "Gap";
+
+        var gapInput = document.createElement("input");
+        gapInput.type = "text"; // Again, consider a plugin or custom parsing.
+        gapInput.id = `gap-${uniqueFormId}`;
+        gapInput.name = "gap";
+        gapInput.pattern = "[0-9]{2}:[0-9]{2}:[0-9]{2}"; // Added this line for the pattern
+        gapInput.placeholder = "00:00:00";  // Default value
 
         rightDiv.appendChild(batchSizeLabel);
         rightDiv.appendChild(batchSizeInput);
@@ -563,9 +651,12 @@ document.addEventListener('DOMContentLoaded', function () {
         rightDiv.appendChild(br.cloneNode());
         rightDiv.appendChild(spongeStartTimeLabel);
         rightDiv.appendChild(spongeStartTimePicker);
-        // rightDiv.appendChild(br.cloneNode());
-        // rightDiv.appendChild(totalTrolleyLabel);
-        // rightDiv.appendChild(totalTrolleyInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(totalTrolleyLabel);
+        rightDiv.appendChild(totalTrolleyInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(gapLabel);
+        rightDiv.appendChild(gapInput);
 
         // Create a hidden input field for the timeVariable
         var timeVariableInput = document.createElement("input");
@@ -575,16 +666,7 @@ document.addEventListener('DOMContentLoaded', function () {
         timeVariableInput.value = timeVariable;
         form.appendChild(timeVariableInput);
 
-        // Create a hidden input field for the timeVariable
-        var recipeWeightInput = document.createElement("input");
-        recipeWeightInput.type = "hidden";
-        recipeWeightInput.id = `recipeWeight-${uniqueFormId}`;
-        recipeWeightInput.name = "recipeWeight";
-        recipeWeightInput.value = recipeWeightValue;
-        form.appendChild(recipeWeightInput);
-
         console.log(`Time Variable: ${timeVariableInput.value}`);
-        console.log(`Weight Variable: ${recipeWeightInput.value}`);
 
         form.appendChild(leftDiv);
         form.appendChild(rightDiv);
@@ -612,18 +694,18 @@ document.addEventListener('DOMContentLoaded', function () {
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
         });
 
-        // Event listener for productionRateInput to calculate cycle time when it changes
         productionRateInput.addEventListener('input', () => {
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
         });
 
-        // Event listener for when batchesInput changes
         batchesInput.addEventListener('input', () => {
-            // Ensure that cycleTime has been calculated
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
-            // Now calculate stdTime
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+        });
+
+        stdTimeInput.addEventListener('input', () => {
+            calculateSpongeEndTime(spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime)
         });
 
         console.log(`Created new form with id: ${form.id}`);
@@ -631,29 +713,49 @@ document.addEventListener('DOMContentLoaded', function () {
         let formCreated = false;
 
         if (!formCreated) {
-            // Set the flag to true as we have created a form
             formCreated = true;
-            // Show the save button
             showSaveButton();
         }
 
         return form;
     }
 
+    function calculateSpongeEndTime(startTime, stdTimeInput, spongeEndTimeElement) {
+
+        console.log(`StdTimeInput: ${stdTimeInput}`)
+
+        let durationSeconds = convertToSeconds(stdTimeInput) + spongeMixing;
+        console.log(`Calculate Sponge End Time - Duration Seconds: ${durationSeconds}`)
+
+        let startTimeWithoutDay = startTime.substring(startTime.indexOf(',') + 2);
+        console.log(`Calculate Sponge End Time - StartTimeWODay: ${startTimeWithoutDay}`)
+
+        let startDate = new Date(startTimeWithoutDay);
+        console.log(`Calculate Sponge End Time - Start Date: ${startDate}`)
+
+        if (isNaN(startDate)) {
+            console.error('Invalid start time. Please check the input.');
+            return;
+        }
+
+        startDate.setSeconds(startDate.getSeconds() + durationSeconds);
+
+        let finalEndTime = formatDateTime(startDate);
+        spongeEndTimeElement.value = finalEndTime;
+        console.log(`Sponge End Time: ${finalEndTime}`);
+    }
+
+
     function showSaveButton() {
-        // Assuming you have only one save button with the 'save-all-button' class
         var saveButton = document.querySelector('.save-all-button');
         if (saveButton) {
-            saveButton.style.display = 'block'; // This will make the button visible
+            saveButton.style.display = 'block';
         }
     }
 
-    // Call this function when a form is removed, to check if we should hide the save button
     function checkFormsAndToggleSaveButton() {
-        // Check if there are any forms left
         var forms = document.querySelectorAll('.recipe-form');
         if (forms.length === 0) {
-            // If no forms are left, hide the save button and reset the flag
             hideSaveButton();
             formCreated = false;
         }
@@ -662,29 +764,25 @@ document.addEventListener('DOMContentLoaded', function () {
     function hideSaveButton() {
         var saveButton = document.querySelector('.save-all-button');
         if (saveButton) {
-            saveButton.style.display = 'none'; // This will hide the button
+            saveButton.style.display = 'none';
         }
     }
 
-    // Helper function to convert time in format hh:mm:ss to seconds
     function convertToSeconds(hhmmss) {
         const [hours, minutes, seconds] = hhmmss.split(':').map(Number);
         return hours * 3600 + minutes * 60 + seconds;
     }
 
-    // Helper function to convert time in seconds to format hh:mm:ss
     function convertToHHMMSS(totalSeconds) {
         let seconds = Math.round(totalSeconds % 60);
         let minutes = Math.floor((totalSeconds % 3600) / 60);
         const hours = Math.floor(totalSeconds / 3600);
 
-        // If rounding seconds goes to 60, we need to add a minute
         if (seconds === 60) {
             minutes += 1;
             seconds = 0;
         }
 
-        // If adding a minute goes to 60, we need to add an hour
         if (minutes === 60) {
             hours += 1;
             minutes = 0;
@@ -697,17 +795,17 @@ document.addEventListener('DOMContentLoaded', function () {
         ].join(':');
     }
 
-    // Function to calculate and update the stdTime field
     function calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput) {
         const batches = parseInt(batchesInput.value, 10) || 0;
         const cycleTimeSeconds = convertToSeconds(cycleTimeInput.value);
-        const additionalTime = Math.round(batches / 16) * 720; // rounded(batchesInput/16) * 720 seconds
+        const additionalTime = Math.round(batches / 16) * 720;
 
         const totalStdTimeSeconds = batches * cycleTimeSeconds + additionalTime;
         stdTimeInput.value = convertToHHMMSS(totalStdTimeSeconds);
+
+        stdTimeInput.dispatchEvent(new Event('input'));
     }
 
-    // Assume this function is defined in the context where cycleTimeInput, productionRateInput, and timeVariable are available
     function calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput) {
         console.log(`Time Variable: ${timeVariableInput.value} for calculateCycleTime`);
         const batchSizeValue = parseFloat(batchSizeInput.value) || 0;
@@ -718,21 +816,19 @@ document.addEventListener('DOMContentLoaded', function () {
             const cycleTimeInSeconds = (batchSizeValue / productionRateValue) * timeVariableInSeconds;
             cycleTimeInput.value = convertToHHMMSS(cycleTimeInSeconds);
         } else {
-            cycleTimeInput.value = "00:00:00"; // Default or error value
+            cycleTimeInput.value = "00:00:00";
         }
     }
 
-    // Function to calculate batches to produce
     function calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariableInput) {
         console.log(`Time Variable: ${timeVariableInput.value}`);
         var salesOrderValue = parseFloat(salesOrderInput.value) || 0;
-        var wastePercentage = parseFloat(wasteInput.value) / 100 || 0.02; // default to 2%
-        var batchSizeValue = parseFloat(batchSizeInput.value) || 1; // default to 1 to avoid division by zero
+        var wastePercentage = parseFloat(wasteInput.value) / 100 || 0.02;
+        var batchSizeValue = parseFloat(batchSizeInput.value) || 1;
 
         var totalOrderWithWaste = salesOrderValue + (salesOrderValue * wastePercentage);
         var batches = totalOrderWithWaste / batchSizeValue;
 
-        // Rounding up to the nearest whole number
         batchesInput.value = Math.ceil(batches);
 
         batchesInput.dispatchEvent(new Event('input'));
@@ -740,46 +836,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function formatDurationInput(inputElem) {
         let val = inputElem.value.replace(/[^0-9]/g, '');
-
-        // Add zeros to the left until the string has 6 characters
         while (val.length < 6) {
             val = val + '0';
         }
 
-        // Split into hours, minutes, and seconds
         const hours = val.slice(-6, -4);
         const minutes = val.slice(-4, -2);
         const seconds = val.slice(-2);
 
-        // Assign back the formatted value
         inputElem.value = `${hours}:${minutes}:${seconds}`;
     }
 
     function formatDurationInput(inputElem) {
         let val = inputElem.value.replace(/[^0-9]/g, '');
 
-        // Add zeros to the left until the string has 6 characters
         while (val.length < 6) {
             val = val + '0';
         }
 
-        // Split into hours, minutes, and seconds
         const hours = val.slice(-6, -4);
         const minutes = val.slice(-4, -2);
         const seconds = val.slice(-2);
 
-        // Assign back the formatted value
         inputElem.value = `${hours}:${minutes}:${seconds}`;
     }
 
     document.addEventListener('input', function (e) {
-        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"]')) {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"], [name="gap"]')) {
             formatDurationInput(e.target);
         }
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"]') && e.key == 'Backspace' || e.key == 'Delete') {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"], [name="gap"]') && e.key == 'Backspace' || e.key == 'Delete') {
             e.preventDefault(); // Prevent default backspace behavior
             e.target.value = '00:00:00'; // Clear the input field
         }
@@ -872,7 +961,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Function to handle the creation and displaying of the recipe form
-    function displayRecipeDetails(recipeName, tabIdx, timeVariable, recipeWeightValue) {
+    function displayRecipeDetails(recipeName, tabIdx, timeVariable) {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
         if (recipeFormObjects[recipeName] && recipeFormObjects[recipeName][tabIdx]) {
             var existingForm = recipeFormObjects[recipeName][tabIdx];
@@ -880,7 +969,7 @@ document.addEventListener('DOMContentLoaded', function () {
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(existingForm);
         } else {
-            var newRecipeForm = createRecipeForm(recipeName, tabIdx, timeVariable, recipeWeightValue);
+            var newRecipeForm = createRecipeForm(recipeName, tabIdx, timeVariable);
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(newRecipeForm);
             recipeFormObjects[recipeName][tabIdx] = newRecipeForm; // Store the form in the dictionary
@@ -901,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 defaultDate: savedDateTimeValues[uniqueFormId] || defaultDateTime,
                 onChange: function (selectedDates) {
                     var selectedDate = selectedDates[0];
-                    var formattedDate = formatDateTime(selectedDate);
+                    var formattedDate = formatDate(selectedDate);
                     dateTimePicker.value = formattedDate;
                     savedDateTimeValues[uniqueFormId] = selectedDate;
 
@@ -918,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var dateValue = dateTimePicker.value;
                 savedDateTimeValues[uniqueFormId] = new Date(dateValue);
                 // Manually update the value of the input field
-                dateTimePicker.value = formatDateTime(savedDateTimeValues[uniqueFormId]);
+                dateTimePicker.value = formatDate(savedDateTimeValues[uniqueFormId]);
             });
         }
     }
@@ -1051,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', function () {
         printProductsByRecipe(recipeName, mainTabIndex);
     }
 
-    function formatDateTime(date) {
+    function formatDate(date) {
         var monthNames = ["Jan", "Feb", "March", "April", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         var dayOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -1062,6 +1151,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return `${selectedDayName}, ${selectedDay} ${selectedMonth} ${selectedYear}`;
     }
+
+    function formatDateTime(date) {
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        const dayOfWeek = dayNames[date.getDay()];
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${dayOfWeek}, ${day} ${month} ${year} ${hours}:${minutes}`;
+    }
+
+
+    // PRODUCTS HERE
 
     function calculateTotalSalesOrderForRecipe(recipeName, tabIndex) {
         let totalSalesOrder = 0;
@@ -1077,7 +1183,29 @@ document.addEventListener('DOMContentLoaded', function () {
         return totalSalesOrder;
     }
 
-    // PRODUCTS HERE
+    function calculateTotalTraysForRecipe(recipeName, tabIndex) {
+        let totalTrays = 0;
+        if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
+            productsByRecipe[tabIndex][recipeName].forEach(product => {
+                if (product.tray) {
+                    totalTrays += parseInt(product.tray, 10);
+                }
+            });
+        }
+        return totalTrays;
+    }
+
+    function calculateTotalTrolleysForRecipe(recipeName, tabIndex) {
+        let totalTrolleys = 0;
+        if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
+            productsByRecipe[tabIndex][recipeName].forEach(product => {
+                if (product.trolley) {
+                    totalTrolleys += parseInt(product.trolley, 10);
+                }
+            });
+        }
+        return totalTrolleys;
+    }
 
     // Initialize product array for each tab
     var productsByRecipe = {};
@@ -1100,6 +1228,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var productPrice = parseFloat(document.getElementById('productPrice').value);
             var thickness = document.getElementById('thickness').value;
             var remarks = document.getElementById('remarks').value;
+            var weight = document.getElementById('weight').value;
+            var tray = document.getElementById('tray').value;
+            var trolley = document.getElementById('trolley').value;
+
+            calculateTrayAndTrolley()
 
             if (activeRecipe.name) {
                 if (!productsByRecipe[activeRecipe.tabIndex]) {
@@ -1122,7 +1255,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         productPrice: productPrice,
                         currency: currency,
                         noOfSlices: noOfSlices,
+                        trolley: trolley,
+                        tray: tray,
                         thickness: thickness,
+                        weight: weight,
                         remarks: remarks
                     };
                     console.log(`Product updated: Recipe - ${activeRecipe.name}, Index - ${productIndexToEdit}`);
@@ -1140,6 +1276,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         currency: currency,
                         noOfSlices: noOfSlices,
                         thickness: thickness,
+                        trolley: trolley,
+                        tray: tray,
+                        weight: weight,
                         remarks: remarks
                     };
                     productsByRecipe[activeRecipe.tabIndex][activeRecipe.name].push(newProduct);
@@ -1155,12 +1294,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Update the total sales order in the recipe form
                 let totalSalesOrderValue = calculateTotalSalesOrderForRecipe(activeRecipe.name, activeRecipe.tabIndex);
 
+                let totalTrays = calculateTotalTraysForRecipe(activeRecipe.name, activeRecipe.tabIndex);
+
+                let totalTrolleys = calculateTotalTrolleysForRecipe(activeRecipe.name, activeRecipe.tabIndex);
+
                 // Get the total sales order input field using the dynamic ID
                 let totalSalesOrderInputFieldId = `salesOrder-recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
                 let totalSalesOrderInputField = document.getElementById(totalSalesOrderInputFieldId);
 
+                let totalTrayInputFieldId = `totalTray-recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
+                let totalTrayField = document.getElementById(totalTrayInputFieldId); // Assuming you have a field with this id
+
+                let totalTrolleyInputFieldId = `totalTrolley-recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
+                let totalTrolleyField = document.getElementById(totalTrolleyInputFieldId); // Assuming you have a field with this id
+
                 if (totalSalesOrderInputField) {
                     totalSalesOrderInputField.value = totalSalesOrderValue;
+                }
+
+                if (totalTrayField) {
+                    totalTrayField.value = totalTrays; // JavaScript converts the number to a string automatically
+                }
+
+                if (totalTrolleyField) {
+                    totalTrolleyField.value = totalTrolleys; // JavaScript converts the number to a string automatically
                 }
 
                 // Call the calculateBatchesToProduce function for the current recipe
@@ -1180,11 +1337,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (productModal) {
                     productModal.style.display = 'none'; // Close the modal
                 }
+
                 productForm.reset(); // Reset the form fields
             } else {
                 console.error('Please select a recipe before adding products.');
             }
         });
+    }
+
+    // Event listener for when the weight selection changes
+    document.getElementById('weight').addEventListener('change', calculateTrayAndTrolley);
+
+    // Event listener for when the sales order changes
+    document.getElementById('salesOrder').addEventListener('input', calculateTrayAndTrolley);
+
+    // Event listener for when the client selection changes
+    document.getElementById('client').addEventListener('change', calculateTrayAndTrolley);
+
+    function calculateTrayAndTrolley() {
+        var weightValue = parseInt(document.getElementById('weight').value, 10);
+        var salesOrderValue = parseFloat(document.getElementById('salesOrder').value);
+        var clientValue = document.getElementById('client').value;
+        var divisor;
+
+        // Check the client value to determine the divisor
+        if (clientValue === 'GFS') {
+            divisor = 12;
+        } else if (clientValue === 'GBKL') {
+            divisor = 15;
+        } else {
+            // Set a default divisor or handle error for unknown client
+            divisor = 12; // Default value or you can set an error state
+        }
+
+        if (!isNaN(weightValue) && !isNaN(salesOrderValue) && weightValue > 0) {
+            var trays = salesOrderValue / weightValue;
+            document.getElementById('tray').value = Math.ceil(trays); // Rounds to two decimal places
+
+            var trolleys = trays / divisor;
+            document.getElementById('trolley').value = Math.ceil(trolleys); // Use Math.ceil to round up to the nearest whole trolley
+        } else {
+            console.error('Invalid weight or sales order value');
+            // Optionally reset the tray and trolley values
+            document.getElementById('tray').value = '';
+            document.getElementById('trolley').value = '';
+        }
     }
 
     // Event listener for closing the product modal
@@ -1279,6 +1476,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var noOfSlices = document.getElementById('noOfSlices');
         var thickness = document.getElementById('thickness');
         var remarks = document.getElementById('remarks');
+        var tray = document.getElementById('tray');
+        var trolley = document.getElementById('trolley');
+        var weight = document.getElementById('weight');
 
         if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
             var product = productsByRecipe[tabIndex][recipeName][index];
@@ -1294,6 +1494,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 noOfSlices.value = product.noOfSlices;
                 thickness.value = product.thickness;
                 remarks.value = product.remarks;
+                tray.value = product.tray;
+                trolley.value = product.trolley;
+                weight.value = product.weight;
                 productIndexToEdit = index;  // Store the index of the product being edited
             }
         }

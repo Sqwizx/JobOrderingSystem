@@ -35,6 +35,14 @@
 }
 
 #product-list {
+    height: 300px;
+}
+
+#tracker {
+    height: 450px;
+}
+
+#small-header {
     color: #808080;
     padding: 15px;
 }
@@ -49,7 +57,6 @@
     margin-bottom: 10px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    height: 298px;
     display: flex;
     flex-direction: column;
 }
@@ -117,7 +124,7 @@
 
 .content-container {
     display: flex;
-    height: 60vh;
+    height: 80vh;
 }
 
 .save-all-button:hover {
@@ -200,7 +207,7 @@
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
     overflow: auto;
-    height: 60vh;
+    height: 80vh;
     overflow-x: hidden;
 }
 
@@ -278,7 +285,7 @@
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
-    height: 60%;
+    height: 48%;
     border-radius: 10px;
 }
 
@@ -622,4 +629,22 @@ select option {
 .client-color-container select {
     width: 100px;
     margin-right: 10px;
+}
+
+.weight-value {
+    display: flex;
+    align-items: start;
+}
+
+.weight-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px;
+}
+
+.weight-value select:focus {
+    border-color: #0442a8;
 }

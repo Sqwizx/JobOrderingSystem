@@ -2,6 +2,7 @@ function initializeCustomScrollbar() {
     const mainScrollContainer = document.getElementById('scrollContainer');
     const modalContent = document.getElementById('productModalContent');
 
+
     OverlayScrollbars(mainScrollContainer, {
         className: "os-theme-dark",
         resize: "none",
@@ -49,5 +50,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // Wait for the tab's content to become visible
             initializeCustomScrollbar();
         });
+    });
+
+    // Initialize OverlayScrollbars for all .recipe-form elements that do not have the custom scrollbar yet
+    document.querySelectorAll('.recipe-form').forEach(function (recipeForm) {
+        if (!recipeForm.classList.contains('os-host')) {
+            OverlayScrollbars(recipeForm, {
+                // ...your custom scrollbar options...
+            });
+        }
     });
 });

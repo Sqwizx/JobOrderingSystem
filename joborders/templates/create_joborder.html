@@ -72,8 +72,6 @@
                            <form id="recipeForm">
                               <label for="recipeName">Recipe Name</label>
                               <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
-                              <label for="weight">Weight</label>
-                              <input type="number" id="recipeWeight-{{ forloop.counter0 }}" name="recipeWeight" min="0" required><br>
                               <label for="cycleTime">Cycle Time</label>
                               <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br><br>
                               <input type="submit" value="Submit">
@@ -84,8 +82,8 @@
                   </div>
                </div>
                <div class="right-column">
-                  <div class="small-card">
-                     <p id="product-list">Product List</p>
+                  <div class="small-card" id="product-list">
+                     <p id="small-header">Product List</p>
                      <div class="product-container">
                         <!-- This is where product items will be displayed -->
                      </div>
@@ -126,6 +124,15 @@
                                  <label for="expiryDate">Expiry Date</label>
                                  <input type="text" id="expiryDate" name="expiryDate" required autocomplete="off">
                               </div><br>
+                              <label for="weight">Weight Value</label><br>
+                              <div class="weight-value">
+                                 <select id="weight" name="weight">
+                                    <option value="20">300g</option>
+                                    <option value="20">400g</option>
+                                    <option value="15">500g</option>
+                                    <option value="12">600g</option>
+                                 </select><br>
+                              </div>
                            </div>
                            <div class="right-div">
                               <label for="saleDate">Sale Date</label><br>
@@ -134,10 +141,10 @@
                               <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
                               <label for="thickness">Thickness</label><br>
                               <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
-                              <label for="totalTray">Total Tray</label><br>
-                              <input type="number" id="totalTray" name="totalTray" required autocomplete="off"><br><br>
-                              <label for="totalTrolley">Total Trolley</label><br>
-                              <input type="number" id="totalTrolley" name="totalTrolley" required autocomplete="off"><br><br>
+                              <label for="tray">Total Tray</label><br>
+                              <input type="number" id="tray" name="tray" required autocomplete="off" disabled><br><br>
+                              <label for="trolley">Total Trolley</label><br>
+                              <input type="number" id="trolley" name="trolley" required autocomplete="off" disabled><br><br>
                               <label for="remarks">Remarks</label><br>
                               <textarea id="remarks" name="remarks" rows="7" cols="60"></textarea><br><br>
                               <input type="submit" value="Submit">
@@ -153,16 +160,17 @@
                         <button id="cancelDelete">Cancel</button>
                      </div>
                   </div>
-                  <div class="small-card">
+                  <div class="small-card" id="tracker">
+                     <p id="small-header">Progress Tracker</p>
                      <!-- Content for small card 2 -->
                   </div>
                </div>
             </div>
       </div>
       </section>
-      <script src="{% static 'js/scrollbar.js' %}"></script>
       <script src="{% static 'js/sidebar.js' %}"></script>
       <script src="{% static 'js/calendar.js' %}"></script>
+      <script src="{% static 'js/scrollbar.js' %}"></script>
       <script src="{% static 'js/create_jo.js' %}"></script>
       </div>
    </body>
