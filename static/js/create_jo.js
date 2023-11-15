@@ -1,15 +1,23 @@
+
+const SPONGE_MIXING = 6 * 60;
+const FERMENTATION = 3 * 3600;
+const DOUGH_MIXING = 6 * 60; // 6 minutes
+const FLOOR_TIME = 6 * 60; // 6 minutes
+const MAKEUP_TIME = 15 * 60; // 15 minutes
+const FINAL_PROOF = 1 * 3600 + 5 * 60; // 1 hour and 5 minutes
+const BAKING = 22 * 60; // 22 minutes
+const COOLING = 1 * 3600 + 15 * 60; // 1 hour and 15 minutes
+const PACKING = 5 * 60; // 5 minutes
+
+
+var firstFormTracker = {};
+var endTimes = {};
+var spongeStartTimePickersByTab = {};
+var recipeFormObjects = {}; // Store recipe form objects
+var savedDateTimeValues = {}; // Stores
 var calendarInstance; // Define the calendarInstance outside the function
 var selectedDate;
 var activeDay = null;
-const spongeMixing = 6 * 60;
-const fermentation = 3 * 3600;
-const doughMixing = 6 * 60; // 6 minutes
-const floorTime = 6 * 60; // 6 minutes
-const makeUpTime = 15 * 60; // 15 minutes
-const finalProof = 1 * 3600 + 5 * 60; // 1 hour and 5 minutes
-const baking = 22 * 60; // 22 minutes
-const cooling = 1 * 3600 + 15 * 60; // 1 hour and 15 minutes
-const packing = 5 * 60; // 5 minutes
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -22,22 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     localStorage.setItem('activeRecipe', JSON.stringify(activeRecipe));
 
-    // Function to format the date to yyyy-mm-dd format
     function formatDateToYYYYMMDD(dateStr) {
-        const date = new Date(dateStr);
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function refreshRecipeForms() {
-        var allRecipeButtons = document.querySelectorAll('.tablinks-recipes');
-        allRecipeButtons.forEach(function (button, index) {
-            var recipeName = button.innerText.replace('Delete', '').trim();
-
-            displayRecipeDetails(recipeName, index);
-        });
+        const DATE = new Date(dateStr);
+        const YEAR = DATE.getFullYear();
+        const MONTH = (DATE.getMonth() + 1).toString().padStart(2, '0');
+        const DAY = DATE.getDate().toString().padStart(2, '0');
+        return `${YEAR}-${MONTH}-${DAY}`;
     }
 
     function openCalendarInstance() {
@@ -63,8 +61,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 if (dateText) {
                                                     dateText.innerHTML = info.date;
                                                     dateButtons[index].innerHTML = `<span class="date-text">${info.date}</span><br>${info.day}`;
-                                                    updateColorSetField(clientSelect.value, selectedDate); // Move this line here
-                                                    refreshRecipeForms();
+                                                    if (activeRecipe && activeRecipe.name) {
+                                                        updateActiveRecipeInfo(activeRecipe.tabIndex, activeRecipe.name, selectedDates[0]);
+                                                    }
                                                 }
                                             }
                                         });
@@ -77,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         };
                         xhr.send();
-                        refreshRecipeForms();
                     }
                 }
             });
@@ -94,16 +92,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function updateActiveRecipeInfo(mainTabIndex, recipeName, selectedDate) {
+        activeRecipe.name = recipeName;
+        activeRecipe.tabIndex = mainTabIndex;
+        activeRecipe.dateTimePicker = selectedDate;
+
+        console.log(`Updating active recipe: ${recipeName}, Tab Index: ${mainTabIndex}, Date: ${selectedDate}`);
+
+        updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
+        displayRecipeDetails(recipeName, mainTabIndex);
+    }
+
     var changeDateButton = document.getElementById('change-date');
     if (changeDateButton) {
         changeDateButton.addEventListener('click', function () {
             openCalendarInstance();
         });
     }
-    // Get the container for recipe tabs
-    var recipeTabsContainer = document.querySelectorAll(".tabcontent");
-    var recipeFormObjects = {}; // Store recipe form objects
-    var savedDateTimeValues = {}; // Stores
 
     // Function to reset data
     function resetData() {
@@ -111,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function () {
         savedDateTimeValues = {};
     }
 
-    // Call the function to reset data on page load
     resetData();
 
     // Event listener for all "Add Recipe" buttons
@@ -217,6 +221,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return button;
     }
 
+    // Get the container for recipe tabs
+    var recipeTabsContainer = document.querySelectorAll(".tabcontent");
+
     function addTabButtonToContainer(button, index) {
         const tabRecipes = recipeTabsContainer[index]?.querySelector('.tab-recipes');
         tabRecipes?.appendChild(button);
@@ -257,6 +264,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function confirmDeletion() {
         const { recipeName, index, button } = deleteParams;
+        const recipeFormID = `recipeForm-${recipeName}-${index}`;
+        const associatedRecipeForm = document.getElementById(recipeFormID);
+        const addProductButtonId = `add-product-for-${recipeName}-${index}`;
+        const addProductButton = document.getElementById(addProductButtonId);
 
         if (button) {
             button.remove();
@@ -264,16 +275,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('The button is not defined or is null.');
         }
 
-        const recipeFormID = `recipeForm-${recipeName}-${index}`;
-        const associatedRecipeForm = document.getElementById(recipeFormID);
         if (associatedRecipeForm) {
             associatedRecipeForm.remove();
             console.log(document.getElementById(recipeFormID));
             console.log(`Recipe form "${recipeName}" with ID "${recipeFormID}" deleted.`);
         }
 
-        const addProductButtonId = `add-product-for-${recipeName}-${index}`;
-        const addProductButton = document.getElementById(addProductButtonId);
         if (addProductButton) {
             addProductButton.remove(); // Remove the 'Add Product' button for the deleted recipe
             console.log(`Add Product button with ID "${addProductButtonId}" deleted.`);
@@ -281,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('The Add Product button is not defined or is null.');
         }
 
-        // Delete associated data.
         if (recipeFormObjects[recipeName]) {
             delete recipeFormObjects[recipeName][index];
             if (Object.keys(recipeFormObjects[recipeName]).length === 0) {
@@ -289,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        console.log(`Recipe "${recipeName}" deleted.`);
         alertModal.style.display = 'none'; // Close the modal
 
         checkFormsAndToggleSaveButton()
@@ -301,7 +306,6 @@ document.addEventListener('DOMContentLoaded', function () {
             delete productsByRecipe[deleteParams.index][deleteParams.recipeName];
             console.log(`Deleted products associated with recipe: ${deleteParams.recipeName}`);
 
-            // Refresh or update the UI after deletion
             printProductsByRecipe(deleteParams.recipeName, deleteParams.index);
         }
 
@@ -310,6 +314,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             console.error("Current day is not set");
         }
+
+        console.log(`Recipe "${recipeName}" deleted.`);
     }
 
     function updateAddProductButtonDisplay() {
@@ -319,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function () {
             var addProductButtonId = `add-product-for-${activeRecipe.name}-${activeRecipe.tabIndex}`;
             var addProductButton = document.getElementById(addProductButtonId);
 
-            // Check the number of recipe buttons
             if (recipeButtons.length === 0 && addProductButton) {
                 addProductButton.style.display = 'none';
             } else if (addProductButton) {
@@ -331,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function cancelDeletion() {
         const alertModal = document.getElementById('alertModal');
-        alertModal.style.display = 'none'; // Just close the modal
+        alertModal.style.display = 'none';
     }
 
     // Attach event listeners
@@ -353,22 +358,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function yesterdayMinDate(tabIdx) {
-        // Create a new Date object for the current date/time
         let minDate = new Date();
 
-        // Subtract tabIdx - 1 days from the date
         minDate.setDate(minDate.getDate() - (tabIdx + 1));
-
-        // Reset the time to midnight for the start of the day
         minDate.setHours(0, 0, 0, 0);
 
         return minDate;
     }
 
-
     function createRecipeForm(recipeName, tabIdx, timeVariable) {
 
-        console.log(`Recipe Cycle Time ${timeVariable}`)
+        var formId = `recipeForm-${recipeName}-${tabIdx}`;
+        var uniqueFormId = `${formId}`;
+        var isFirstForm = !firstFormTracker[tabIdx];
+        let formCreated = false;
+        console.log(`${isFirstForm}`);
 
         if (!recipeFormObjects[recipeName]) {
             recipeFormObjects[recipeName] = {};
@@ -376,9 +380,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!recipeFormObjects[recipeName][tabIdx]) {
             recipeFormObjects[recipeName][tabIdx] = 1;
         }
-
-        var formId = `recipeForm-${recipeName}-${tabIdx}`;
-        var uniqueFormId = `${formId}`;
 
         var existingForm = document.getElementById(uniqueFormId);
         if (existingForm) {
@@ -427,28 +428,10 @@ document.addEventListener('DOMContentLoaded', function () {
             enableTime: false,
             dateFormat: "d/m/Y",
             defaultDate: savedDateTimeValues[uniqueFormId] || defaultDateTime,
-            onChange: function (selectedDates) {
-                var selectedDate = selectedDates[0];
-                var formattedDate = formatDate(selectedDate);
-                dateTimePicker.value = formattedDate;
-                savedDateTimeValues[uniqueFormId] = selectedDate;
-                activeRecipe.dateTimePicker = selectedDate; // Updating the activeRecipe object with the new dateTimePicker value
-                updateColorSetField(clientSelect.value, dateTimePicker.selectedDates[0], tabIdx);
-            }
         });
 
         dateTimePicker.value = defaultDateTime;
         activeRecipe.dateTimePicker = dateTimePicker.value;
-
-        leftDiv.appendChild(nameLabel);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(nameInput);
-        leftDiv.appendChild(br.cloneNode());
-
-        rightDiv.appendChild(datetimeLabel);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(dateTimePicker);
-        rightDiv.appendChild(br.cloneNode());
 
         // Production Rate
         var productionRateLabel = document.createElement("label");
@@ -516,24 +499,6 @@ document.addEventListener('DOMContentLoaded', function () {
         beltNoInput.id = `beltNo-${uniqueFormId}`;
         beltNoInput.name = "beltNo";
 
-        leftDiv.appendChild(productionRateLabel);
-        leftDiv.appendChild(productionRateInput);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(salesOrderLabel);
-        leftDiv.appendChild(salesOrderInput);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(stdTimeLabel);
-        leftDiv.appendChild(stdTimeInput);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(wasteLabel);
-        leftDiv.appendChild(wasteInput);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(totalTrayLabel);
-        leftDiv.appendChild(totalTrayInput);
-        leftDiv.appendChild(br.cloneNode());
-        leftDiv.appendChild(beltNoLabel);
-        leftDiv.appendChild(beltNoInput);
-
         // Std. Batch Size
         var batchSizeLabel = document.createElement("label");
         batchSizeLabel.htmlFor = `batchSize-${uniqueFormId}`;
@@ -580,6 +545,12 @@ document.addEventListener('DOMContentLoaded', function () {
         spongeStartTimePicker.id = `spongeStartTime-${uniqueFormId}`;
         spongeStartTimePicker.name = "spongeStartTime";
 
+        // Add the spongeStartTimePicker to the global tracker
+        if (!spongeStartTimePickersByTab[tabIdx]) {
+            spongeStartTimePickersByTab[tabIdx] = [];
+        }
+        spongeStartTimePickersByTab[tabIdx].push(spongeStartTimePicker);
+
         flatpickr(spongeStartTimePicker, {
             enableTime: true,
             dateFormat: "d/m/Y H:i",
@@ -602,20 +573,36 @@ document.addEventListener('DOMContentLoaded', function () {
                     let stdTimeElement = document.getElementById(`stdTime-${uniqueFormId}`);
                     let spongeEndTimeElement = document.getElementById(`spongeEndTime-${uniqueFormId}`);
 
+                    endTimes[tabIdx] = spongeEndTimeElement.value;
+
                     // Call calculateSpongeEndTime with the formatted start time
-                    calculateSpongeEndTime(formattedDate, stdTimeElement.value, spongeEndTimeElement);
+                    calculateSpongeEndTime(tabIdx, formattedDate, stdTimeElement.value, spongeEndTimeElement);
+
+                    // If this is the first form, update the subsequent sponge start times
+                    if (!firstFormTracker[tabIdx] || firstFormTracker[tabIdx] === true) {
+                        updateSubsequentSpongeStartTimes(tabIdx, new Date(spongeEndTimeElement.value));
+                    }
                 }
             }
         });
 
-        spongeStartTimePicker.value = yesterdayDefaultDateTime;
+        if (isFirstForm) {
+            spongeStartTimePicker.disabled = false;
+
+            spongeStartTimePicker.value = yesterdayDefaultDateTime;
+            firstFormTracker[tabIdx] = true;
+        } else {
+            spongeStartTimePicker.disabled = true;
+
+            spongeStartTimePicker.value = calculateStartTimeBasedOnPreviousEndTime(tabIdx);
+        }
 
         //Sponge End Time
         var spongeEndTime = document.createElement("input");
         spongeEndTime.type = "hidden";
         spongeEndTime.id = `spongeEndTime-${uniqueFormId}`;
         spongeEndTime.name = "spongeEndTime";
-        form.appendChild(spongeEndTime);
+
 
         // total trolley
         var totalTrolleyLabel = document.createElement("label");
@@ -640,36 +627,15 @@ document.addEventListener('DOMContentLoaded', function () {
         gapInput.pattern = "[0-9]{2}:[0-9]{2}:[0-9]{2}"; // Added this line for the pattern
         gapInput.placeholder = "00:00:00";  // Default value
 
-        rightDiv.appendChild(batchSizeLabel);
-        rightDiv.appendChild(batchSizeInput);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(batchesLabel);
-        rightDiv.appendChild(batchesInput);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(cycleTimeLabel);
-        rightDiv.appendChild(cycleTimeInput);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(spongeStartTimeLabel);
-        rightDiv.appendChild(spongeStartTimePicker);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(totalTrolleyLabel);
-        rightDiv.appendChild(totalTrolleyInput);
-        rightDiv.appendChild(br.cloneNode());
-        rightDiv.appendChild(gapLabel);
-        rightDiv.appendChild(gapInput);
-
         // Create a hidden input field for the timeVariable
         var timeVariableInput = document.createElement("input");
         timeVariableInput.type = "hidden";
         timeVariableInput.id = `timeVariable-${uniqueFormId}`;
         timeVariableInput.name = "timeVariable";
         timeVariableInput.value = timeVariable;
-        form.appendChild(timeVariableInput);
 
         console.log(`Time Variable: ${timeVariableInput.value}`);
 
-        form.appendChild(leftDiv);
-        form.appendChild(rightDiv);
         // Append the new form to the existing recipes list
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
         currentRecipeDetailsContainer.appendChild(form);
@@ -705,26 +671,108 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         stdTimeInput.addEventListener('input', () => {
-            calculateSpongeEndTime(spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime)
+            calculateSpongeEndTime(tabIdx, spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime)
+            calculateStartTimeBasedOnPreviousEndTime(tabIdx);
         });
 
         console.log(`Created new form with id: ${form.id}`);
-
-        let formCreated = false;
 
         if (!formCreated) {
             formCreated = true;
             showSaveButton();
         }
 
+        leftDiv.appendChild(nameLabel);
+        leftDiv.appendChild(nameInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(productionRateLabel);
+        leftDiv.appendChild(productionRateInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(salesOrderLabel);
+        leftDiv.appendChild(salesOrderInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(stdTimeLabel);
+        leftDiv.appendChild(stdTimeInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(wasteLabel);
+        leftDiv.appendChild(wasteInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(totalTrayLabel);
+        leftDiv.appendChild(totalTrayInput);
+        leftDiv.appendChild(br.cloneNode());
+        leftDiv.appendChild(beltNoLabel);
+        leftDiv.appendChild(beltNoInput);
+
+        rightDiv.appendChild(datetimeLabel);
+        rightDiv.appendChild(dateTimePicker);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(batchSizeLabel);
+        rightDiv.appendChild(batchSizeInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(batchesLabel);
+        rightDiv.appendChild(batchesInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(cycleTimeLabel);
+        rightDiv.appendChild(cycleTimeInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(spongeStartTimeLabel);
+        rightDiv.appendChild(spongeStartTimePicker);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(totalTrolleyLabel);
+        rightDiv.appendChild(totalTrolleyInput);
+        rightDiv.appendChild(br.cloneNode());
+        rightDiv.appendChild(gapLabel);
+        rightDiv.appendChild(gapInput);
+
+        form.appendChild(leftDiv);
+        form.appendChild(rightDiv);
+        form.appendChild(timeVariableInput);
+        form.appendChild(spongeEndTime);
+
         return form;
     }
 
-    function calculateSpongeEndTime(startTime, stdTimeInput, spongeEndTimeElement) {
+    function updateSubsequentSpongeStartTimes(tabIdx, newEndTime) {
+        const subsequentTimePickers = spongeStartTimePickersByTab[tabIdx] || [];
+        let subsequentStartTime = newEndTime;
+
+        // Iterate over subsequent forms and update their sponge start times
+        subsequentTimePickers.forEach(function (picker, index) {
+            if (index === 0) return; // Skip the first one as it's the trigger for updates
+
+            subsequentStartTime = new Date(subsequentStartTime.getTime() + 45 * 60000); // Add 45 minutes for each subsequent recipe
+            picker.value = formatDateTime(subsequentStartTime); // Assuming formatDateTime is your date formatting function
+        });
+    }
+
+    function calculateStartTimeBasedOnPreviousEndTime(tabIdx) {
+
+        var previousEndTimeString = endTimes[tabIdx];
+        // Parse the previous end time string to a Date object
+        var previousEndTime = new Date(previousEndTimeString);
+
+        console.log(`Value of previous End Time String is: ${previousEndTimeString}`)
+
+        console.log(`Value of previous End Time is: ${previousEndTime}`)
+
+        // Check if previousEndTime is valid Date object
+        if (isNaN(previousEndTime.getTime())) {
+            console.error('Invalid date provided for previousEndTime:', previousEndTimeString);
+            return null;
+        }
+
+        // Create a new Date object for the new start time
+        var newStartTime = new Date(previousEndTime.getTime());
+        newStartTime.setMinutes(newStartTime.getMinutes() + 45); // Add 45 minutes to the previous end time
+
+        return formatDateTime(newStartTime);
+    }
+
+    function calculateSpongeEndTime(tabIdx, startTime, stdTimeInput, spongeEndTimeElement) {
 
         console.log(`StdTimeInput: ${stdTimeInput}`)
 
-        let durationSeconds = convertToSeconds(stdTimeInput) + spongeMixing;
+        let durationSeconds = convertToSeconds(stdTimeInput) + SPONGE_MIXING;
         console.log(`Calculate Sponge End Time - Duration Seconds: ${durationSeconds}`)
 
         let startTimeWithoutDay = startTime.substring(startTime.indexOf(',') + 2);
@@ -742,6 +790,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let finalEndTime = formatDateTime(startDate);
         spongeEndTimeElement.value = finalEndTime;
+        endTimes[tabIdx] = spongeEndTimeElement.value;
         console.log(`Sponge End Time: ${finalEndTime}`);
     }
 
@@ -874,9 +923,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-
-
-
     document.querySelector('.right-column').addEventListener('click', function (event) {
         updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
 
@@ -913,11 +959,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    function updateColorSetField(client, selectedDate, tabIdx) {
-        console.log('Updating color set with:');
-        console.log('Client:', client);
-        console.log('Selected Date:', selectedDate);
-        console.log('Tab Index:', tabIdx);
+    function updateColorSetField(client, selectedDate) {
 
         var dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
         var colorSets = {
@@ -942,7 +984,6 @@ document.addEventListener('DOMContentLoaded', function () {
             colorSetField.value = selectedColor;
         }
     }
-
 
     // Event listener for the client select element
     var clientSelect = document.getElementById('client');
@@ -1091,48 +1132,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function setActiveTab(clickedButton) {
-        // Get the parent tab container
         var tabContainer = clickedButton.closest('.tabcontent');
-
-        // Get all main tab containers in the document
         var allMainTabs = document.querySelectorAll('.tabcontent');
-
-        // Get the index of the current tab container among all main tab containers
         var mainTabIndex = Array.from(allMainTabs).indexOf(tabContainer);
-
-        // Get all tab buttons within the same tab container
         var allRecipeButtons = tabContainer.querySelectorAll('.tablinks-recipes');
+        var recipeName = clickedButton.innerText.replace('Delete', '').trim();
+        var selectedDate = addDaysToDate(mainTabIndex);
+        var activeButtonId = `add-product-for-${recipeName}-${mainTabIndex}`;
+        var activeButton = document.getElementById(activeButtonId);
+        var allAddProductButtons = document.querySelectorAll('.add-product-button');
 
-        // Remove 'opened' class from all buttons within the same tab container
+        activeRecipe.name = recipeName;
+        activeRecipe.tabIndex = mainTabIndex;
+        activeRecipe.dateTimePicker = selectedDate;
+
         allRecipeButtons.forEach(function (button) {
             button.classList.remove('opened');
         });
 
-        // Add 'opened' class to the clicked button
         clickedButton.classList.add('opened');
-
-        var recipeName = clickedButton.innerText.replace('Delete', '').trim();
-
-        activeRecipe.name = recipeName;
-        activeRecipe.tabIndex = mainTabIndex;  // Use the mainTabIndex instead of recipeButtonIndex
-
-        var selectedDate = addDaysToDate(mainTabIndex);
-
-        activeRecipe.dateTimePicker = selectedDate;
 
         console.log(`Currently active recipe: ${recipeName}, Tab Index: ${mainTabIndex}, Date: ${selectedDate}`);
 
         updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
 
-        // Hide all "Add Product" buttons:
-        var allAddProductButtons = document.querySelectorAll('.add-product-button');
         allAddProductButtons.forEach(function (btn) {
             btn.style.display = 'none';
         });
 
-        // Display only the button related to the currently active recipe:
-        var activeButtonId = `add-product-for-${recipeName}-${mainTabIndex}`;
-        var activeButton = document.getElementById(activeButtonId);
         if (activeButton) {
             activeButton.style.display = 'block';
         }
@@ -1143,7 +1170,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatDate(date) {
         var monthNames = ["Jan", "Feb", "March", "April", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         var dayOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
         var selectedYear = date.getFullYear();
         var selectedMonth = monthNames[date.getMonth()];
         var selectedDay = date.getDate().toString().padStart(2, '0');
@@ -1155,7 +1181,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatDateTime(date) {
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
         const dayOfWeek = dayNames[date.getDay()];
         const day = String(date.getDate()).padStart(2, '0');
         const month = monthNames[date.getMonth()];
