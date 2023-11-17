@@ -122,7 +122,7 @@
                                  </div>
                                  <br>
                                  <label for="expiryDate">Expiry Date</label>
-                                 <input type="text" id="expiryDate" name="expiryDate" required autocomplete="off">
+                                 <input type="text" id="expiryDate" name="expiryDate" placeholder="N/A" required autocomplete="off">
                               </div><br>
                               <label for="weight">Weight Value</label><br>
                               <div class="weight-value">
@@ -162,8 +162,12 @@
                   </div>
                   <div class="small-card" id="tracker">
                      <p id="small-header">Progress Tracker</p>
-                     <!-- Content for small card 2 -->
-                  </div>
+                     <p id="sponge-start-time">Sponge Start Time: <span id="spongeStartTimeTracker">--:--</span></p>
+                     <p id="sponge-end-time">Sponge End Time: <span id="spongeEndTimeTracker">--:--</span></p>
+                     <p id="dough-start-time">Dough Start Time: <span id="doughStartTimeTracker">--:--</span></p>
+                     <p id="dough-end-time">Dough End Time: <span id="doughEndTimeTracker">--:--</span></p>
+                     <p id="first-loaf-packed">First Loaf Packed: <span id="firstLoafPackedTracker">--:--</span></p>
+                 </div>                 
                </div>
             </div>
       </div>
