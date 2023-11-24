@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import JobOrder,  Activity, Recipe, Revision, Product 
+from .models import JobOrder, Recipe, Revision, Product, Activity
 
 admin.site.register(JobOrder)
 admin.site.register(Activity)

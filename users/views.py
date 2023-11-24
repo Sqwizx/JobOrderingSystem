@@ -1,6 +1,8 @@
+import pytz
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-
+from django.utils import timezone
+from joborders.models import JobOrder, Recipe
 from django.contrib.auth.decorators import login_required
 
 def login_view(request):
@@ -18,8 +20,76 @@ def login_view(request):
 
 @login_required
 def dashboard_view(request):
-    # Add authentication check here if necessary
-    return render(request, 'dashboard.html')
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+    job_orders_list = []
+
+    job_orders = JobOrder.objects.all().prefetch_related('recipes__activity_recipe')
+
+    for job_order in job_orders:
+        # Initialize the variables to store the earliest upcoming or ongoing activity
+        earliest_activity = {
+            'recipeName': None,
+            'name': 'Not Started',
+            'time': None
+        }
+
+        for recipe in job_order.recipes.all():
+            activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
+
+            for activity in activities:
+                # Check if the job order hasn't started yet
+                if now < activity.spongeStart:
+                    if earliest_activity['time'] is None or activity.spongeStart < earliest_activity['time']:
+                        earliest_activity['recipeName'] = recipe.recipeName
+                        earliest_activity['name'] = 'Not Started'
+                        earliest_activity['time'] = activity.spongeStart
+
+                # Check for the sponge activity
+                if activity.spongeStart <= now <= activity.spongeEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Sponge'
+                    earliest_activity['time'] = activity.spongeEnd
+                    break  # Stop checking as we found an ongoing activity
+
+                # Check for the dough activity
+                if activity.doughStart <= now <= activity.doughEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Dough'
+                    earliest_activity['time'] = activity.doughEnd
+                    break  # Stop checking as we found an ongoing activity
+
+                # Check for the packing activity
+                if activity.firstLoafPacked <= now < activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Packing'
+                    earliest_activity['time'] = activity.cutOffTime
+                    break  # Stop checking as we found an ongoing activity
+
+                # Check if the job order has finished
+                if now >= activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Finished'
+                    earliest_activity['time'] = None
+
+        # Construct the job order data with the current activity information
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+            'current_recipe_name': earliest_activity['recipeName'],
+            'current_activity_name': earliest_activity['name'],
+            'current_activity_time': earliest_activity['time'],
+        }
+
+        # Append the job data to the job orders list
+        job_orders_list.append(job_data)
+
+    context = {
+        'job_orders': job_orders_list
+    }
+
+    return render(request, 'dashboard.html', context)
 
 def logout_view(request):
     logout(request)  # This logs the user out

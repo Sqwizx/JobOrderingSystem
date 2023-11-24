@@ -15,8 +15,10 @@
       <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
    </head>
    <body>
+      {% csrf_token %}
       <div id="scrollContainer" class="scroll-area">
          {% include 'sidebar.html' %}
          <section class="home-section">
@@ -100,7 +102,7 @@
                               <label for="productName">Product Name</label><br>
                               <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
                               <label for="salesOrder">Sales Order</label><br>
-                              <input type="text" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
+                              <input type="number" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
                               <div class="product-price-group">
                                  <label for="productPrice">Product Price</label>
                                  <div class="price-container">
@@ -162,13 +164,35 @@
                   </div>
                   <div class="small-card" id="tracker">
                      <p id="small-header">Progress Tracker</p>
-                     <p id="sponge-start-time">Sponge Start Time: <span id="spongeStartTimeTracker">--:--</span></p>
-                     <p id="sponge-end-time">Sponge End Time: <span id="spongeEndTimeTracker">--:--</span></p>
-                     <p id="dough-start-time">Dough Start Time: <span id="doughStartTimeTracker">--:--</span></p>
-                     <p id="dough-end-time">Dough End Time: <span id="doughEndTimeTracker">--:--</span></p>
-                     <p id="first-loaf-packed">First Loaf Packed: <span id="firstLoafPackedTracker">--:--</span></p>
-                 </div>                 
-               </div>
+                     <div id="progressContainer">
+                         <div class="progressStep" id="spongeStartProgress">
+                             <span class="progressLabel">Sponge Start</span>
+                             <span class="timeValue" id="spongeStartTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="spongeEndProgress">
+                             <span class="progressLabel">Sponge End</span>
+                             <span class="timeValue" id="spongeEndTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="doughStartProgress">
+                             <span class="progressLabel">Dough Start</span>
+                             <span class="timeValue" id="doughStartTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="doughEndProgress">
+                             <span class="progressLabel">Dough End</span>
+                             <span class="timeValue" id="doughEndTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="firstLoafPackedProgress">
+                             <span class="progressLabel">First Loaf Packed</span>
+                             <span class="timeValue" id="firstLoafPackedTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="cutOffProgress">
+                           <span class="progressLabel">Cut Off Time</span>
+                           <span class="timeValue" id="cutOffTimeTracker">--:--</span>
+                       </div>
+                         <div id="progressLine"></div>
+                         <div id="progressLineOverlay"></div>
+                     </div>
+                 </div>
             </div>
       </div>
       </section>

@@ -16,6 +16,10 @@ var savedDateTimeValues = {}; // Stores
 var calendarInstance; // Define the calendarInstance outside the function
 var selectedDate;
 var activeDay = null;
+var formTracker = [];
+
+let allFormsData = {};
+let isSaving = false;
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -182,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         displayRecipeDetails(recipeName, index, timeVariable);
         setActiveTabByName(recipeName);
         checkAndToggleProductModalButton();
+        checkAndToggleTrackerVisibility();
     }
 
     function createRecipeTabButton(recipeName, index) {
@@ -286,6 +291,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('The Add Product button is not defined or is null.');
         }
 
+        const recipeFormIdentifier = `${recipeName}-${index}`;
+        if (allFormsData[recipeFormIdentifier]) {
+            delete allFormsData[recipeFormIdentifier];
+            console.log(`Data for deleted form "${recipeFormIdentifier}" removed from allFormsData.`);
+        }
+
         if (recipeFormObjects[recipeName]) {
             delete recipeFormObjects[recipeName][index];
             if (Object.keys(recipeFormObjects[recipeName]).length === 0) {
@@ -293,9 +304,29 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // Delete the end time and start time picker associated with this form
+        if (endTimes[index]) {
+            delete endTimes[index];
+        }
+
+        // Similarly, remove the sponge start time picker reference
+        if (spongeStartTimePickersByTab[index]) {
+            // Filter out the picker that belongs to the deleted form
+            spongeStartTimePickersByTab[index] = spongeStartTimePickersByTab[index].filter(picker => picker.id !== `spongeStartTime-${recipeFormID}`);
+            // If there are no more pickers in this tab, delete the tab entry as well
+            if (spongeStartTimePickersByTab[index].length === 0) {
+                delete spongeStartTimePickersByTab[index];
+            }
+        }
+
+        // Remove the form from the tracker
+        formTracker = formTracker.filter(f => f.id !== recipeFormID);
+
         alertModal.style.display = 'none'; // Close the modal
 
         checkFormsAndToggleSaveButton()
+
+        checkAndToggleTrackerVisibility();
 
         updateAddProductButtonDisplay();
 
@@ -312,6 +343,14 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             console.error("Current day is not set");
         }
+
+        // Remove the form from the tracker
+        formTracker = formTracker.filter(f => f.id !== recipeFormID);
+
+        // Recalculate times and update the first form tracker
+        recalculateSpongeTimes();
+        findAndEnableFirstForm();
+
 
         console.log(`Recipe "${recipeName}" deleted.`);
     }
@@ -341,6 +380,51 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmDelete').addEventListener('click', confirmDeletion);
     document.getElementById('cancelDelete').addEventListener('click', cancelDeletion);
     document.getElementById('closeAlertModal').addEventListener('click', cancelDeletion);
+
+    function recalculateSpongeTimes() {
+        formTracker.forEach((form, index) => {
+            const tabIdx = form.tabIdx;
+            const uniqueFormId = form.id.split('-').pop();
+
+            // Find the sponge start time and end time inputs
+            const spongeStartTimePicker = form.domElement.querySelector('[name="spongeStartTime"]');
+            const spongeEndTimeElement = form.domElement.querySelector('[name="spongeEndTime"]');
+            const stdTimeInputValue = form.domElement.querySelector('[name="stdTime"]').value;
+
+            // If the form is the first one, enable its sponge start time picker
+            if (index === 0) {
+                spongeStartTimePicker.disabled = false;
+                firstFormTracker[tabIdx] = true;
+                spongeStartTimePicker.value = subtractDaysFromDateTime(tabIdx);
+            }
+
+            // After updating the spongeEndTime, call updateSpongeStartTimes for subsequent forms
+            if (index === 0) {
+                // Only call this if there's more than one form, to update subsequent times
+                if (formTracker.length > 1) {
+                    updateSpongeStartTimes(tabIdx, spongeEndTimeElement.value);
+                }
+            }
+
+            calculateSpongeEndTime(tabIdx, spongeStartTimePicker.value, stdTimeInputValue, spongeEndTimeElement, uniqueFormId);
+
+            endTimes[tabIdx] = spongeEndTimeElement.value;
+        });
+    }
+
+
+    function findAndEnableFirstForm() {
+        for (const tabIdx in spongeStartTimePickersByTab) {
+            if (spongeStartTimePickersByTab[tabIdx].length > 0) {
+                // Enable the sponge start time picker for the first form in this tab
+                const firstPicker = spongeStartTimePickersByTab[tabIdx][0];
+                firstPicker.disabled = false;
+                // Set this form as the first form for this tab
+                firstFormTracker[tabIdx] = true;
+                break; // Assuming you only need to enable the first form's picker across all tabs
+            }
+        }
+    }
 
     // Utility and helper functions
     function addDaysToDate(tabIdx) {
@@ -445,13 +529,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
     function createRecipeForm(recipeName, tabIdx, timeVariable) {
         var formId = `recipeForm-${recipeName}-${tabIdx}`;
         var uniqueFormId = `${formId}`;
         var yesterdayDefaultDateTime = subtractDaysFromDateTime(tabIdx);
         var defaultDateTime = addDaysToDate(tabIdx);
         var isFirstForm = !firstFormTracker[tabIdx];
-        let formCreated = false;
 
         var form = checkForExistingForm(recipeName, tabIdx);
         if (form) {
@@ -540,8 +624,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     // If this is the first form, update the subsequent sponge start times
                     if (!firstFormTracker[tabIdx] || firstFormTracker[tabIdx] === true) {
                         updateSpongeStartTimes(tabIdx, new Date(spongeEndTimeElement.value));
-                        updateTrackerDisplay(uniqueFormId);
                     }
+                    calculateDoughStartTime(spongeStartTimePicker.value, doughStartTime);
+                    calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
+                    calculateFirstLoafPacked(doughStartTime.value, firstLoafPacked);
+                    calculateCutOffTime(firstLoafPacked.value, stdTimeInput.value, cutOffTime);
+                    updateTrackerDisplay(uniqueFormId);
                 }
             }
         });
@@ -551,17 +639,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var totalTrolleyInput = createInputElement("number", `totalTrolley-${uniqueFormId}`, "totalTrolley", null, true);
         var totalTrolleyLabel = createLabelElement(totalTrolleyInput.id, "Total Trolley");
 
-        var gapInput = createInputElement("text", `gap-${uniqueFormId}`, "gap", null, false, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
-        var gapLabel = createLabelElement(gapInput.id, "Gap");
+        // var gapInput = createInputElement("text", `gap-${uniqueFormId}`, "gap", null, false, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
+        // var gapLabel = createLabelElement(gapInput.id, "Gap");
 
         var timeVariableInput = createInputElement("hidden", `timeVariable-${uniqueFormId}`, "timeVariable", timeVariable);
         var spongeEndTime = createInputElement("hidden", `spongeEndTime-${uniqueFormId}`, "spongeEndTime");
         var doughStartTime = createInputElement("hidden", `doughStartTime-${uniqueFormId}`, "doughStartTime");
         var doughEndTime = createInputElement("hidden", `doughEndTime-${uniqueFormId}`, "doughEndTime");
         var firstLoafPacked = createInputElement("hidden", `firstLoafPacked-${uniqueFormId}`, "firstLoafPacked");
+        var cutOffTime = createInputElement("hidden", `cutOffTime-${uniqueFormId}`, "cutOffTime");
 
         appendElements(leftDiv, [nameLabel, nameInput, productionRateLabel, productionRateInput, salesOrderLabel, salesOrderInput, stdTimeLabel, stdTimeInput, wasteLabel, wasteInput, totalTrayLabel, totalTrayInput, beltNoLabel, beltNoInput]);
-        appendElements(rightDiv, [datetimeLabel, dateTimePicker, batchSizeLabel, batchSizeInput, batchesLabel, batchesInput, cycleTimeLabel, cycleTimeInput, spongeStartTimeLabel, spongeStartTimePicker, totalTrolleyLabel, totalTrolleyInput, gapLabel, gapInput]);
+        appendElements(rightDiv, [datetimeLabel, dateTimePicker, batchSizeLabel, batchSizeInput, batchesLabel, batchesInput, cycleTimeLabel, cycleTimeInput, spongeStartTimeLabel, spongeStartTimePicker, totalTrolleyLabel, totalTrolleyInput]);
 
         form.appendChild(leftDiv);
         form.appendChild(rightDiv);
@@ -570,6 +659,7 @@ document.addEventListener('DOMContentLoaded', function () {
         form.appendChild(doughStartTime);
         form.appendChild(doughEndTime);
         form.appendChild(firstLoafPacked);
+        form.appendChild(cutOffTime);
 
         // Set up input event listeners
         addInputEventListener(salesOrderInput, 'change', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
@@ -586,11 +676,14 @@ document.addEventListener('DOMContentLoaded', function () {
         addInputEventListener(batchesInput, 'input', () => {
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+            updateTrackerDisplay(uniqueFormId);
         });
         addInputEventListener(stdTimeInput, 'input', () => {
             calculateSpongeEndTime(tabIdx, spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime, uniqueFormId);
             calculateSpongeStartTime(tabIdx);
-            calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime, uniqueFormId)
+            calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
+            calculateCutOffTime(firstLoafPacked.value, stdTimeInput.value, cutOffTime);
+            updateTrackerDisplay(uniqueFormId);
         });
 
         addProductButton(form, recipeName, tabIdx);
@@ -612,23 +705,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         calculateDoughStartTime(spongeStartTimePicker.value, doughStartTime);
-        calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
         calculateFirstLoafPacked(doughStartTime.value, firstLoafPacked);
+        updateTrackerDisplay(uniqueFormId);
 
-        // FORM CREATION VALIDATION
-        if (!formCreated) {
-            formCreated = true;
-            showSaveButton();
-        }
+        // Set the unique identifier for the form
+        form.dataset.recipeName = recipeName;
+        form.dataset.tabIdx = tabIdx;
+
+        // Attach change listeners to inputs
+        attachInputChangeListeners(form);
+
+        formTracker.push({ id: form.id, tabIdx: tabIdx, domElement: form });
+
+        collectFormData(form)
+        console.log(`[ALL FORMS DATA]`, allFormsData); // Log the entire allFormsData object
+
+        checkFormsAndToggleSaveButton();
 
         console.log(`Created new form with id: ${form.id}`);
         return form;
     }
 
     function updateTrackerDisplay(uniqueFormId) {
-        // Define a helper function to get the value or a placeholder if it's not set
+
+        // Define a helper function to get the value or a placeholder if it's not set or invalid
         function getValueOrPlaceholder(inputElement) {
-            return inputElement && inputElement.value ? inputElement.value : 'Not set';
+            // Check if the inputElement exists and has a value that is not empty
+            if (inputElement && inputElement.value) {
+                // Ensure the value is not a string 'undefined', 'NaN', or an empty string
+                let value = inputElement.value;
+                if (value.trim() !== '' && value !== 'undefined' && value !== 'NaN') {
+                    return value;
+                }
+            }
+            return 'Not set';
         }
 
         // Get the input elements by using the unique form ID
@@ -637,6 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var doughStartTimeInput = document.getElementById(`doughStartTime-${uniqueFormId}`);
         var doughEndTimeInput = document.getElementById(`doughEndTime-${uniqueFormId}`);
         var firstLoafPackedInput = document.getElementById(`firstLoafPacked-${uniqueFormId}`);
+        var cutOffTimeInput = document.getElementById(`cutOffTime-${uniqueFormId}`);
 
         // Check if the input elements exist and log their values for debugging
         if (spongeStartTimeInput) console.log(`Value of spongeStartTime: ${spongeStartTimeInput.value}`);
@@ -644,6 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (doughStartTimeInput) console.log(`Value of doughStartTime: ${doughStartTimeInput.value}`);
         if (doughEndTimeInput) console.log(`Value of doughEndTime: ${doughEndTimeInput.value}`);
         if (firstLoafPackedInput) console.log(`Value of firstLoafPacked: ${firstLoafPackedInput.value}`);
+        if (cutOffTimeInput) console.log(`Value of cutOffTime: ${cutOffTimeInput.value}`)
 
         // Get the display elements by their static IDs
         var spongeStartTimeDisplay = document.getElementById('spongeStartTimeTracker');
@@ -651,9 +763,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var doughStartTimeDisplay = document.getElementById('doughStartTimeTracker');
         var doughEndTimeDisplay = document.getElementById('doughEndTimeTracker');
         var firstLoafPackedDisplay = document.getElementById('firstLoafPackedTracker');
+        var cutOffTimeDisplay = document.getElementById('cutOffTimeTracker');
 
         // Add a check to ensure the display elements were found
-        if (!spongeEndTimeDisplay || !doughStartTimeDisplay || !doughEndTimeDisplay || !firstLoafPackedDisplay) {
+        if (!spongeEndTimeDisplay || !doughStartTimeDisplay || !doughEndTimeDisplay || !firstLoafPackedDisplay || !cutOffTimeDisplay) {
             console.error('One of the display elements was not found in the DOM.');
             return; // Exit the function if elements are not found
         }
@@ -664,6 +777,23 @@ document.addEventListener('DOMContentLoaded', function () {
         doughStartTimeDisplay.textContent = getValueOrPlaceholder(doughStartTimeInput);
         doughEndTimeDisplay.textContent = getValueOrPlaceholder(doughEndTimeInput);
         firstLoafPackedDisplay.textContent = getValueOrPlaceholder(firstLoafPackedInput);
+        cutOffTimeDisplay.textContent = getValueOrPlaceholder(cutOffTimeInput);
+    }
+
+    // Helper function to calculate the dough end time
+    function calculateCutOffTime(firstLoafPackedValue, stdTime, cutOffTimeElement) {
+        console.log(`First Loaf Time Value: ${firstLoafPackedValue}`); // Log the dough start time
+
+        console.log(`stdTime Value: ${stdTime}`); // Log the dough start time
+
+        let firstLoafPacked = new Date(firstLoafPackedValue);
+        console.log(`First Loaf new Date Time: ${firstLoafPacked}`); // Log the dough start time
+
+        let cutOffTime = new Date(firstLoafPacked.getTime() + convertToSeconds(stdTime) * 1000);
+        console.log(`Dough End Time (calculated): ${cutOffTime}`); // Log the calculated dough end time
+
+        cutOffTimeElement.value = formatDateTime(cutOffTime);
+        console.log(`Dough End Time (formatted): ${cutOffTimeElement.value}`); // Log the formatted dough end time
     }
 
     // Helper function to calculate the end time for the 1st loaf
@@ -720,61 +850,84 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(`Dough Start Time (formatted): ${doughStartTimeElement.value}`); // Log the formatted dough start time
     }
 
-
     function updateSpongeStartTimes(tabIdx, newEndTime) {
         const subsequentTimePickers = spongeStartTimePickersByTab[tabIdx] || [];
         let subsequentStartTime = new Date(newEndTime);
 
         console.log(`Updating sponge start times for tab index: ${tabIdx}`);
 
-        // Iterate over all forms, including the first, and update their sponge start times
         subsequentTimePickers.forEach(function (picker, index) {
-            if (index !== 0) {
-                subsequentStartTime = new Date(subsequentStartTime.getTime() + 45 * 60000); // Add 45 minutes for each subsequent recipe
-            }
+            if (index === 0) return; // Skip the first picker, it's already set.
+
+            subsequentStartTime = new Date(subsequentStartTime.getTime() + 45 * 60000);
             picker.value = formatDateTime(subsequentStartTime);
-
-            // Extract the recipeName from the picker's ID
-            let recipeName = picker.id.split('-')[2];
-            let uniqueFormId = `recipeForm-${recipeName}-${tabIdx}`;
-            let doughStartTimeInputId = `doughStartTime-${uniqueFormId}`;
-            let stdTimeInputId = `stdTime-${uniqueFormId}`;
-            let doughEndTimeInputId = `doughEndTime-${uniqueFormId}`;
-            let firstLoafPackedInputId = `firstLoafPacked-${uniqueFormId}`;
-
-            console.log(`Attempting to fetch elements with IDs:`, doughStartTimeInputId, stdTimeInputId, doughEndTimeInputId, firstLoafPackedInputId);
-
-            let doughStartTimeInput = document.getElementById(doughStartTimeInputId);
-            let stdTimeInput = document.getElementById(stdTimeInputId);
-            let doughEndTimeInput = document.getElementById(doughEndTimeInputId);
-            let firstLoafPackedInput = document.getElementById(firstLoafPackedInputId);
-
-            console.log(`Fetched Elements:`, { doughStartTimeInput, stdTimeInput, doughEndTimeInput, firstLoafPackedInput });
-
-            if (doughStartTimeInput && stdTimeInput && doughEndTimeInput && firstLoafPackedInput) {
-                console.log(`Values before calculation:`, {
-                    spongeStartTime: picker.value,
-                    stdTime: stdTimeInput.value,
-                    doughStartTime: doughStartTimeInput.value,
-                    firstLoafPacked: firstLoafPackedInput.value
-                });
-
-                calculateDoughStartTime(picker.value, doughStartTimeInput);
-                calculateDoughEndTime(doughStartTimeInput.value, stdTimeInput.value, doughEndTimeInput);
-                calculateFirstLoafPacked(doughStartTimeInput.value, firstLoafPackedInput);
-
-                console.log(`Values after calculation:`, {
-                    doughStartTime: doughStartTimeInput.value,
-                    doughEndTime: doughEndTimeInput.value,
-                    firstLoafPacked: firstLoafPackedInput.value
-                });
-            } else {
-                console.error('One or more elements could not be found:', doughStartTimeInputId, stdTimeInputId, doughEndTimeInputId, firstLoafPackedInputId);
-            }
+            updateSpongeEndTimes(picker.value);
+            updateDoughStartTimes(picker.value);
+            updateDoughEndTimes();
+            updateFirstLoafPacked();
+            updateCutOffTimes();
         });
     }
 
+    function updateSpongeEndTimes(spongeStartTimePicker) {
+        formTracker.forEach((form, index) => {
+            const tabIdx = form.tabIdx;
+            const uniqueFormId = form.id.split('-').pop();
+            if (index === 0) return;
 
+            const spongeEndTimeElement = form.domElement.querySelector('[name="spongeEndTime"]');
+            const stdTimeInputValue = form.domElement.querySelector('[name="stdTime"]').value;
+
+            calculateSpongeEndTime(tabIdx, spongeStartTimePicker, stdTimeInputValue, spongeEndTimeElement, uniqueFormId);
+
+            endTimes[tabIdx] = spongeEndTimeElement.value;
+        });
+    }
+
+    function updateDoughStartTimes(spongeStartTimePicker) {
+        formTracker.forEach((form, index) => {
+            if (index === 0) return;
+
+            const doughStartTimeElement = form.domElement.querySelector('[name="doughStartTime"]');
+
+            calculateDoughStartTime(spongeStartTimePicker, doughStartTimeElement);
+        });
+    }
+
+    function updateDoughEndTimes() {
+        formTracker.forEach((form, index) => {
+            if (index === 0) return;
+
+            const doughStartTimeElement = form.domElement.querySelector('[name="doughStartTime"]').value;
+            const stdTimeInputValue = form.domElement.querySelector('[name="stdTime"]').value;
+            const doughEndTimeElement = form.domElement.querySelector('[name="doughEndTime"]');
+
+            calculateDoughEndTime(doughStartTimeElement, stdTimeInputValue, doughEndTimeElement);
+        });
+    }
+
+    function updateCutOffTimes() {
+        formTracker.forEach((form, index) => {
+            if (index === 0) return;
+
+            const firstLoafPackedElement = form.domElement.querySelector('[name="firstLoafPacked"]').value;
+            const stdTimeInputValue = form.domElement.querySelector('[name="stdTime"]').value;
+            const cutOffTimeElement = form.domElement.querySelector('[name="cutOffTime"]');
+
+            calculateDoughEndTime(firstLoafPackedElement, stdTimeInputValue, cutOffTimeElement);
+        });
+    }
+
+    function updateFirstLoafPacked() {
+        formTracker.forEach((form, index) => {
+            if (index === 0) return;
+
+            const doughStartTimeElement = form.domElement.querySelector('[name="doughStartTime"]').value;
+            const firstLoafPackedElement = form.domElement.querySelector('[name="firstLoafPacked"]');
+
+            calculateFirstLoafPacked(doughStartTimeElement, firstLoafPackedElement);
+        });
+    }
 
     function calculateSpongeStartTime(tabIdx) {
 
@@ -821,23 +974,143 @@ document.addEventListener('DOMContentLoaded', function () {
         spongeEndTimeElement.value = finalEndTime;
         endTimes[tabIdx] = spongeEndTimeElement.value;
         console.log(`Sponge End Time: ${finalEndTime}`);
-
-        updateTrackerDisplay(uniqueFormId);
     }
 
+    function getCsrfToken() {
+        // Get all cookies from the document and split into individual items
+        let cookies = document.cookie.split(';');
+
+        // Look for the "csrftoken" cookie and return its value
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();
+            let cookieParts = cookie.split('=');
+            if (cookieParts[0] === 'csrftoken') {
+                return cookieParts[1];
+            }
+        }
+        return ''; // Return an empty string if not found
+    }
+
+    function collectProductData(recipeName, tabIndex) {
+        // Assuming productsByRecipe is accessible in this scope and structured as you've described
+        if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
+            return productsByRecipe[tabIndex][recipeName];  // This will be an array of product objects
+        }
+        return [];  // Return an empty array if no products are found for the recipe
+    }
+
+    function collectFormData(form) {
+        let formData = {};
+        let inputElements = form.querySelectorAll('input, select, textarea');
+
+        inputElements.forEach(element => {
+            let fieldName = element.name || element.id.split('-')[0];
+            formData[fieldName] = element.value;
+        });
+
+        let recipeName = form.dataset.recipeName;
+        let tabIndex = form.dataset.tabIdx;
+        let formIdentifier = recipeName + '-' + tabIndex;
+        formData['formId'] = formIdentifier;
+
+        // Collect product data for the recipe
+        formData['products'] = collectProductData(recipeName, tabIndex);
+
+        // Include the product data within the allFormsData object
+        allFormsData[formIdentifier] = formData;
+
+        console.log(`Updated data for ${formIdentifier}:`, formData);
+    }
+
+
+
+    function attachInputChangeListeners(form) {
+        const inputElements = form.querySelectorAll('input, select, textarea');
+        inputElements.forEach(input => {
+            input.addEventListener('change', () => {
+                collectFormData(form);
+                console.log(`Data for ${form.dataset.recipeName}-${form.dataset.tabIdx} has been updated.`);
+                console.log(`[ALL FORMS DATA]`, allFormsData); // Log the entire allFormsData object
+            });
+        });
+    }
 
     function showSaveButton() {
         var saveButton = document.querySelector('.save-all-button');
         if (saveButton) {
             saveButton.style.display = 'block';
+
+            attachSaveButtonListener(saveButton);
         }
     }
 
+    function attachSaveButtonListener(saveButton) {
+        if (!saveButton.dataset.listenerAttached) {
+            saveButton.addEventListener('click', function () {
+                // Disable the button to prevent multiple submissions
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...'; // Optional: provide user feedback
+
+                // Collect data from all forms again to ensure we have the most current data
+                let allForms = document.querySelectorAll('.recipe-form');
+                allForms.forEach(form => {
+                    collectFormData(form); // This populates allFormsData
+                });
+
+                // Convert allFormsData object to an array of recipe data objects
+                let recipesArray = Object.values(allFormsData);
+
+                // Create the data payload to send to the server
+                let payload = {
+                    recipes: recipesArray  // This is the expected format on the backend
+                };
+
+                fetch('/save_recipes/', {
+                    method: 'POST',
+                    body: JSON.stringify(payload), // Send the payload with recipes array
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // After saving, redirect to the homepage
+                            allFormsData = {};
+                            isSaving = false;
+                            window.location.href = '/';
+                        } else {
+                            isSaving = false;
+                            // If the save wasn't successful, show an error message
+                            alert('Failed to save the recipe: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        isSaving = false;
+                        console.error('Error:', error);
+                        alert('Error saving recipe: ' + error.message);
+                        // Re-enable the button in case of error so the user can try again
+                        saveButton.disabled = false;
+                        saveButton.textContent = 'Save'; // Reset button text
+                    });
+            });
+            saveButton.dataset.listenerAttached = 'true';
+        }
+    }
+
+    // This function checks if any forms exist and shows/hides the save button accordingly
     function checkFormsAndToggleSaveButton() {
         var forms = document.querySelectorAll('.recipe-form');
-        if (forms.length === 0) {
+        if (forms.length > 0) {
+            showSaveButton();
+        } else {
             hideSaveButton();
-            formCreated = false;
         }
     }
 
@@ -1128,6 +1401,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         checkAndToggleProductModalButton();
 
+        checkAndToggleTrackerVisibility();
+
         activateFirstRecipeInMainTab(day);
     }
 
@@ -1137,6 +1412,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var firstRecipeButton = tabContent.querySelector('.tablinks-recipes');
             if (firstRecipeButton) {
                 setActiveTab(firstRecipeButton);
+                displayRecipeDetails(activeRecipe.name, activeRecipe.tabIndex);
             }
         }
     }
@@ -1155,6 +1431,8 @@ document.addEventListener('DOMContentLoaded', function () {
         activeRecipe.name = recipeName;
         activeRecipe.tabIndex = mainTabIndex;
         activeRecipe.dateTimePicker = selectedDate;
+
+        var uniqueFormId = `recipeForm-${recipeName}-${mainTabIndex}`;
 
         allRecipeButtons.forEach(function (button) {
             button.classList.remove('opened');
@@ -1175,6 +1453,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         printProductsByRecipe(recipeName, mainTabIndex);
+        updateTrackerDisplay(uniqueFormId)
     }
 
     function formatDate(date) {
@@ -1278,6 +1557,7 @@ document.addEventListener('DOMContentLoaded', function () {
         productForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
+            let currentForm = document.querySelector('.recipe-form');
             var formData = getProductFormData();
             calculateTrayAndTrolley()
 
@@ -1319,6 +1599,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
                 updateTotalValues(activeRecipe.name, activeRecipe.tabIndex);
                 handleBatchCalculations(activeRecipe.name, activeRecipe.tabIndex);
+                if (currentForm) {
+                    collectFormData(currentForm);
+                }
 
                 var productModal = document.getElementById('productModal');
                 if (productModal) {
@@ -1538,16 +1821,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function checkAndToggleProductModalButton() {
-        // Find the active tab
         var activeTab = document.querySelector('.tabcontent[style*="display: block"]');
         if (activeTab) {
-            // Check if there are any recipe buttons within the active tab
             var recipeButtons = activeTab.querySelectorAll('.tablinks-recipes');
-            // Find the add-product-button within the active tab
             var addProductButton = activeTab.querySelector('.add-product-button');
-
             if (recipeButtons.length > 0) {
-                // If there are recipe buttons in the active tab, show the add-product-button
                 if (addProductButton) {
                     addProductButton.style.display = 'block';
                 }
@@ -1555,8 +1833,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function checkAndToggleTrackerVisibility() {
+        var activeTab = document.querySelector('.tabcontent[style*="display: block"]');
+        var tracker = document.getElementById('progressContainer');
+
+        if (activeTab) {
+            var recipeButtons = activeTab.querySelectorAll('.tablinks-recipes');
+            if (recipeButtons.length === 0) {
+                // If there are no recipe buttons, hide the tracker and reset the values
+                if (tracker) {
+                    var timeValues = tracker.querySelectorAll('.timeValue');
+                    timeValues.forEach(function (timeValue) {
+                        timeValue.textContent = '--:--'; // Reset to placeholder value
+                    });
+                }
+            } else {
+                // If there are recipe buttons, make sure the tracker is visible
+                if (tracker) {
+                    tracker.style.display = 'block';
+                }
+            }
+        }
+    }
+
     // Initially check and set visibility of the button
     checkAndToggleProductModalButton();
+    checkAndToggleTrackerVisibility();
 
     // Product Event Listeners
     document.getElementById('weight').addEventListener('change', calculateTrayAndTrolley);
@@ -1591,6 +1893,48 @@ document.addEventListener('DOMContentLoaded', function () {
         this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
     });
 
+    const steps = [
+        'spongeStartProgress',
+        'spongeEndProgress',
+        'doughStartProgress',
+        'doughEndProgress',
+        'firstLoafPackedProgress',
+        'cutOffProgress'
+    ];
+
+    function setProgress(percentage) {
+        // Ensure the percentage is within bounds
+        const clampedPercentage = Math.max(0, Math.min(100, percentage));
+
+        // Update the overlay to cover the inactive part of the progress line
+        const progressLineOverlay = document.getElementById('progressLineOverlay');
+        progressLineOverlay.style.top = `${clampedPercentage}%`;
+        progressLineOverlay.style.height = `${100 - clampedPercentage}%`;
+
+        // Activate steps and labels up to the percentage
+        steps.forEach(step => {
+            const element = document.getElementById(step);
+            const label = element.querySelector('.progressLabel'); // Get the label within the step
+            const stepPosition = element.offsetTop / progressLineOverlay.parentElement.offsetHeight * 100;
+
+            if (stepPosition < clampedPercentage) {
+                element.classList.add('active');
+                if (label) {
+                    label.classList.add('active');
+                    label.style.color = '#3498db'; // Blue color for active steps
+                }
+            } else {
+                element.classList.remove('active');
+                if (label) {
+                    label.classList.remove('active');
+                    label.style.color = '#ccc'; // Gray color for inactive steps
+                }
+            }
+        });
+    }
+
+    // Example usage:
+    setProgress(70); // Set progress to 10%   
 });
 
 window.addEventListener('beforeunload', function (e) {

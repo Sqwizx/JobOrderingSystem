@@ -1,18 +1,6 @@
-from datetime import date, timedelta
 from django.utils import timezone
 from django.db import models
-
-from users.models import User
-
-class Product(models.Model):
-    productId = models.CharField(max_length=50)
-    productPrice = models.DecimalField(decimal_places=2, max_digits=5)
-    productSalesOrder = models.PositiveIntegerField()
-    productThickness = models.PositiveIntegerField()
-    productSlice = models.CharField(max_length=50)
-    productExpDate = models.DateTimeField(default=timezone.now, blank=True, null=True)
-    productSaleDate = models.DateTimeField(default=timezone.now, blank=True, null=True)
-    productRemarks = models.CharField(max_length=50)
+from django.contrib.auth.models import User
 
 class Revision(models.Model):
     revisionId = models.CharField(max_length=50)
@@ -22,25 +10,36 @@ class Revision(models.Model):
     def __str__(self):
         return self.revisionId
 
+class JobOrder(models.Model):
+    jobOrderId = models.CharField(max_length=50, unique=True)
+    jobOrderCreatedDate = models.DateTimeField()
+    jobOrderStatus = models.CharField(max_length=50)
+    userId = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.jobOrderId
+
 class Recipe(models.Model):
     recipeId = models.CharField(max_length=50)
-    recipeSalesOrder = models.PositiveIntegerField(null=True)
+    recipeName = models.CharField(max_length=50)
+    recipeProdDate = models.DateField()
     recipeProdRate = models.PositiveIntegerField(null=True)
     recipeBatchSize = models.PositiveIntegerField(null=True)
-    recipeProdDate = models.DateField()
-    recipeKwikLokColor = models.CharField(max_length=50,null=True)
+    recipeTotalSales = models.PositiveIntegerField(null=True)
     recipeBatches = models.PositiveIntegerField(null=True)
+    recipeStdTime = models.DurationField(null=True)
     recipeCycleTime = models.DurationField(null=True)
-    recipeWaste = models.DecimalField(max_digits=5, decimal_places=2, default=2.00)
-    recipeReqTime = models.DurationField(null=True)
-    recipeTotalTray = models.PositiveBigIntegerField(null=True)
+    recipeWaste = models.DecimalField(max_digits=5, decimal_places=2)
+    recipeSpongeStartTime = models.DurationField(null=True)
+    recipeTotalTray = models.PositiveIntegerField(null=True)
     recipeTotalTrolley = models.PositiveIntegerField(null=True)
     recipeBeltNo = models.PositiveIntegerField(null=True)
-    recipeProducts = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    jobOrder = models.ForeignKey(JobOrder, related_name='recipes', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.recipeId
-
+    
+    
 class Activity(models.Model):
     cutOffTime = models.DateTimeField()
     spongeStart = models.DateTimeField()
@@ -53,20 +52,27 @@ class Activity(models.Model):
     def __str__(self):
         # Assuming there's a ForeignKey from Activity to Recipe
         return f"{self.recipe.recipeId}'s Activity"
+    
+from django.db import models
+from django.utils import timezone
 
-class JobOrder(models.Model):
-    jobOrderId = models.CharField(max_length=50)
-    jobOrderCreatedDate = models.DateTimeField(default=timezone.now)
-    totalSalesOrder = models.PositiveIntegerField(null=True)
-    jobOrderStatus = models.CharField(max_length=50, null=True)
-    currentActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='current', null=True)
-    nextActivity = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='next', null=True)
-    jobOrderRevision = models.ForeignKey(Revision, on_delete=models.CASCADE, related_name="job_revision", null=True)
-    recipeId = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='job_recipe', null=True)
-    userId = models.ForeignKey(User, on_delete=models.CASCADE, related_name = 'user_job')
+class Product(models.Model):
+    productId = models.CharField(max_length=50, unique=True, null=True)
+    productName = models.CharField(max_length=100, null=True)
+    productSalesOrder = models.PositiveIntegerField(null=True)
+    currency = models.CharField(max_length=3, null=True)  # Assuming currency codes like 'SGD', 'MYR'
+    productPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    client = models.CharField(max_length=100, null=True)
+    colorSet = models.CharField(max_length=100, null=True)  # Assuming this can be optional
+    productExpDate = models.DateTimeField(null=True)
+    productSaleDate = models.DateTimeField(null=True)
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)  # Assuming weight might need decimal values
+    noOfSlices = models.PositiveIntegerField(null=True)
+    thickness = models.PositiveIntegerField(null=True)
+    tray = models.PositiveIntegerField(null=True)  # Assuming this can be optional
+    trolley = models.PositiveIntegerField(null=True)  # Assuming this can be optional
+    productRemarks = models.TextField(blank=True, null=True)  # Text fields are better for longer, variable-length text
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="products", null=True)  # Removed the null=True since ForeignKey should not be null in most cases
 
     def __str__(self):
-        return self.jobOrderId
-
-
-    
+        return self.productId

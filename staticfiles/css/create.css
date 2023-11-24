@@ -1,13 +1,24 @@
+.os-scrollbar-handle {
+    background-color: rgba(4, 66, 168, 1) !important
+}
+
+.os-scrollbar {
+    margin: 2px
+}
+
+.scroll-area {
+    height: 100vh
+}
+
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
-    gap: 10px;
-    /* height: 80vh; */
+    gap: 10px
 }
 
 .left-column {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .big-card {
@@ -15,32 +26,50 @@
     margin-bottom: 20px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    overflow: auto;
+    overflow: auto
 }
 
 .right-column {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
+}
+
+#product-list {
+    height: 300px
+}
+
+#tracker {
+    height: 450px
+}
+
+#small-header {
+    color: #808080;
+    padding: 15px
+}
+
+#recipe-list {
+    color: #808080;
+    padding-bottom: 10px
 }
 
 .small-card {
     background-color: #f2f2f2;
-    padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    height: 300px;
+    display: flex;
+    flex-direction: column
 }
 
 .tab {
+    position: relative;
     overflow: hidden;
     background-color: #f1f1f1;
     border-bottom: 1px solid gray;
     width: 100%;
-    /* Set the width to 100% */
     display: flex;
     border-top-right-radius: 10px;
-    border-top-left-radius: 10px;
+    border-top-left-radius: 10px
 }
 
 .tab button {
@@ -50,16 +79,16 @@
     outline: none;
     cursor: pointer;
     padding: 14px 30px;
-    transition: 0.3s;
-    font-size: 17px;
+    transition: .3s;
+    font-size: 17px
 }
 
 .tab button:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tab button.active {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
     border-left: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1);
@@ -69,44 +98,105 @@
 .tab button:first-child.active {
     border-bottom: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
-    border-left: none;
-
+    border-left: none
 }
 
 .tab button:last-child.active {
     border-bottom: 1px solid rgba(4, 66, 168, 1);
     border-left: 1px solid rgba(4, 66, 168, 1);
-    border-right: none;
+    border-right: none
 }
-
 
 .tabcontent {
     display: none;
-    padding: 20px 20px;
-    border-top: none;
+    padding: 10px 20px 20px 20px;
+    border-top: none
 }
 
 .tabcontent.active {
-    display: block;
+    display: block
 }
 
 .date-text {
     font-size: 20px;
-    font-weight: 400;
-    /* Adjust the font size as needed */
+    font-weight: 400
 }
 
 .content-container {
     display: flex;
-    min-height: 60vh;
+    height: 80vh
 }
 
+.save-all-button:hover {
+    background-color: rgb(5, 57, 139);
+    transition: all 0.3s ease
+}
+
+
 .first-column {
-    flex: 1;
+    flex: 1
 }
 
 .second-column {
     flex: 3;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    height: 100%;
+    width: 100%
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1vh 5vh;
+    position: relative
+}
+
+
+.save-all-button {
+    padding: 10px 25px;
+    background-color: rgba(4, 66, 168, 1);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100px;
+    align-self: flex-end;
+    display: none
+}
+
+
+.save-all-button::after {
+    padding: 10px 25px;
+    background-color: rgba(4, 66, 168, 1);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100px;
+    align-self: flex-end
+}
+
+.form-container {
+    width: 100%;
+    overflow: hidden
+}
+
+.left-div {
+    margin-left: 5vh
+}
+
+.right-div {
+    margin-left: 10vh
+}
+
+.card .os-content,
+.card .os-viewport {
+    border-radius: 10px
 }
 
 .card {
@@ -114,14 +204,14 @@
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
     overflow: auto;
-    height: 60vh;
-    overflow-x: hidden;
+    height: 80vh;
+    overflow-x: hidden
 }
 
 .tab-recipes {
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    overflow-x: hidden
 }
 
 .tablinks-recipes {
@@ -129,13 +219,13 @@
     border: none;
     cursor: pointer;
     padding: 10px 20px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 16px;
     text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 146px;
+    max-width: 146px
 }
 
 .add-recipe-tab {
@@ -144,137 +234,122 @@
     outline: none;
     cursor: pointer;
     padding: 10px 20px;
-    transition: 0.3s;
+    transition: .3s;
     font-size: 16px;
-    color: gray;
+    color: #808080;
+    width: 146px
 }
 
 .add-recipe-tab:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tablinks-recipes:hover {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tablinks-recipes:first-child {
     border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-right-radius: 10px
 }
 
 .tablinks-recipes.opened:not(:first-child) {
-    border-top: 1px solid rgba(4, 66, 168, 1);
+    border-top: 1px solid rgba(4, 66, 168, 1)
 }
 
 .tablinks-recipes.opened {
-    background-color: rgba(4, 66, 168, 0.2);
+    background-color: rgba(4, 66, 168, .2);
     color: rgba(4, 66, 168, 1);
-    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    border-bottom: 1px solid rgba(4, 66, 168, 1)
 }
 
-/* The Modal */
 .modal {
     display: none;
-    /* Hidden by default */
     position: fixed;
-    /* Stay in place */
     z-index: 102;
-    /* Sit on top */
     left: 0;
     top: 0;
     width: 100%;
-    /* Full width */
     height: 100%;
-    /* Full height */
-    overflow: auto;
-    /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0);
-    /* Fallback color */
-    background-color: rgba(0, 0, 0, 0.4);
-    /* Black w/ opacity */
+    overflow: hidden;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
 }
 
-/* Modal Content/Box */
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
-    /* 15% from the top and centered */
+    margin: 10% auto;
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
-    height: 50%;
-    border-radius: 10px;
-    /* Could be more or less, depending on screen size */
+    height: 48%;
+    border-radius: 10px
 }
 
-/* Close Button */
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font-weight: lighter;
+    font-weight: lighter
 }
 
 .close:hover,
 .close:focus {
-    color: black;
+    color: #000;
     text-decoration: none;
-    cursor: pointer;
+    cursor: pointer
 }
 
-/* 
 #recipeForm {
     display: flex;
-    flex-direction: column;
-} */
+    flex-direction: column
+}
 
+.modal input[type="number"],
 .modal input[type="text"] {
     width: 100%;
     padding: 10px 15px;
     border: 2px solid #ccc;
     border-radius: 10px;
     outline: none;
-    transition: border-color 0.3s;
-
-    /* Add spacing between form elements */
+    transition: border-color .3s
 }
 
 .modal button {
-    border: none;
+    border: none
 }
 
 .modal input[type="submit"] {
     width: 100%;
     padding: 10px 15px;
-    color: white;
+    color: #fff;
     background-color: #0442a8;
     border-radius: 10px;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease-in-out
 }
 
-/* Add focus styles for the input fields */
 .modal input[type="text"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
-/* FORM CSS */
 .left-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
+    padding: 10px
 }
 
 .right-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
+    padding: 10px
 }
 
 .recipe-form {
     padding-left: 20px;
-    display: flex;
+    display: flex
 }
 
+.recipe-form input[type="number"],
 .recipe-form input[type="text"] {
     width: 300px;
     padding: 10px 10px;
@@ -282,11 +357,12 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color 0.3s;
+    transition: border-color .3s
 }
 
+.recipe-form input[type="number"]:focus,
 .recipe-form input[type="text"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 .recipe-form input[type="datetime-local"] {
@@ -296,11 +372,11 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color 0.3s;
+    transition: border-color .3s
 }
 
 .recipe-form input[type="datetime-local"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 select {
@@ -308,16 +384,15 @@ select {
     width: 300px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
-/* Style for the options within the select element */
 select option {
-    padding: 6px;
+    padding: 6px
 }
 
 .delete-recipe {
-    font-size: 12px;
+    font-size: 12px
 }
 
 #change-date {
@@ -325,5 +400,348 @@ select option {
     margin-bottom: 10px;
     font-size: 12px;
     border-radius: 5px;
-    border: 1px solid #0442a8;
+    border: 1px solid #0442a8
+}
+
+.delete-container:hover .delete-icon,
+.delete-container:hover .delete-text {
+    color: #f00;
+    transition: color .2s
+}
+
+.delete-icon,
+.delete-text {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 12px
+}
+
+.delete-container {
+    color: #0442a8;
+    cursor: pointer
+}
+
+.add-product-button {
+    background-color: #f1f1f1;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 15px 0px;
+    transition: .3s;
+    font-size: 16px;
+    color: #808080;
+    width: 100%
+}
+
+.add-product-button:hover {
+    background-color: rgba(4, 66, 168, .2)
+}
+
+.product-item:first-child {
+    margin-top: 10px;
+    border-top: 1px solid rgba(128, 128, 128, .234)
+}
+
+.product-item {
+    width: 100%;
+    border-bottom: 1px solid rgba(128, 128, 128, .234);
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.product-item .product-icon {
+    margin-left: 5px
+}
+
+.product-info-container {
+    display: flex;
+    flex-direction: column;
+    align-items: start
+}
+
+.fa-edit {
+    color: #0442a8
+}
+
+.fa-trash {
+    color: #0442a8
+}
+
+.fa-edit:hover {
+    transition: color .2s;
+    color: #ffa500
+}
+
+.fa-trash:hover {
+    color: #f00;
+    transition: color .2s
+}
+
+#alertModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+.modal-content #alertModal {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 30%;
+    height: 50%;
+    border-radius: 10px
+}
+
+#productForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+#productForm .form-row {
+    display: flex;
+    justify-content: space-between
+}
+
+#productForm .left-div,
+#productForm .right-div {
+    align-items: center;
+    flex: 1;
+
+    box-sizing: border-box
+}
+
+#productModalContent .right-div textarea {
+    resize: none
+}
+
+.modal input[type="date"],
+.modal textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .3s;
+    margin-bottom: 10px
+}
+
+.modal textarea {
+    resize: vertical
+}
+
+.modal input[type="date"]:focus,
+.modal textarea:focus {
+    border-color: #0442a8
+}
+
+#productModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+#productModalContent {
+    background-color: #fefefe;
+    margin: 3% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 70%;
+    height: 85%;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden
+}
+
+.product-price-group {
+    display: flex;
+    flex-direction: column
+}
+
+.price-container {
+    display: flex;
+    align-items: start
+}
+
+.price-container select,
+.price-container input[type="number"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.price-container input[type="number"]:focus,
+.price-container select:focus {
+    border-color: #0442a8
+}
+
+.price-container select {
+    width: 100px;
+    margin-right: 10px
+}
+
+.client-color-group {
+    display: flex;
+    flex-direction: column
+}
+
+.client-color-container {
+    display: flex;
+    align-items: start
+}
+
+.client-color-container select,
+.client-color-container input[type="text"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.client-color-container input[type="text"]:focus,
+.client-color-container select:focus {
+    border-color: #0442a8
+}
+
+.client-color-container select {
+    width: 100px;
+    margin-right: 10px
+}
+
+.weight-value {
+    display: flex;
+    align-items: start
+}
+
+.weight-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.weight-value select:focus {
+    border-color: #0442a8
+}
+
+#progressContainer {
+    margin-top: 20px;
+    position: relative;
+    width: 100%;
+
+    height: 300px
+}
+
+#progressLine {
+    position: absolute;
+    left: 50%;
+    height: 100%;
+    border-left: 3px solid #3498db;
+    z-index: 1
+}
+
+
+#progressLineOverlay {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+
+    border-left: 3px solid #ccc;
+
+    z-index: 1
+}
+
+.progressStep {
+    position: absolute;
+    left: calc(50% - 9px);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #ccc;
+    transform: translateY(-50%);
+    z-index: 2
+}
+
+.progressLabel {
+    position: absolute;
+    right: 2vw;
+    display: block;
+    width: 150px;
+    text-align: right;
+    top: 51%;
+    transform: translateY(-40%);
+    font-size: small;
+    color: #ccc;
+
+    transition: color 0.25s
+}
+
+.progressLabel.active {
+    color: #3498db
+}
+
+.timeValue {
+    position: absolute;
+    left: 2vw;
+    display: block;
+    width: 150px;
+    text-align: left;
+    top: 51%;
+    transform: translateY(-40%);
+    font-size: small;
+    color: black;
+}
+
+#spongeStartProgress {
+    top: 0%;
+}
+
+#spongeEndProgress {
+    top: 20%;
+}
+
+#doughStartProgress {
+    top: 40%;
+}
+
+#doughEndProgress {
+    top: 60%;
+}
+
+#firstLoafPackedProgress {
+    top: 80%;
+}
+
+#cutOffProgress {
+    top: 100%;
+}
+
+
+
+.progressStep.active {
+    border-color: #3498db
 }

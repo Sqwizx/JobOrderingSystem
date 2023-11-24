@@ -1,24 +1,24 @@
 .os-scrollbar-handle {
-    background-color: rgba(4, 66, 168, 1) !important;
+    background-color: rgba(4, 66, 168, 1) !important
 }
 
 .os-scrollbar {
-    margin: 2px;
+    margin: 2px
 }
 
 .scroll-area {
-    height: 100vh;
+    height: 100vh
 }
 
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
-    gap: 10px;
+    gap: 10px
 }
 
 .left-column {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .big-card {
@@ -26,30 +26,30 @@
     margin-bottom: 20px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    overflow: auto;
+    overflow: auto
 }
 
 .right-column {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 #product-list {
-    height: 300px;
+    height: 300px
 }
 
 #tracker {
-    height: 450px;
+    height: 450px
 }
 
 #small-header {
     color: #808080;
-    padding: 15px;
+    padding: 15px
 }
 
 #recipe-list {
     color: #808080;
-    padding-bottom: 10px;
+    padding-bottom: 10px
 }
 
 .small-card {
@@ -58,7 +58,7 @@
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .tab {
@@ -69,7 +69,7 @@
     width: 100%;
     display: flex;
     border-top-right-radius: 10px;
-    border-top-left-radius: 10px;
+    border-top-left-radius: 10px
 }
 
 .tab button {
@@ -80,11 +80,11 @@
     cursor: pointer;
     padding: 14px 30px;
     transition: .3s;
-    font-size: 17px;
+    font-size: 17px
 }
 
 .tab button:hover {
-    background-color: rgba(4, 66, 168, .2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tab button.active {
@@ -92,49 +92,49 @@
     border-left: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1);
-    color: rgba(4, 66, 168, 1);
+    color: rgba(4, 66, 168, 1)
 }
 
 .tab button:first-child.active {
     border-bottom: 1px solid rgba(4, 66, 168, 1);
     border-right: 1px solid rgba(4, 66, 168, 1);
-    border-left: none;
+    border-left: none
 }
 
 .tab button:last-child.active {
     border-bottom: 1px solid rgba(4, 66, 168, 1);
     border-left: 1px solid rgba(4, 66, 168, 1);
-    border-right: none;
+    border-right: none
 }
 
 .tabcontent {
     display: none;
     padding: 10px 20px 20px 20px;
-    border-top: none;
+    border-top: none
 }
 
 .tabcontent.active {
-    display: block;
+    display: block
 }
 
 .date-text {
     font-size: 20px;
-    font-weight: 400;
+    font-weight: 400
 }
 
 .content-container {
     display: flex;
-    height: 80vh;
+    height: 80vh
 }
 
 .save-all-button:hover {
     background-color: rgb(5, 57, 139);
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 
 .first-column {
-    flex: 1;
+    flex: 1
 }
 
 .second-column {
@@ -143,7 +143,7 @@
     flex-direction: column;
     overflow: auto;
     height: 100%;
-    width: 100%;
+    width: 100%
 }
 
 .footer {
@@ -151,55 +151,52 @@
     flex-direction: column;
     overflow: hidden;
     padding: 1vh 5vh;
-    position: relative;
-    /* Needed for absolute positioning of the pseudo-element */
+    position: relative
 }
 
-/* Style for the Save Recipes button */
+
 .save-all-button {
     padding: 10px 25px;
     background-color: rgba(4, 66, 168, 1);
-    color: white;
+    color: #FFFFFF;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
     width: 100px;
     align-self: flex-end;
-    display: none;
-    /* Adjust as needed to create space between the form and the button */
+    display: none
 }
 
-/* Style for the Save Recipes button */
+
 .save-all-button::after {
     padding: 10px 25px;
     background-color: rgba(4, 66, 168, 1);
-    color: white;
+    color: #FFFFFF;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
     width: 100px;
-    align-self: flex-end;
-    /* Adjust as needed to create space between the form and the button */
+    align-self: flex-end
 }
 
 .form-container {
     width: 100%;
-    overflow: hidden;
+    overflow: hidden
 }
 
 .left-div {
-    margin-left: 5vh;
+    margin-left: 5vh
 }
 
 .right-div {
-    margin-left: 10vh;
+    margin-left: 10vh
 }
 
 .card .os-content,
 .card .os-viewport {
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 .card {
@@ -208,13 +205,13 @@
     border: 1px solid rgba(4, 66, 168, 1);
     overflow: auto;
     height: 80vh;
-    overflow-x: hidden;
+    overflow-x: hidden
 }
 
 .tab-recipes {
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    overflow-x: hidden
 }
 
 .tablinks-recipes {
@@ -228,7 +225,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 146px;
+    max-width: 146px
 }
 
 .add-recipe-tab {
@@ -240,30 +237,30 @@
     transition: .3s;
     font-size: 16px;
     color: #808080;
-    width: 146px;
+    width: 146px
 }
 
 .add-recipe-tab:hover {
-    background-color: rgba(4, 66, 168, .2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tablinks-recipes:hover {
-    background-color: rgba(4, 66, 168, .2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .tablinks-recipes:first-child {
     border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-right-radius: 10px
 }
 
 .tablinks-recipes.opened:not(:first-child) {
-    border-top: 1px solid rgba(4, 66, 168, 1);
+    border-top: 1px solid rgba(4, 66, 168, 1)
 }
 
 .tablinks-recipes.opened {
     background-color: rgba(4, 66, 168, .2);
     color: rgba(4, 66, 168, 1);
-    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    border-bottom: 1px solid rgba(4, 66, 168, 1)
 }
 
 .modal {
@@ -276,7 +273,7 @@
     height: 100%;
     overflow: hidden;
     background-color: #000;
-    background-color: rgba(0, 0, 0, .4);
+    background-color: rgba(0, 0, 0, .4)
 }
 
 .modal-content {
@@ -286,26 +283,26 @@
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
     height: 48%;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font-weight: lighter;
+    font-weight: lighter
 }
 
 .close:hover,
 .close:focus {
     color: #000;
     text-decoration: none;
-    cursor: pointer;
+    cursor: pointer
 }
 
 #recipeForm {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .modal input[type="number"],
@@ -315,11 +312,11 @@
     border: 2px solid #ccc;
     border-radius: 10px;
     outline: none;
-    transition: border-color .3s;
+    transition: border-color .3s
 }
 
 .modal button {
-    border: none;
+    border: none
 }
 
 .modal input[type="submit"] {
@@ -328,28 +325,28 @@
     color: #fff;
     background-color: #0442a8;
     border-radius: 10px;
-    transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out
 }
 
 .modal input[type="text"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 .left-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
+    padding: 10px
 }
 
 .right-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
+    padding: 10px
 }
 
 .recipe-form {
     padding-left: 20px;
-    display: flex;
+    display: flex
 }
 
 .recipe-form input[type="number"],
@@ -360,12 +357,12 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color .3s;
+    transition: border-color .3s
 }
 
 .recipe-form input[type="number"]:focus,
 .recipe-form input[type="text"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 .recipe-form input[type="datetime-local"] {
@@ -375,11 +372,11 @@
     border-radius: 10px;
     outline: none;
     margin-bottom: 10px;
-    transition: border-color .3s;
+    transition: border-color .3s
 }
 
 .recipe-form input[type="datetime-local"]:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 select {
@@ -387,15 +384,15 @@ select {
     width: 300px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 select option {
-    padding: 6px;
+    padding: 6px
 }
 
 .delete-recipe {
-    font-size: 12px;
+    font-size: 12px
 }
 
 #change-date {
@@ -403,25 +400,25 @@ select option {
     margin-bottom: 10px;
     font-size: 12px;
     border-radius: 5px;
-    border: 1px solid #0442a8;
+    border: 1px solid #0442a8
 }
 
 .delete-container:hover .delete-icon,
 .delete-container:hover .delete-text {
     color: #f00;
-    transition: color .2s;
+    transition: color .2s
 }
 
 .delete-icon,
 .delete-text {
     display: inline-block;
     vertical-align: middle;
-    font-size: 12px;
+    font-size: 12px
 }
 
 .delete-container {
     color: #0442a8;
-    cursor: pointer;
+    cursor: pointer
 }
 
 .add-product-button {
@@ -433,16 +430,16 @@ select option {
     transition: .3s;
     font-size: 16px;
     color: #808080;
-    width: 100%;
+    width: 100%
 }
 
 .add-product-button:hover {
-    background-color: rgba(4, 66, 168, .2);
+    background-color: rgba(4, 66, 168, .2)
 }
 
 .product-item:first-child {
     margin-top: 10px;
-    border-top: 1px solid rgba(128, 128, 128, .234);
+    border-top: 1px solid rgba(128, 128, 128, .234)
 }
 
 .product-item {
@@ -451,35 +448,35 @@ select option {
     padding: 10px 15px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: center
 }
 
 .product-item .product-icon {
-    margin-left: 5px;
+    margin-left: 5px
 }
 
 .product-info-container {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: start
 }
 
 .fa-edit {
-    color: #0442a8;
+    color: #0442a8
 }
 
 .fa-trash {
-    color: #0442a8;
+    color: #0442a8
 }
 
 .fa-edit:hover {
     transition: color .2s;
-    color: #ffa500;
+    color: #ffa500
 }
 
 .fa-trash:hover {
     color: #f00;
-    transition: color .2s;
+    transition: color .2s
 }
 
 #alertModal {
@@ -492,7 +489,7 @@ select option {
     height: 100%;
     overflow: auto;
     background-color: #000;
-    background-color: rgba(0, 0, 0, .4);
+    background-color: rgba(0, 0, 0, .4)
 }
 
 .modal-content #alertModal {
@@ -502,30 +499,30 @@ select option {
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
     height: 50%;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 #productForm {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-between
 }
 
 #productForm .form-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between
 }
 
 #productForm .left-div,
 #productForm .right-div {
     align-items: center;
     flex: 1;
-    /* padding: 10px; */
-    box-sizing: border-box;
+
+    box-sizing: border-box
 }
 
 #productModalContent .right-div textarea {
-    resize: none;
+    resize: none
 }
 
 .modal input[type="date"],
@@ -536,16 +533,16 @@ select option {
     border-radius: 10px;
     outline: none;
     transition: border-color .3s;
-    margin-bottom: 10px;
+    margin-bottom: 10px
 }
 
 .modal textarea {
-    resize: vertical;
+    resize: vertical
 }
 
 .modal input[type="date"]:focus,
 .modal textarea:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 #productModal {
@@ -558,7 +555,7 @@ select option {
     height: 100%;
     overflow: hidden;
     background-color: #000;
-    background-color: rgba(0, 0, 0, .4);
+    background-color: rgba(0, 0, 0, .4)
 }
 
 #productModalContent {
@@ -570,17 +567,17 @@ select option {
     height: 85%;
     border-radius: 10px;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: hidden
 }
 
 .product-price-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .price-container {
     display: flex;
-    align-items: start;
+    align-items: start
 }
 
 .price-container select,
@@ -589,27 +586,27 @@ select option {
     padding: 10px;
     outline: none;
     transition: border-color .3s;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 .price-container input[type="number"]:focus,
 .price-container select:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 .price-container select {
     width: 100px;
-    margin-right: 10px;
+    margin-right: 10px
 }
 
 .client-color-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .client-color-container {
     display: flex;
-    align-items: start;
+    align-items: start
 }
 
 .client-color-container select,
@@ -618,22 +615,22 @@ select option {
     padding: 10px;
     outline: none;
     transition: border-color .3s;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 .client-color-container input[type="text"]:focus,
 .client-color-container select:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
 }
 
 .client-color-container select {
     width: 100px;
-    margin-right: 10px;
+    margin-right: 10px
 }
 
 .weight-value {
     display: flex;
-    align-items: start;
+    align-items: start
 }
 
 .weight-value select {
@@ -642,9 +639,109 @@ select option {
     padding: 10px;
     outline: none;
     transition: border-color .3s;
-    border-radius: 10px;
+    border-radius: 10px
 }
 
 .weight-value select:focus {
-    border-color: #0442a8;
+    border-color: #0442a8
+}
+
+#progressContainer {
+    margin-top: 20px;
+    position: relative;
+    width: 100%;
+
+    height: 300px
+}
+
+#progressLine {
+    position: absolute;
+    left: 50%;
+    height: 100%;
+    border-left: 3px solid #3498db;
+    z-index: 1
+}
+
+
+#progressLineOverlay {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+
+    border-left: 3px solid #ccc;
+
+    z-index: 1
+}
+
+.progressStep {
+    position: absolute;
+    left: calc(50% - 9px);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #ccc;
+    transform: translateY(-50%);
+    z-index: 2
+}
+
+.progressLabel {
+    position: absolute;
+    right: 2vw;
+    display: block;
+    width: 150px;
+    text-align: right;
+    top: 51%;
+    transform: translateY(-40%);
+    font-size: small;
+    color: #ccc;
+
+    transition: color 0.25s
+}
+
+.progressLabel.active {
+    color: #3498db
+}
+
+.timeValue {
+    position: absolute;
+    left: 2vw;
+    display: block;
+    width: 150px;
+    text-align: left;
+    top: 51%;
+    transform: translateY(-40%);
+    font-size: small;
+    color: black;
+}
+
+#spongeStartProgress {
+    top: 0%;
+}
+
+#spongeEndProgress {
+    top: 20%;
+}
+
+#doughStartProgress {
+    top: 40%;
+}
+
+#doughEndProgress {
+    top: 60%;
+}
+
+#firstLoafPackedProgress {
+    top: 80%;
+}
+
+#cutOffProgress {
+    top: 100%;
+}
+
+
+
+.progressStep.active {
+    border-color: #3498db
 }
