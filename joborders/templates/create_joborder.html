@@ -70,12 +70,11 @@
                               <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
                               <h1>Add Recipe</h1>
                            </div>
-                           <br>
                            <form id="recipeForm">
                               <label for="recipeName">Recipe Name</label>
                               <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
-                              <label for="cycleTime">Cycle Time</label>
-                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br><br>
+                              <label for="cycleTime">Cycle Time Variable</label>
+                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00" value="00:00:00"><br><br>
                               <input type="submit" value="Submit">
                            </form>
                         </div>
@@ -156,12 +155,37 @@
                   </div>
                   <div id="alertModal" class="modal">
                      <div class="modal-content">
-                        <span class="close" id="closeAlertModal">&times;</span>
-                        <p>Are you sure you want to delete the recipe <strong id="recipeNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+                        <div class="modal-header">
+                           <span class="close" id="closeAlertModal">&times;</span>
+                           <h1>Confirm Delete</h1>
+                        </div>
+                        <p>Are you sure you want to delete the recipe <strong id="alertModalNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+                        <br>
                         <button id="confirmDelete">Confirm</button>
                         <button id="cancelDelete">Cancel</button>
                      </div>
                   </div>
+                  <div id="warningModal" class="modal">
+                     <div class="modal-content">
+                        <div class="modal-header">
+                           <span class="close" id="closeWarningModal">&times;</span>
+                           <h1>No Products Added</h1>
+                        </div>
+                        <p>You have not added any products for <strong id="warningModalNamePlaceholder">[Recipe Name]</strong>. Please add products before creating another recipe.</p>
+                        <br>
+                        <button id="okayWarningModal">Okay</button>
+                     </div>
+                  </div>
+                  <div id="summaryModal" class="modal">
+                     <div class="modal-content" id="summaryModalContent">
+                        <div class="modal-header">
+                           <span class="close" id="closeSummaryModal">&times;</span>
+                           <h1>Job Order Summary</h1>
+                        </div>
+                       <div id="summaryContent"></div>
+                       <button id="confirmSave">Confirm Save</button>
+                     </div>
+                   </div>
                   <div class="small-card" id="tracker">
                      <p id="small-header">Progress Tracker</p>
                      <div id="progressContainer">

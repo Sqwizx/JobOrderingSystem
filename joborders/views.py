@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
-from .models import Recipe, JobOrder, Activity, Product
+from .models import RecipeMapping, JobOrder, Activity, Product
 from decimal import Decimal
 import pytz
 
@@ -70,16 +70,18 @@ def save_recipes(request):
             del recipe_data['doughEndTime']
             del recipe_data['firstLoafPacked']
             del recipe_data['cutOffTime']
-            form_id = recipe_data.get('formId')
+
             
             recipe_prod_date = aware.localize(datetime.strptime(recipe_data['dateTimePicker'], '%A, %d %b %Y'))
 
             # Create `timedelta` objects
             std_time_delta = timedelta(hours=std_hours, minutes=std_minutes, seconds=std_seconds)
             cycle_time_delta = timedelta(hours=cycle_hours, minutes=cycle_minutes, seconds=cycle_seconds)
+
+            recipe_id = '{}_{}'.format(job_order_id, recipe_data['recipeName'])
             # Create the Recipe instance
-            recipe = Recipe.objects.create(
-                recipeId=form_id,
+            recipe = RecipeMapping.objects.create(
+                recipeId=recipe_id,
                 jobOrder=job_order,
                 recipeName=recipe_data['recipeName'],
                 recipeProdDate=recipe_prod_date,
@@ -118,7 +120,7 @@ def save_recipes(request):
                 product_sale_date = product_data.get('saleDate')
                 product_sale_date = aware.localize(datetime.strptime(product_data['saleDate'], '%Y-%m-%d')) if product_sale_date else None
                 
-                product_id = '{}{}'.format(recipe.recipeId, product_data['name'].replace(' ', ''))
+                product_id = '{}_{}'.format(recipe.recipeId, product_data['name'].replace(' ', ''))
                 Product.objects.create(
                 productId=product_id,
                 recipe=recipe,

@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'joborders',
+    'channels',
+    'recipes',
 ]
 
 MIDDLEWARE = [
@@ -92,6 +94,8 @@ DATABASES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 SESSION_COOKIE_AGE = 604800
+
+APPEND_SLASH = False
 
 SESSION_COOKIE_HTTPONLY = True
 

@@ -8,19 +8,21 @@
 {% load static %}
 <div class="sidebar">
     <div class="logo-details">
-      <img src="{% static 'img/FLlogo.png' %}" alt="Farmland Logo">
+      <a href="{% url 'dashboard' %}">
+        <img src="{% static 'img/FLlogo.png' %}" alt="Farmland Logo">
+      </a>
         <i class='bx bx-menu' id="btn"></i>
     </div>
     <ul class="nav-list">
       <li>
-        <a href="#">
+        <a href="{% url 'dashboard' %}">
           <i class='bx bx-grid-alt'></i>
           <span class="links_name">Job Order</span>
         </a>
          <span class="tooltip">Job Order</span>
       </li>
       <li>
-       <a href="#">
+       <a href="{% url 'recipe_dashboard' %}">
          <i class='bx bx-user' ></i>
          <span class="links_name">Recipe</span>
        </a>

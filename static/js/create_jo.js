@@ -120,15 +120,82 @@ document.addEventListener('DOMContentLoaded', function () {
 
     resetData();
 
-    // Event listener for all "Add Recipe" buttons
+    function checkAndDisplayModal(index) {
+        var activeTab = document.querySelector('.tabcontent[style*="display: block"]');
+        if (activeTab) {
+            var recipeButtons = activeTab.querySelectorAll('.tablinks-recipes');
+            if (recipeButtons.length > 0) {
+                console.log(`Checking ${recipeButtons.length}`)
+
+                // Initialize productsByRecipe for the active recipe if it does not exist
+                if (activeRecipe.name !== null && activeRecipe.tabIndex !== null) {
+                    if (!productsByRecipe[activeRecipe.tabIndex]) {
+                        productsByRecipe[activeRecipe.tabIndex] = {};
+                    }
+                    if (!productsByRecipe[activeRecipe.tabIndex][activeRecipe.name]) {
+                        productsByRecipe[activeRecipe.tabIndex][activeRecipe.name] = [];
+                    }
+                }
+
+                // Now it's safe to check if the active recipe has products
+                var hasProductsInActiveRecipe = activeRecipe.name !== null &&
+                    productsByRecipe[activeRecipe.tabIndex] &&
+                    productsByRecipe[activeRecipe.tabIndex][activeRecipe.name].length > 0;
+
+                console.log(`Checking ${activeRecipe.tabIndex} ${activeRecipe.name} ${productsByRecipe[activeRecipe.tabIndex][activeRecipe.name].length}`)
+                // If the active recipe has products, show warning modal; otherwise, show the recipe creation modal
+                if (hasProductsInActiveRecipe) {
+                    // Show the recipe creation modal for the new recipe
+                    var modal = document.getElementById(`myModal-${index}`);
+                    if (modal) {
+                        modal.style.display = 'block';
+                        console.log(`Recipe creation modal opened for index: ${index}`);
+                    } else {
+                        console.error(`Modal myModal-${index} not found!`);
+                    }
+                } else {
+                    // Show warning modal
+                    var warningModal = document.getElementById('warningModal');
+                    if (warningModal) {
+                        document.getElementById('warningModalNamePlaceholder').textContent = activeRecipe.name;
+                        warningModal.style.display = 'block';
+                        console.log('Warning: The active recipe do not have any products.');
+                    } else {
+                        console.error('Warning modal not found!');
+                    }
+                }
+            } else {
+                // If there are no recipe buttons, directly show the recipe creation modal
+                var modal = document.getElementById(`myModal-${index}`);
+                if (modal) {
+                    modal.style.display = 'block';
+                    console.log(`Recipe creation modal opened for index: ${index}`);
+                } else {
+                    console.error(`Modal myModal-${index} not found!`);
+                }
+
+            }
+        }
+    }
+
+    function warningClose() {
+        const warningModal = document.getElementById('warningModal');
+        warningModal.style.display = 'none';
+    }
+
+    function summaryClose() {
+        const warningModal = document.getElementById('summaryModal');
+        warningModal.style.display = 'none';
+    }
+
+    document.getElementById('closeWarningModal').addEventListener('click', warningClose);
+    document.getElementById('okayWarningModal').addEventListener('click', warningClose);
+
+    // Add the event listener to the "Add Recipe" button
     var addRecipeButtons = document.querySelectorAll(".add-recipe-tab");
     addRecipeButtons.forEach(function (addRecipeButton, index) {
         addRecipeButton.addEventListener("click", function () {
-            var modal = document.getElementById(`myModal-${index}`);
-            if (modal) {
-                modal.style.display = 'block';
-                console.log(`Recipe created: ${modal.id}`);
-            }
+            checkAndDisplayModal(index);
         });
     });
 
@@ -253,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function deleteRecipe(recipeName, index, button) {
         const alertModal = document.getElementById('alertModal');
         if (alertModal) {
-            document.getElementById('recipeNamePlaceholder').textContent = recipeName;
+            document.getElementById('alertModalNamePlaceholder').textContent = recipeName;
             alertModal.style.display = 'block';
 
             // Store parameters for later use.
@@ -567,13 +634,13 @@ document.addEventListener('DOMContentLoaded', function () {
         activeRecipe.dateTimePicker = dateTimePicker.value;
 
         var datetimeLabel = createLabelElement(dateTimePicker.id, "Production Date");
-        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate");
+        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate", null, false, true);
         var productionRateLabel = createLabelElement(productionRateInput.id, "Production Rate");
 
-        var salesOrderInput = createInputElement("number", `salesOrder-${uniqueFormId}`, "salesOrder", null, true);
+        var salesOrderInput = createInputElement("number", `salesOrder-${uniqueFormId}`, "salesOrder", null, true, true);
         var salesOrderLabel = createLabelElement(salesOrderInput.id, "Total Sales Order");
 
-        var wasteInput = createInputElement("number", `waste-${uniqueFormId}`, "waste", 2);
+        var wasteInput = createInputElement("number", `waste-${uniqueFormId}`, "waste", 2, false, true);
         var wasteLabel = createLabelElement(wasteInput.id, "Budgeted Waste (%)");
 
         var stdTimeInput = createInputElement("text", `stdTime-${uniqueFormId}`, "stdTime", null, true, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
@@ -582,10 +649,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var totalTrayInput = createInputElement("number", `totalTray-${uniqueFormId}`, "totalTray", null, true);
         var totalTrayLabel = createLabelElement(totalTrayInput.id, "Total Tray");
 
-        var beltNoInput = createInputElement("number", `beltNo-${uniqueFormId}`, "beltNo");
+        var beltNoInput = createInputElement("number", `beltNo-${uniqueFormId}`, "beltNo", null, false, true);
         var beltNoLabel = createLabelElement(beltNoInput.id, "Suction Cup Belt No.");
 
-        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize");
+        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize", null, false, true);
         var batchSizeLabel = createLabelElement(batchSizeInput.id, "Batch Size");
 
         var batchesInput = createInputElement("number", `batches-${uniqueFormId}`, "batches", null, true);
@@ -1022,8 +1089,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(`Updated data for ${formIdentifier}:`, formData);
     }
 
-
-
     function attachInputChangeListeners(form) {
         const inputElements = form.querySelectorAll('input, select, textarea');
         inputElements.forEach(input => {
@@ -1047,61 +1112,188 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachSaveButtonListener(saveButton) {
         if (!saveButton.dataset.listenerAttached) {
             saveButton.addEventListener('click', function () {
-                // Disable the button to prevent multiple submissions
-                saveButton.disabled = true;
-                saveButton.textContent = 'Saving...'; // Optional: provide user feedback
-
-                // Collect data from all forms again to ensure we have the most current data
+                // Collect data from all forms to ensure we have the most current data
                 let allForms = document.querySelectorAll('.recipe-form');
                 allForms.forEach(form => {
                     collectFormData(form); // This populates allFormsData
                 });
 
-                // Convert allFormsData object to an array of recipe data objects
-                let recipesArray = Object.values(allFormsData);
+                // Generate the summary report to display in the modal
+                generateSummaryReport();
 
-                // Create the data payload to send to the server
-                let payload = {
-                    recipes: recipesArray  // This is the expected format on the backend
-                };
+                // Show the modal
+                document.getElementById('summaryModal').style.display = 'block';
 
-                fetch('/save_recipes/', {
-                    method: 'POST',
-                    body: JSON.stringify(payload), // Send the payload with recipes array
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken()
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            // After saving, redirect to the homepage
-                            allFormsData = {};
-                            isSaving = false;
-                            window.location.href = '/';
-                        } else {
-                            isSaving = false;
-                            // If the save wasn't successful, show an error message
-                            alert('Failed to save the recipe: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        isSaving = false;
-                        console.error('Error:', error);
-                        alert('Error saving recipe: ' + error.message);
-                        // Re-enable the button in case of error so the user can try again
-                        saveButton.disabled = false;
-                        saveButton.textContent = 'Save'; // Reset button text
-                    });
+                // Re-enable the save button after the summary is shown
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save'; // Reset button text if needed
             });
+
             saveButton.dataset.listenerAttached = 'true';
         }
+    }
+
+    document.getElementById('confirmSave').addEventListener('click', function () {
+        // Disable the confirm button to prevent multiple submissions
+        this.disabled = true;
+        this.textContent = 'Saving...'; // Optional: provide user feedback
+
+        // Convert allFormsData object to an array of recipe data objects
+        let recipesArray = Object.values(allFormsData);
+
+        // Create the data payload to send to the server
+        let payload = {
+            recipes: recipesArray  // This is the expected format on the backend
+        };
+
+        fetch('/save_recipes/', {
+            method: 'POST',
+            body: JSON.stringify(payload), // Send the payload with recipes array
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // After saving, redirect to the homepage
+                    allFormsData = {};
+                    window.location.href = '/';
+                } else {
+                    // If the save wasn't successful, show an error message
+                    alert('Failed to save the recipe: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving recipe: ' + error.message);
+                // Re-enable the button in case of error so the user can try again
+                this.disabled = false;
+                this.textContent = 'Confirm Save'; // Reset button text
+            });
+
+        // Close the modal
+        document.getElementById('summaryModal').style.display = 'none';
+    });
+
+    document.getElementById('closeSummaryModal').addEventListener('click', summaryClose);
+
+    function generateSummaryReport() {
+        let summary = '';
+        let unfilledFields = false;
+
+        // Group forms by production date
+        const formsByDate = {};
+        for (const [formIdentifier, formData] of Object.entries(allFormsData)) {
+            const productionDate = formData.dateTimePicker;
+            if (!formsByDate[productionDate]) {
+                formsByDate[productionDate] = [];
+            }
+            formsByDate[productionDate].push({ formIdentifier, formData });
+        }
+
+        // Iterate over grouped forms
+        for (const [productionDate, forms] of Object.entries(formsByDate)) {
+            // Format production date
+            const formattedDate = new Date(productionDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Start of the date details
+            summary += `
+            <details>
+                <summary>${formattedDate}</summary>
+                <div class="date-details">
+            `;
+
+            // Iterate over forms for the current date
+            for (const { formIdentifier, formData } of forms) {
+                // Start of the form details
+                summary += `
+                    <details>
+                        <summary>${formIdentifier}</summary>
+                        <div class="form-details">
+                            <div class="form-column">
+                `;
+
+                // Divide variables into two columns
+                const variableKeys = Object.keys(formData).filter(key => key !== 'products');
+                const halfwayIndex = Math.ceil(variableKeys.length / 2);
+
+                variableKeys.forEach((key, index) => {
+                    const value = formData[key];
+                    const isEmptyOrNull = value === '' || value === null;
+                    summary += `<div class="form-field ${isEmptyOrNull ? 'empty' : ''}"><span class="field-key"><b>${key}</b></span><span class="field-value ${isEmptyOrNull ? 'empty' : ''}">${value}</span></div>`;
+                    if (isEmptyOrNull && key !== 'products') {
+                        unfilledFields = true;
+                    }
+
+                    // Insert a closing div and open a new one for the second column
+                    if (index === halfwayIndex - 1) {
+                        summary += `</div><div class="form-column">`;
+                    }
+                });
+
+                // Close the first column and start the second column
+                summary += `</div></div><div class="form-column">`;
+
+                // Display products as collapsible dropdowns
+                if (formData.products && formData.products.length > 0) {
+                    // Inside the loop for products
+                    formData.products.forEach(product => {
+                        // Start of the product details
+                        summary += `
+        <details class="product-details">
+            <summary>${product.name}</summary>
+            <div class="product-details-container">
+                <div class="product-column">
+    `;
+
+                        // Divide product variables into two columns
+                        const productVariableKeys = Object.keys(product);
+                        const halfwayProductIndex = Math.ceil(productVariableKeys.length / 2);
+
+                        productVariableKeys.forEach((productKey, productIndex) => {
+                            const productValue = product[productKey];
+                            summary += `
+            <div class="product-field ${productValue ? '' : 'empty'}">
+                <span class="product-key"><b>${productKey}</b></span>
+                <span class="product-value">${productValue}</span>
+            </div>
+        `;
+
+                            // Insert a closing div and open a new one for the second column
+                            if (productIndex === halfwayProductIndex - 1) {
+                                summary += `</div><div class="product-column">`;
+                            }
+                        });
+
+                        // Close the second column and the product details container
+                        summary += '</div></div></details>';
+                    });
+
+                } else {
+                    summary += '<div class="form-field"><span class="field-value empty">No products found for this recipe.</span></div>';
+                }
+                // Close the form details
+                summary += '</div></details>';
+            }
+
+            // Close the date details
+            summary += '</div></details>';
+        }
+
+        document.getElementById('summaryContent').innerHTML = summary;
+        document.getElementById('confirmSave').disabled = unfilledFields;
     }
 
     // This function checks if any forms exist and shows/hides the save button accordingly
@@ -1174,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariableInput) {
-        console.log(`Time Variable: ${timeVariableInput.value}`);
+        console.log(`Time Variable: ${timeVariableInput}`);
         var salesOrderValue = parseFloat(salesOrderInput.value) || 0;
         var wastePercentage = parseFloat(wasteInput.value) / 100 || 0.02;
         var batchSizeValue = parseFloat(batchSizeInput.value) || 1;
@@ -1393,17 +1585,22 @@ document.addEventListener('DOMContentLoaded', function () {
             product.style.display = 'none';
         });
 
+        var uniqueFormId = `recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
         var currentTabContent = document.getElementById(day);
         var recipeButtonsInCurrentTab = currentTabContent.querySelectorAll('.tablinks-recipes');
         if (recipeButtonsInCurrentTab.length > 0) {
+            console.log('Length of', recipeButtonsInCurrentTab.length)
+            setActiveTab(recipeButtonsInCurrentTab[0]);
+            displayRecipeDetails(activeRecipe.name, activeRecipe.tabIndex);
             printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
+            updateTrackerDisplay(uniqueFormId)
         }
 
         checkAndToggleProductModalButton();
 
         checkAndToggleTrackerVisibility();
 
-        activateFirstRecipeInMainTab(day);
+        // activateFirstRecipeInMainTab(day);
     }
 
     function activateFirstRecipeInMainTab(day) {

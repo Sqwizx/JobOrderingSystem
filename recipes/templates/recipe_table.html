@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<table id="dashboard-table">
+    <thead>
+        <tr>
+            <th>No. Code</th>
+            <th>Production Rate</th>
+            <th>Std. Batch Size</th>
+            <th>Cycle Time Variable</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if recipes %}
+            {% for recipe in recipes %}
+                <tr>
+                    <td>{{ recipe.recipeName }}</td>
+                    <td>{{ recipe.productionRate }}</td>
+                    <td>{{ recipe.stdBatchSize }}</td>
+                    <td>{{ recipe.cycleTimeVariable }}</td>
+                    <td>
+                        <button class="edit-btn" 
+                            data-recipe-id="{{ recipe.id }}"
+                            data-recipe-name="{{ recipe.recipeName }}"
+                            data-production-rate="{{ recipe.productionRate }}"
+                            data-std-batch-size="{{ recipe.stdBatchSize }}"
+                            data-cycle-time-variable="{{ recipe.cycleTimeVariable }}">Edit</button>
+
+                        <button class="delete-btn" data-recipe-id="{{ recipe.id }}">Delete</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="5">No recipes found.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+    </html>

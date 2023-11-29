@@ -19,7 +19,7 @@ class JobOrder(models.Model):
     def __str__(self):
         return self.jobOrderId
 
-class Recipe(models.Model):
+class RecipeMapping(models.Model):
     recipeId = models.CharField(max_length=50)
     recipeName = models.CharField(max_length=50)
     recipeProdDate = models.DateField()
@@ -47,14 +47,11 @@ class Activity(models.Model):
     doughStart = models.DateTimeField()
     doughEnd = models.DateTimeField()
     firstLoafPacked = models.DateTimeField()
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="activity_recipe")
+    recipe = models.ForeignKey(RecipeMapping, on_delete=models.CASCADE, related_name="activity_recipe")
 
     def __str__(self):
         # Assuming there's a ForeignKey from Activity to Recipe
         return f"{self.recipe.recipeId}'s Activity"
-    
-from django.db import models
-from django.utils import timezone
 
 class Product(models.Model):
     productId = models.CharField(max_length=50, unique=True, null=True)
@@ -72,7 +69,7 @@ class Product(models.Model):
     tray = models.PositiveIntegerField(null=True)  # Assuming this can be optional
     trolley = models.PositiveIntegerField(null=True)  # Assuming this can be optional
     productRemarks = models.TextField(blank=True, null=True)  # Text fields are better for longer, variable-length text
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="products", null=True)  # Removed the null=True since ForeignKey should not be null in most cases
+    recipe = models.ForeignKey(RecipeMapping, on_delete=models.CASCADE, related_name="products", null=True)  # Removed the null=True since ForeignKey should not be null in most cases
 
     def __str__(self):
         return self.productId

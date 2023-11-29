@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<table id="dashboard-table">
+        <thead>
+            <tr>
+                <th>No. Code</th>
+                <th>Date Created</th>
+                <th>Status</th>
+                <th>Current Recipe</th>
+                <th>Activity</th>
+                <th>Est. Time</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for job in job_orders %}
+              <tr>
+                  <td>{{ job.jobOrderId }}</td>
+                  <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
+                  <td>{{ job.jobOrderStatus }}</td>
+                  <td>{{ job.current_recipe_name }}</td>
+                  <td>{{ job.current_activity_name }}</td>
+                  <td>{{ job.current_activity_time|date:"l, d M Y H:i A" }}</td>
+              </tr>
+          {% empty %}
+              <tr>
+                  <td colspan="6">No job orders found.</td>
+              </tr>
+          {% endfor %}
+      </tbody>
+      </table>
+    </html>
