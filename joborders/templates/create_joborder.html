@@ -57,9 +57,11 @@
                               <div class="form-container" id="recipe-details">
                               <!-- Recipe details form will be dynamically added here -->
                               </div>
+                              {% if forloop.first %}
                               <div class="footer" id="footer">
                                 <button class="save-all-button">Save</button>
-                               </div>
+                              </div>
+                              {% endif %}
                            </div>
                         </div>
                      </div>
@@ -71,10 +73,21 @@
                               <h1>Add Recipe</h1>
                            </div>
                            <form id="recipeForm">
+                              <div class="search-container">
+                                 <label for="searchField">Search Recipes</label>
+                                 <input type="text" id="searchField-{{ forloop.counter0 }}" name="searchQuery" autocomplete="off">
+                                 <div id="searchResults-{{ forloop.counter0 }}" class="searchResults"></div>
+                              </div>
+                              <br><b>Or</b><br>
                               <label for="recipeName">Recipe Name</label>
                               <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
                               <label for="cycleTime">Cycle Time Variable</label>
-                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00" value="00:00:00"><br><br>
+                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br>
+
+                              <!-- HIDDEN INPUTS -->
+                              <input type="hidden" id="prodRate-{{ forloop.counter0 }}" name="prodRate">
+                              <input type="hidden" id="batchSize-{{ forloop.counter0 }}" name="batchSize">
+                              
                               <input type="submit" value="Submit">
                            </form>
                         </div>

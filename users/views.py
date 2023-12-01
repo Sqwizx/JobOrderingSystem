@@ -1,11 +1,15 @@
+from collections import defaultdict
+from itertools import groupby
+from operator import attrgetter
 from django.http import JsonResponse
 import pytz
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 from joborders.models import JobOrder
 from django.contrib.auth.decorators import login_required
-from django.template.defaultfilters import date
+from django import template
+from datetime import timedelta
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -175,6 +179,24 @@ def update_dashboard_table(request):
         job_orders_list.append(job_data)
 
     return JsonResponse({'job_orders': job_orders_list})
+
+def job_order_detail(request, job_order_id):
+    job_order = get_object_or_404(JobOrder, jobOrderId=job_order_id)
+    recipes = job_order.recipes.order_by('recipeProdDate')
+
+    # Group recipes by their production date
+    grouped_recipes = defaultdict(list)
+    for recipe in recipes:
+        grouped_recipes[recipe.recipeProdDate].append(recipe)
+
+    # Assuming there are recipes, get the range of recipeProdDates
+    date_range = grouped_recipes.keys()
+
+    return render(request, 'view_joborder.html', {
+        'job_order': job_order,
+        'grouped_recipes': grouped_recipes,
+        'date_range': date_range,
+    })
 
 def logout_view(request):
     logout(request)  # This logs the user out

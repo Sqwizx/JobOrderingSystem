@@ -1,15 +1,15 @@
 import json
-from datetime import datetime, timedelta
-from django.shortcuts import render
-from django.utils import timezone
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.db import transaction
-from .models import RecipeMapping, JobOrder, Activity, Product
-from decimal import Decimal
 import pytz
-
+from decimal import Decimal
+from recipes.models import Recipe
+from django.db import transaction
+from django.utils import timezone
+from django.shortcuts import render
+from django.http import JsonResponse
+from datetime import datetime, timedelta
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from .models import RecipeMapping, JobOrder, Activity, Product, RecipePerDay
 
 @login_required
 def create_joborder(request):
@@ -41,7 +41,9 @@ def save_recipes(request):
             userId=request.user,
         )
         
+        recipe_per_day_dict = {}
         for recipe_data in recipes_data:
+            # Parse the datetime strings into aware datetime objects
             sponge_start = aware.localize(datetime.strptime(recipe_data['spongeStartTime'], '%A, %d %b %Y %H:%M'))
             sponge_end = aware.localize(datetime.strptime(recipe_data['spongeEndTime'], '%A, %d %b %Y %H:%M'))
             dough_start = aware.localize(datetime.strptime(recipe_data['doughStartTime'], '%A, %d %b %Y %H:%M'))
@@ -50,36 +52,29 @@ def save_recipes(request):
             cut_off = aware.localize(datetime.strptime(recipe_data['cutOffTime'], '%A, %d %b %Y %H:%M'))
             std_hours, std_minutes, std_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
             cycle_hours, cycle_minutes, cycle_seconds = map(int, recipe_data.get('cycleTime', '00:00:00').split(':'))
-                    # Extract activity-related data from recipe_data
-            activity_data = {
-                'spongeStart': sponge_start,
-                'spongeEnd': sponge_end,
-                'doughStart': dough_start,
-                'doughEnd': dough_end,
-                'firstLoafPacked': first_loaf_packed,
-                'cutOffTime': cut_off,
-            }
-
-            # Now create an 'activities' key in recipe_data that contains the extracted info
-            recipe_data['activities'] = [activity_data]  # Here we create a list with a single activity
-
-            # Remove the activity-related data from the recipe_data since it's now in 'activities'
-            del recipe_data['spongeStartTime']
-            del recipe_data['spongeEndTime']
-            del recipe_data['doughStartTime']
-            del recipe_data['doughEndTime']
-            del recipe_data['firstLoafPacked']
-            del recipe_data['cutOffTime']
-
             
+            # Extract the gap value
+            gap_hours, gap_minutes, gap_seconds = map(int, recipe_data.get('gap', '00:00:00').split(':'))
+            gap_time_delta = timedelta(hours=gap_hours, minutes=gap_minutes, seconds=gap_seconds)
+
             recipe_prod_date = aware.localize(datetime.strptime(recipe_data['dateTimePicker'], '%A, %d %b %Y'))
 
-            # Create `timedelta` objects
+            recipe_per_day = recipe_per_day_dict.get(recipe_prod_date)
+            if recipe_per_day is None:
+                recipe_per_day, created = RecipePerDay.objects.get_or_create(
+                    jobOrder=job_order,
+                    production_date=recipe_prod_date,
+                    defaults={'gap': gap_time_delta}
+                )
+                recipe_per_day_dict[recipe_prod_date] = recipe_per_day
+                if not created and recipe_per_day.gap != gap_time_delta:
+                    recipe_per_day.gap = gap_time_delta
+                    recipe_per_day.save()
+
+            # Create RecipeMapping instance
             std_time_delta = timedelta(hours=std_hours, minutes=std_minutes, seconds=std_seconds)
             cycle_time_delta = timedelta(hours=cycle_hours, minutes=cycle_minutes, seconds=cycle_seconds)
-
             recipe_id = '{}_{}'.format(job_order_id, recipe_data['recipeName'])
-            # Create the Recipe instance
             recipe = RecipeMapping.objects.create(
                 recipeId=recipe_id,
                 jobOrder=job_order,
@@ -97,47 +92,66 @@ def save_recipes(request):
                 recipeBeltNo=int(recipe_data.get('beltNo', 0)),
             )
             
-            # Create multiple Activity instances for each Recipe
-            for activity_data in recipe_data['activities']:
-                Activity.objects.create(
-                    recipe=recipe,  # Assuming you have a ForeignKey to Recipe in Activity
-                    spongeStart=sponge_start,
-                    spongeEnd=sponge_end,
-                    doughStart=dough_start,
-                    doughEnd=dough_end,
-                    firstLoafPacked=first_loaf_packed,
-                    cutOffTime=cut_off,
-            # Associate with the Recipe instance
-                )
+            if created or recipe not in recipe_per_day.recipes.all():
+                recipe_per_day.recipes.add(recipe)
+
+            # Create Activity instances
+            Activity.objects.create(
+                recipe=recipe,
+                spongeStart=sponge_start,
+                spongeEnd=sponge_end,
+                doughStart=dough_start,
+                doughEnd=dough_end,
+                firstLoafPacked=first_loaf_packed,
+                cutOffTime=cut_off,
+            )
 
             # Process and save products for the recipe
             for product_data in recipe_data.get('products', []):
-                    # Check if 'expiryDate' is in product_data and is not an empty string
                 product_exp_date = product_data.get('expiryDate')
-                product_exp_date = aware.localize(datetime.strptime(product_data['expiryDate'], '%Y-%m-%d')) if product_exp_date else None
+                if product_exp_date:
+                    product_exp_date = aware.localize(datetime.strptime(product_exp_date, '%A, %d %b %Y'))
 
-                # Check if 'saleDate' is in product_data and is not an empty string
                 product_sale_date = product_data.get('saleDate')
-                product_sale_date = aware.localize(datetime.strptime(product_data['saleDate'], '%Y-%m-%d')) if product_sale_date else None
-                
+                if product_sale_date:
+                    product_sale_date = aware.localize(datetime.strptime(product_sale_date, '%A, %d %b %Y'))
+
                 product_id = '{}_{}'.format(recipe.recipeId, product_data['name'].replace(' ', ''))
                 Product.objects.create(
-                productId=product_id,
-                recipe=recipe,
-                productName=product_data['name'],
-                productSalesOrder=product_data['salesOrder'],
-                productPrice=Decimal(product_data['productPrice']),
-                currency=product_data['currency'],
-                client=product_data['client'],
-                colorSet=product_data.get('color'),  # Assuming this is how you store color, and it's optional
-                productExpDate=product_exp_date,
-                productSaleDate=product_sale_date,
-                noOfSlices=int(product_data['noOfSlices']),
-                thickness=float(product_data['thickness']),
-                weight=int(product_data['weight']),
-                tray=int(product_data.get('tray', 0)),  # Defaulting to 0 if not provided
-                trolley=int(product_data.get('trolley', 0)),  # Defaulting to 0 if not provided
-                productRemarks=product_data.get('remarks', '')  # Defaulting to empty string if not provided
-            )
+                    productId=product_id,
+                    recipe=recipe,
+                    productName=product_data['name'],
+                    productSalesOrder=int(product_data['salesOrder']),
+                    productPrice=Decimal(product_data['productPrice']),
+                    currency=product_data['currency'],
+                    client=product_data['client'],
+                    colorSet=product_data.get('color'),
+                    productExpDate=product_exp_date,
+                    productSaleDate=product_sale_date,
+                    noOfSlices=int(product_data['noOfSlices']),
+                    thickness=float(product_data['thickness']),
+                    weight=int(product_data['weight']),
+                    tray=int(product_data.get('tray', 0)),
+                    trolley=int(product_data.get('trolley', 0)),
+                    productRemarks=product_data.get('remarks', ''),
+                )
 
     return JsonResponse({'status': 'success'})
+
+def search_recipes(request):
+    query = request.GET.get('query', '')
+    recipes = Recipe.objects.filter(recipeName__icontains=query)
+
+    # Prepare the data for JSON response
+    recipe_data = []
+    for recipe in recipes:
+        recipe_dict = {
+            'id': recipe.id,
+            'recipeName': recipe.recipeName,
+            'cycleTimeVariable': recipe.cycleTimeVariable.total_seconds(),  # Convert timedelta to seconds
+            'productionRate': recipe.productionRate,
+            'stdBatchSize': recipe.stdBatchSize
+        }
+        recipe_data.append(recipe_dict)
+
+    return JsonResponse({'recipes': recipe_data})

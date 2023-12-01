@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+   <head>
+      <meta charset="UTF-8">
+      <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
+      {% load static %}
+      <link rel="stylesheet" href="{% static 'css/create.css' %}">
+      <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+      <!-- Boxicons CDN Link -->
+      <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
+   </head>
+   <body>
+      {% csrf_token %}
+      <div id="scrollContainer" class="scroll-area">
+      {% include 'sidebar.html' %}
+      <section class="home-section">
+         {% include 'create_header.html' %}
+         <div class="main-content">
+         <div class="container">
+            <div class="left-column">
+               <div class="big-card">
+                  <div class="tab">
+                     {% for date in date_range %}
+                     <button data-day="{{ date }}" class="tablinks {% if forloop.first %}active{% endif %}">
+                     <span class="date-text">{{ date|date:"j" }}</span> <br> {{ date|date:"D" }}
+                     </button>
+                     {% endfor %}
+                  </div>
+                  {% for recipe_date, recipes in grouped_recipes.items %}
+                  <div id="{{ recipe_date }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                  <p id="recipe-list">Recipe List</p>
+                  <div class="content-container">
+                     <div class="card">
+                        <div class="first-column">
+                           <div class="tab-recipes" id="recipe-tabs">
+                              <!-- Loop through recipes within each production date group -->
+                              {% for recipe in recipes %}
+                              <!-- Recipe's name will be printed here from the database -->
+                              <button class="tablinks-recipes opened" data-recipe-name="{{ recipe.recipeName }}">
+                              {{ recipe.recipeName }}
+                              </button>
+                              {% endfor %}
+                           </div>
+                        </div>
+                     </div>
+                     <div class="second-column">
+                        <div class="form-container" id="recipe-details">
+                           <!-- Loop through recipes within each production date group -->
+                           {% for recipe in recipes %}
+                           <form id="recipeForm" class="recipe-form" data-recipe-name="{{ recipe.recipeName }}">
+                              <div class="left-div">
+                                 <label for="recipeName">Recipe Name</label>
+                                 <input type="text" id="recipeName" name="recipeName" value="{{ recipe.recipeName }}" required>
+                                 <label for="productionRate">Production Rate</label>
+                                 <input type="number" id="productionRate" name="productionRate" value="{{ recipe.recipeProdRate }}">
+                                 <label for="salesOrder">Total Sales Order</label>
+                                 <input type="number" id="salesOrder" name="salesOrder" value="{{ recipe.recipeTotalSales }}">
+                                 <label for="waste">Budgeted Waste (%)</label>
+                                 <input type="number" id="waste" name="waste" value="{{ recipe.recipeWaste }}">
+                                 <label for="stdTime">Required Std. Time</label>
+                                 <input type="text" id="stdTime" name="stdTime" value="{{ recipe.recipeStdTime|default:"" }}" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00">
+                                 <label for="totalTray">Total Tray</label>
+                                 <input type="number" id="totalTray" name="totalTray" value="{{ recipe.recipeTotalTray }}">
+                                 <label for="beltNo">Suction Cup Belt No.</label>
+                                 <input type="number" id="beltNo" name="beltNo" value="{{ recipe.recipeBeltNo }}">
+                              </div>
+                              <div class="right-div">
+                                 <label for="dateTimePicker">Production Date</label>
+                                 <input type="text" id="dateTimePicker" name="dateTimePicker" value="{{ recipe.recipeProdDate }}" class="flatpickr-input">
+                                 <label for="batchSize">Batch Size</label>
+                                 <input type="number" id="batchSize" name="batchSize" value="{{ recipe.recipeBatchSize }}">
+                                 <label for="batches">Batches To Produce</label>
+                                 <input type="number" id="batches" name="batches" value="{{ recipe.recipeBatches }}">
+                                 <label for="cycleTime">Cycle Time</label>
+                                 <input type="text" id="cycleTime" name="cycleTime" value="{{ recipe.recipeCycleTime|default:"" }}" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00">
+                                 <label for="spongeStartTime">Sponge Start Time</label>
+                                 <input type="text" id="spongeStartTime" name="spongeStartTime" value="{{ recipe.recipeSpongeStartTime|default:"" }}" class="flatpickr-input">
+                                 <label for="totalTrolley">Total Trolley</label>
+                                 <input type="number" id="totalTrolley" name="totalTrolley" value="{{ recipe.recipeTotalTrolley }}">
+                                 <label for="gap">Gap</label>
+                                 <input type="text" id="gap" name="gap" value="{{ recipe.recipeGap|default:"" }}" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00">
+                              </div>
+                           </form>
+                           {% endfor %}
+                        </div>
+                        <div class="footer" id="footer">
+                           <button class="submit-button">Submit</button>
+                           <button class="submit-button">Edit</button>
+                           <button class="submit-button">Delete</button>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               {% endfor %}
+               <div class="right-column">
+                  <div class="small-card" id="product-list">
+                     <p id="small-header">Product List</p>
+                     <div class="product-container">
+                        <!-- This is where product items will be displayed -->
+                        <div class="product-item">
+                           <div class="product-info-container">
+                              <p>Recipe's Product Name</p>
+                              <p style="color: gray; font-size: 14px;">Client name</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="small-card" id="tracker">
+                     <p id="small-header">Progress Tracker</p>
+                     <div id="progressContainer">
+                        <div class="progressStep" id="spongeStartProgress">
+                           <span class="progressLabel">Sponge Start</span>
+                           <span class="timeValue" id="spongeStartTimeTracker">Value of recipe's spongestarttime from db</span>
+                        </div>
+                        <div class="progressStep" id="spongeEndProgress">
+                           <span class="progressLabel">Sponge End</span>
+                           <span class="timeValue" id="spongeEndTimeTracker">Value of recipe's sponge end time from db</span>
+                        </div>
+                        <div class="progressStep" id="doughStartProgress">
+                           <span class="progressLabel">Dough Start</span>
+                           <span class="timeValue" id="doughStartTimeTracker">Value of recipe's dough start time from db</span>
+                        </div>
+                        <div class="progressStep" id="doughEndProgress">
+                           <span class="progressLabel">Dough End</span>
+                           <span class="timeValue" id="doughEndTimeTracker">Value of recipe's dough end time from db</span>
+                        </div>
+                        <div class="progressStep" id="firstLoafPackedProgress">
+                           <span class="progressLabel">First Loaf Packed</span>
+                           <span class="timeValue" id="firstLoafPackedTracker">Value of recipe's first loaf packed time from db</span>
+                        </div>
+                        <div class="progressStep" id="cutOffProgress">
+                           <span class="progressLabel">Cut Off Time</span>
+                           <span class="timeValue" id="cutOffTimeTracker">Value of recipe's cut off time from db</span>
+                        </div>
+                        <div id="progressLine"></div>
+                        <div id="progressLineOverlay"></div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+      </section>
+      <script src="{% static 'js/sidebar.js' %}"></script>
+      <script src="{% static 'js/scrollbar.js' %}"></script>
+      <script src="{% static 'js/view_jo.js' %}"></script>
+      </div>
+   </body>
+</html>

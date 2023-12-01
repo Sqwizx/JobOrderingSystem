@@ -39,6 +39,21 @@ class RecipeMapping(models.Model):
     def __str__(self):
         return self.recipeId
     
+class RecipePerDay(models.Model):
+    id = models.CharField(max_length=100, primary_key=True, editable=False)
+    jobOrder = models.ForeignKey(JobOrder, related_name='recipe_days', on_delete=models.CASCADE)
+    production_date = models.DateField()
+    gap = models.CharField(max_length=50, null=True)
+    recipes = models.ManyToManyField(RecipeMapping, related_name='recipe_days')
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            dateday = self.production_date.strftime("%d%a")  # Format: DayOfWeekDayOfMonth, e.g., "Friday23"
+            self.id = f"{self.jobOrder.jobOrderId}_{dateday}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.id
     
 class Activity(models.Model):
     cutOffTime = models.DateTimeField()

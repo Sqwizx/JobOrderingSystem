@@ -165,11 +165,25 @@
     font-size: 16px;
     width: 100px;
     align-self: flex-end;
-    display: none
 }
 
+.disabled-button {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
 
-.save-all-button::after {
+.disabled-button:hover {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
+
+/* .save-all-button::after {
     padding: 10px 25px;
     background-color: rgba(4, 66, 168, 1);
     color: #FFFFFF;
@@ -179,7 +193,7 @@
     font-size: 16px;
     width: 100px;
     align-self: flex-end
-}
+} */
 
 .form-container {
     width: 100%;
@@ -282,7 +296,7 @@
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
-    height: 48%;
+    height: 60%;
     border-radius: 10px
 }
 
@@ -947,6 +961,15 @@ details>div.date-details>details>div.form-details>div.form-column>div.form-field
     left: 57vw;
 }
 
+/* Styling for the disabled button */
+#confirmSave[disabled] {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
+
 #recipeModal {
     display: none;
     position: fixed;
@@ -1050,3 +1073,40 @@ details>div.date-details>details>div.form-details>div.form-column>div.form-field
     border: none;
     left: 22.5vw;
 }
+
+/* Style search container */
+.search-container {
+    position: relative;
+    /* Create a positioning context for children */
+}
+
+/* Style search results container */
+.searchResults {
+    display: none;
+    /* Hide by default */
+    position: absolute;
+    width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 10px;
+    top: 100%;
+    /* Make sure it's above other content */
+}
+
+/* Style individual search results */
+.searchResults div {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+/* Style hover effect */
+.searchResults div:hover {
+    background-color: rgba(4, 66, 168, 0.2);
+}
+
+/* strong {
+    color: black;
+} */

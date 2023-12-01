@@ -85,5 +85,18 @@ function updateTable(jobOrders) {
     }
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+    // Get all rows with the class "clickable-row"
+    const rows = document.querySelectorAll(".clickable-row");
+
+    // Add a click event listener to each row
+    rows.forEach(function (row) {
+        row.addEventListener("click", function () {
+            const jobOrderId = this.getAttribute("data-job-order-id"); // Get the job order ID from data attribute
+            window.location.href = `/job_order_detail/${jobOrderId}/`; // Redirect to the details page
+        });
+    });
+});
+
 // Update the dashboard table every 1 minute in miliseconds
 setInterval(updateDashboardTable, 60000);

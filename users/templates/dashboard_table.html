@@ -17,20 +17,20 @@
             </tr>
         </thead>
         <tbody>
-          {% for job in job_orders %}
-              <tr>
-                  <td>{{ job.jobOrderId }}</td>
-                  <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
-                  <td>{{ job.jobOrderStatus }}</td>
-                  <td>{{ job.current_recipe_name }}</td>
-                  <td>{{ job.current_activity_name }}</td>
-                  <td>{{ job.current_activity_time|date:"l, d M Y H:i A" }}</td>
-              </tr>
-          {% empty %}
-              <tr>
-                  <td colspan="6">No job orders found.</td>
-              </tr>
-          {% endfor %}
-      </tbody>
+            {% for job in job_orders %}
+            <tr id="job_order_row_{{ job.jobOrderId }}" class="clickable-row" data-job-order-id="{{ job.jobOrderId }}" data-href="{% url 'job_order_detail' job.jobOrderId %}">
+                    <td>{{ job.jobOrderId }}</td>
+                    <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
+                    <td>{{ job.jobOrderStatus }}</td>
+                    <td>{{ job.current_recipe_name }}</td>
+                    <td>{{ job.current_activity_name }}</td>
+                    <td>{{ job.current_activity_time|date:"l, d M Y H:i A" }}</td>
+                </tr>
+            {% empty %}
+                <tr>  
+                    <td colspan="6">No job orders found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
       </table>
     </html>

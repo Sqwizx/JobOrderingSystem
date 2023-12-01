@@ -20,6 +20,7 @@ var formTracker = [];
 
 let allFormsData = {};
 let isSaving = false;
+let gapValuesByTabIdx = {};
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -222,6 +223,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const formIndex = Array.from(recipeForms).indexOf(this);
         const enteredRecipeNameElem = document.getElementById(`recipeName-${formIndex}`);
         const timeVariable = document.getElementById(`timeVariable-${formIndex}`).value;
+        const prodRateSubmit = document.getElementById(`prodRate-${formIndex}`).value;
+        const batchSizeSubmit = document.getElementById(`batchSize-${formIndex}`).value;
 
         const enteredRecipeName = enteredRecipeNameElem?.value.trim();
 
@@ -230,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isExistingRecipeForm(enteredRecipeName, formIndex)) {
             handleExistingRecipe(enteredRecipeName, formIndex);
         } else {
-            handleNewRecipe(enteredRecipeName, formIndex, timeVariable);
+            handleNewRecipe(enteredRecipeName, prodRateSubmit, batchSizeSubmit, formIndex, timeVariable);
         }
 
         closeModal(formIndex);
@@ -246,17 +249,17 @@ document.addEventListener('DOMContentLoaded', function () {
         setActiveTabByName(recipeName);
     }
 
-    function handleNewRecipe(recipeName, index, timeVariable) {
-        const newRecipeButton = createRecipeTabButton(recipeName, index);
+    function handleNewRecipe(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable) {
+        const newRecipeButton = createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index);
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
-        displayRecipeDetails(recipeName, index, timeVariable);
+        displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
         setActiveTabByName(recipeName);
         checkAndToggleProductModalButton();
         checkAndToggleTrackerVisibility();
     }
 
-    function createRecipeTabButton(recipeName, index) {
+    function createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index) {
         const button = document.createElement('button');
         button.classList.add('tablinks-recipes');
         button.textContent = recipeName;
@@ -284,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.appendChild(document.createElement('br'));
         button.appendChild(deleteContainer);  // Append the delete container to the button
         button.addEventListener('click', function () {
-            displayRecipeDetails(recipeName, index);
+            displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index);
             setActiveTab(button);
         });
 
@@ -376,6 +379,10 @@ document.addEventListener('DOMContentLoaded', function () {
             delete endTimes[index];
         }
 
+        if (firstFormTracker[index]) {
+            delete firstFormTracker[index];
+        }
+
         // Similarly, remove the sponge start time picker reference
         if (spongeStartTimePickersByTab[index]) {
             // Filter out the picker that belongs to the deleted form
@@ -415,9 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
         formTracker = formTracker.filter(f => f.id !== recipeFormID);
 
         // Recalculate times and update the first form tracker
-        recalculateSpongeTimes();
         findAndEnableFirstForm();
-
+        recalculateSpongeTimes();
 
         console.log(`Recipe "${recipeName}" deleted.`);
     }
@@ -469,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (index === 0) {
                 // Only call this if there's more than one form, to update subsequent times
                 if (formTracker.length > 1) {
+                    console.log("Length of the formTracker", formTracker.length)
                     updateSpongeStartTimes(tabIdx, spongeEndTimeElement.value);
                 }
             }
@@ -596,8 +603,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function synchronizeGapValue(tabIdx, newValue) {
+        // Update the global storage
+        gapValuesByTabIdx[tabIdx] = newValue;
 
-    function createRecipeForm(recipeName, tabIdx, timeVariable) {
+        // Update all forms with the same tabIdx
+        formTracker.forEach(formInfo => {
+            if (formInfo.tabIdx === tabIdx) {
+                let form = formInfo.domElement;
+                let gapInput = form.querySelector(`input[name="gap"]`);
+                if (gapInput) {
+                    gapInput.value = newValue;
+                }
+            }
+        });
+    }
+
+    function createRecipeForm(recipeName, prodRateSubmit, batchSizeSubmit, tabIdx, timeVariable) {
         var formId = `recipeForm-${recipeName}-${tabIdx}`;
         var uniqueFormId = `${formId}`;
         var yesterdayDefaultDateTime = subtractDaysFromDateTime(tabIdx);
@@ -633,8 +655,11 @@ document.addEventListener('DOMContentLoaded', function () {
         dateTimePicker.value = defaultDateTime;
         activeRecipe.dateTimePicker = dateTimePicker.value;
 
+        prodRateValue = prodRateSubmit || null;
+        batchSizeValue = batchSizeSubmit || null;
+
         var datetimeLabel = createLabelElement(dateTimePicker.id, "Production Date");
-        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate", null, false, true);
+        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate", prodRateValue, false, true);
         var productionRateLabel = createLabelElement(productionRateInput.id, "Production Rate");
 
         var salesOrderInput = createInputElement("number", `salesOrder-${uniqueFormId}`, "salesOrder", null, true, true);
@@ -652,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var beltNoInput = createInputElement("number", `beltNo-${uniqueFormId}`, "beltNo", null, false, true);
         var beltNoLabel = createLabelElement(beltNoInput.id, "Suction Cup Belt No.");
 
-        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize", null, false, true);
+        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize", batchSizeValue, false, true);
         var batchSizeLabel = createLabelElement(batchSizeInput.id, "Batch Size");
 
         var batchesInput = createInputElement("number", `batches-${uniqueFormId}`, "batches", null, true);
@@ -706,8 +731,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var totalTrolleyInput = createInputElement("number", `totalTrolley-${uniqueFormId}`, "totalTrolley", null, true);
         var totalTrolleyLabel = createLabelElement(totalTrolleyInput.id, "Total Trolley");
 
-        // var gapInput = createInputElement("text", `gap-${uniqueFormId}`, "gap", null, false, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
-        // var gapLabel = createLabelElement(gapInput.id, "Gap");
+        var gapValue = gapValuesByTabIdx[tabIdx] || "00:00:00"; // Use default or existing value
+        var gapInput = createInputElement("text", `gap-${uniqueFormId}`, "gap", gapValue, false, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
+        var gapLabel = createLabelElement(gapInput.id, "Gap");
 
         var timeVariableInput = createInputElement("hidden", `timeVariable-${uniqueFormId}`, "timeVariable", timeVariable);
         var spongeEndTime = createInputElement("hidden", `spongeEndTime-${uniqueFormId}`, "spongeEndTime");
@@ -717,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var cutOffTime = createInputElement("hidden", `cutOffTime-${uniqueFormId}`, "cutOffTime");
 
         appendElements(leftDiv, [nameLabel, nameInput, productionRateLabel, productionRateInput, salesOrderLabel, salesOrderInput, stdTimeLabel, stdTimeInput, wasteLabel, wasteInput, totalTrayLabel, totalTrayInput, beltNoLabel, beltNoInput]);
-        appendElements(rightDiv, [datetimeLabel, dateTimePicker, batchSizeLabel, batchSizeInput, batchesLabel, batchesInput, cycleTimeLabel, cycleTimeInput, spongeStartTimeLabel, spongeStartTimePicker, totalTrolleyLabel, totalTrolleyInput]);
+        appendElements(rightDiv, [datetimeLabel, dateTimePicker, batchSizeLabel, batchSizeInput, batchesLabel, batchesInput, cycleTimeLabel, cycleTimeInput, spongeStartTimeLabel, spongeStartTimePicker, totalTrolleyLabel, totalTrolleyInput, gapLabel, gapInput]);
 
         form.appendChild(leftDiv);
         form.appendChild(rightDiv);
@@ -727,6 +753,11 @@ document.addEventListener('DOMContentLoaded', function () {
         form.appendChild(doughEndTime);
         form.appendChild(firstLoafPacked);
         form.appendChild(cutOffTime);
+
+        if (prodRateSubmit !== null || batchSizeSubmit !== null) {
+            // At least one of them exists, so call calculateCycleTime
+            calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
+        }
 
         // Set up input event listeners
         addInputEventListener(salesOrderInput, 'change', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
@@ -753,6 +784,8 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTrackerDisplay(uniqueFormId);
         });
 
+        addInputEventListener(gapInput, 'change', (event) => synchronizeGapValue(tabIdx, event.target.value));
+
         addProductButton(form, recipeName, tabIdx);
 
         // Add the spongeStartTimePicker to the global tracker
@@ -761,13 +794,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         spongeStartTimePickersByTab[tabIdx].push(spongeStartTimePicker);
 
+        console.log("Is this the first form?", isFirstForm)
+
         // CHECKING IF THE CREATED FORM IS THE FIRST FORM
         if (isFirstForm) {
             spongeStartTimePicker.disabled = false;
+            gapInput.disabled = false;
             spongeStartTimePicker.value = yesterdayDefaultDateTime;
             firstFormTracker[tabIdx] = true;
         } else {
             spongeStartTimePicker.disabled = true;
+            gapInput.disabled = true;
             spongeStartTimePicker.value = calculateSpongeStartTime(tabIdx);
         }
 
@@ -1100,15 +1137,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function showSaveButton() {
-        var saveButton = document.querySelector('.save-all-button');
-        if (saveButton) {
-            saveButton.style.display = 'block';
-
-            attachSaveButtonListener(saveButton);
-        }
-    }
-
     function attachSaveButtonListener(saveButton) {
         if (!saveButton.dataset.listenerAttached) {
             saveButton.addEventListener('click', function () {
@@ -1134,21 +1162,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('confirmSave').addEventListener('click', function () {
-        // Disable the confirm button to prevent multiple submissions
         this.disabled = true;
         this.textContent = 'Saving...'; // Optional: provide user feedback
 
-        // Convert allFormsData object to an array of recipe data objects
         let recipesArray = Object.values(allFormsData);
 
-        // Create the data payload to send to the server
         let payload = {
-            recipes: recipesArray  // This is the expected format on the backend
+            recipes: recipesArray
         };
 
         fetch('/save_recipes/', {
             method: 'POST',
-            body: JSON.stringify(payload), // Send the payload with recipes array
+            body: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
@@ -1162,18 +1187,16 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 if (data.status === 'success') {
-                    // After saving, redirect to the homepage
+
                     allFormsData = {};
                     window.location.href = '/';
                 } else {
-                    // If the save wasn't successful, show an error message
                     alert('Failed to save the recipe: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error saving recipe: ' + error.message);
-                // Re-enable the button in case of error so the user can try again
                 this.disabled = false;
                 this.textContent = 'Confirm Save'; // Reset button text
             });
@@ -1296,20 +1319,44 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('confirmSave').disabled = unfilledFields;
     }
 
-    // This function checks if any forms exist and shows/hides the save button accordingly
     function checkFormsAndToggleSaveButton() {
         var forms = document.querySelectorAll('.recipe-form');
-        if (forms.length > 0) {
-            showSaveButton();
-        } else {
-            hideSaveButton();
-        }
-    }
-
-    function hideSaveButton() {
         var saveButton = document.querySelector('.save-all-button');
+
         if (saveButton) {
-            saveButton.style.display = 'none';
+            var allTabsHaveRecipeForms = true; // Assume all tabs have recipe forms initially
+
+            // Loop through tablinks and check if each one has .tablinks-recipes
+            document.querySelectorAll('.tablinks').forEach(function (tablink, index) {
+                var tabRecipesContainer = document.getElementById('recipe-tabs-' + index);
+
+                if (tabRecipesContainer) {
+                    var tablinkRecipes = tabRecipesContainer.querySelectorAll('.tablinks-recipes');
+
+                    console.log(`Tablink ${index + 1}:`, tablink);
+                    console.log(`Length of tablinks-recipes in Tablink ${index + 1}:`, tablinkRecipes.length);
+
+                    if (tablinkRecipes.length === 0) {
+                        allTabsHaveRecipeForms = false;
+                    }
+                }
+            });
+
+            // Apply different CSS and functionality based on conditions
+            if (forms.length > 0) {
+                saveButton.style.display = 'block'; // Show save button
+                saveButton.classList.add('disabled-button'); // Apply disabled style
+            } else {
+                saveButton.style.display = 'none'; // Hide save button
+            }
+
+            if (allTabsHaveRecipeForms) {
+                saveButton.classList.remove('disabled-button'); // Remove disabled style
+                attachSaveButtonListener(saveButton);
+            } else {
+                // Add a tooltip message when the button is disabled and hovered
+                saveButton.setAttribute('title', 'Please add recipes for all the days in the Job Order to enable save button.');
+            }
         }
     }
 
@@ -1498,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Function to handle the creation and displaying of the recipe form
-    function displayRecipeDetails(recipeName, tabIdx, timeVariable) {
+    function displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, tabIdx, timeVariable) {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
         if (recipeFormObjects[recipeName] && recipeFormObjects[recipeName][tabIdx]) {
             var existingForm = recipeFormObjects[recipeName][tabIdx];
@@ -1506,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', function () {
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(existingForm);
         } else {
-            var newRecipeForm = createRecipeForm(recipeName, tabIdx, timeVariable);
+            var newRecipeForm = createRecipeForm(recipeName, prodRateSubmit, batchSizeSubmit, tabIdx, timeVariable);
             currentRecipeDetailsContainer.innerHTML = "";
             currentRecipeDetailsContainer.appendChild(newRecipeForm);
             recipeFormObjects[recipeName][tabIdx] = newRecipeForm; // Store the form in the dictionary
@@ -2132,6 +2179,70 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Example usage:
     setProgress(70); // Set progress to 10%   
+
+    // Function to handle setting values in the modal fields
+    function setModalFieldValues(tabIdx, recipe) {
+        var timeVariableId = 'timeVariable-' + tabIdx;
+        var prodRateId = 'prodRate-' + tabIdx;
+        var batchSizeId = 'batchSize-' + tabIdx;
+        var recipeNameId = 'recipeName-' + tabIdx;
+
+        document.getElementById(timeVariableId).value = convertToHHMMSS(recipe.cycleTimeVariable);
+        document.getElementById(prodRateId).value = recipe.productionRate;
+        document.getElementById(batchSizeId).value = recipe.stdBatchSize;
+        document.getElementById(recipeNameId).value = recipe.recipeName;
+    }
+
+    document.querySelectorAll('.modal').forEach(function (modal, tabIdx) {
+        const searchField = modal.querySelector('#searchField-' + tabIdx);
+        const resultsDiv = modal.querySelector('#searchResults-' + tabIdx);
+
+        if (searchField) {
+            searchField.addEventListener('input', function () {
+                const query = this.value;
+
+                if (query.length > 0) {
+                    fetch('/search/?query=' + query)
+                        .then(response => response.json())
+                        .then(data => {
+                            var results = data.recipes;
+                            resultsDiv.innerHTML = '';
+                            resultsDiv.style.display = 'block';
+
+                            if (results.length === 0) {
+                                resultsDiv.innerHTML = '<div>Nothing found.</div>';
+                            } else {
+                                results.forEach(function (recipe, index) {
+                                    var div = document.createElement('div');
+                                    var regex = new RegExp(query, 'gi');
+                                    var highlightedName = recipe.recipeName.replace(regex, function (match) { return `<strong>${match}</strong>`; });
+                                    div.innerHTML = highlightedName;
+                                    div.onclick = function () {
+                                        console.log("Recipe clicked:", recipe);
+
+                                        var cycleTimeVarInSeconds = recipe.cycleTimeVariable;
+                                        var formattedCycleTime = convertToHHMMSS(cycleTimeVarInSeconds);
+                                        console.log("Formatted Cycle Time:", formattedCycleTime);
+
+                                        // Call the function to set modal field values
+                                        setModalFieldValues(tabIdx, recipe);
+
+                                        resultsDiv.style.display = 'none';
+                                    };
+                                    resultsDiv.appendChild(div);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching recipes:', error);
+                        });
+                } else {
+                    resultsDiv.innerHTML = '';
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+    });
 });
 
 window.addEventListener('beforeunload', function (e) {
