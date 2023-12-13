@@ -438,6 +438,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
+    var flatpickrInstances = {};
+
     document.querySelectorAll('.spongeStart-flatpickr').forEach(function (el) {
         var originalDate = el.value; // Get the original date string
         var formattedDate = moment(originalDate, "dddd, DD MMM YYYY HH:mm").format("YYYY-MM-DD HH:mm");
@@ -445,8 +447,10 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('This is original date', originalDate);
         console.log('This is formatted date', formattedDate);
 
-        flatpickr(el, {
+        var recipeId = el.closest('.recipe-form').getAttribute('data-recipe-id');
+        flatpickrInstances[recipeId] = flatpickr(el, {
             enableTime: true,
+            noCalendar: true,
             altInput: true,
             altFormat: "l, d M Y H:i",
             dateFormat: "Y-m-d H:i",
@@ -477,9 +481,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const stdTimeInput = document.querySelector(`#stdTime-${recipeId}`);
         const timeVariableInput = document.querySelector(`#timeVariable-${recipeId}`);
 
-        calculateBatchesToProduce(salesOrderInput.value, wasteInput.value, batchSizeInput.value, batchesInput);
-        calculateCycleTime(batchSizeInput.value, productionRateInput.value, timeVariableInput.value, cycleTimeInput);
-        calculateStdTime(batchesInput.value, cycleTimeInput.value, stdTimeInput, recipeId);
+        // calculateBatchesToProduce(salesOrderInput.value, wasteInput.value, batchSizeInput.value, batchesInput);
+        // calculateCycleTime(batchSizeInput.value, productionRateInput.value, timeVariableInput.value, cycleTimeInput);
+        // calculateStdTime(batchesInput.value, cycleTimeInput.value, stdTimeInput, recipeId);
 
         console.log('cycleTimeInput [FIRST]:', cycleTimeInput.value);
         // Attach event listeners to these elements
@@ -872,7 +876,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateSubsequentRecipes(recipeId) {
-        let recipeFormUpdated = false;
+        let currentRecipeId = recipeId;
         let previousSpongeEndTime = null;
 
         // Find the container of the current recipe form
@@ -882,35 +886,98 @@ document.addEventListener('DOMContentLoaded', function () {
             const allRecipeForms = currentRecipeContainer.querySelectorAll('.recipe-form');
 
             allRecipeForms.forEach(form => {
-                const currentRecipeId = form.getAttribute('data-recipe-id');
-
-                if (recipeFormUpdated) {
-                    // Update subsequent recipe start times
-                    const spongeStartTimeInput = form.querySelector('[name="spongeStartTime"]');
-                    if (spongeStartTimeInput && previousSpongeEndTime) {
-                        const newStartTime = new Date(previousSpongeEndTime);
-                        newStartTime.setMinutes(newStartTime.getMinutes() + 45); // Add 45 minutes buffer
-                        spongeStartTimeInput.value = formatDateTime(newStartTime);
-
-                        // Also update the tracker time
-                        const trackerTimeSpan = document.querySelector(`.activity-steps[data-recipe-id='${currentRecipeId}'] #spongeStartTimeTracker`);
-                        if (trackerTimeSpan) {
-                            trackerTimeSpan.textContent = formatDateTime(newStartTime);
-                        }
-                    }
-                }
-
-                if (currentRecipeId === recipeId) {
-                    // Mark that we have updated the current recipe
-                    recipeFormUpdated = true;
+                const nextRecipeId = form.getAttribute('data-recipe-id');
+                if (nextRecipeId === currentRecipeId) {
                     // Get the sponge end time for this recipe
-                    const spongeEndTimeSpan = document.querySelector(`.activity-steps[data-recipe-id='${currentRecipeId}'] #spongeEndTimeTracker`);
+                    const spongeEndTimeSpan = document.querySelector(`.activity-steps[data-recipe-id='${nextRecipeId}'] #spongeEndTimeTracker`);
+                    if (spongeEndTimeSpan) {
+                        previousSpongeEndTime = spongeEndTimeSpan.textContent;
+                    }
+                    currentRecipeId = null; // Reset to find the next recipe
+                } else if (currentRecipeId === null && previousSpongeEndTime) {
+                    // Update times for the next recipe
+                    const newStartTime = new Date(previousSpongeEndTime);
+                    newStartTime.setMinutes(newStartTime.getMinutes() + 45); // Add 45 minutes buffer
+                    updateRecipeTimes(nextRecipeId, formatDateTime(newStartTime));
+
+                    // Update previousSpongeEndTime for the next iteration
+                    const spongeEndTimeSpan = document.querySelector(`.activity-steps[data-recipe-id='${nextRecipeId}'] #spongeEndTimeTracker`);
                     if (spongeEndTimeSpan) {
                         previousSpongeEndTime = spongeEndTimeSpan.textContent;
                     }
                 }
             });
         }
+    }
+
+    function updateRecipeTimes(recipeId, newStartTime) {
+        const spongeStartTimeInput = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}'] [name="spongeStartTime"]`);
+        if (spongeStartTimeInput) {
+            spongeStartTimeInput.value = newStartTime;
+
+            // Calculate and update all dependent times
+            const stdTime = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}'] [name="stdTime"]`).value;
+
+            const newSpongeEndTime = calculateSpongeEndTime(newStartTime, stdTime);
+            const newDoughStartTime = calculateDoughStartTime(newSpongeEndTime);
+            const newDoughEndTime = calculateDoughEndTime(newDoughStartTime, stdTime);
+            const newFirstLoafPackedTime = calculateFirstLoafPacked(newDoughEndTime);
+            const newCutOffTime = calculateCutOffTime(newFirstLoafPackedTime, stdTime);
+
+            updateTracker(recipeId, newStartTime, newSpongeEndTime, newDoughStartTime, newDoughEndTime, newFirstLoafPackedTime, newCutOffTime);
+        }
+    }
+
+    function updateFlatpickrInstance(recipeId, newTime) {
+        var originalDate = newTime; // Get the original date string
+        var formattedDate = moment(originalDate, "dddd, DD MMM YYYY HH:mm").format("YYYY-MM-DD HH:mm");
+        if (!flatpickrInstances[recipeId]) {
+            console.error('Flatpickr instance not found for recipeId:', recipeId);
+            return;
+        }
+        var flatpickrInstance = flatpickrInstances[recipeId];
+        console.log('flatpickrInstance:', flatpickrInstance, 'newTime:', formattedDate)
+        flatpickrInstance.setDate(formattedDate, true);
+    }
+
+
+    function updateTracker(recipeId, spongeStartTime, spongeEndTime, doughStartTime, doughEndTime, firstLoafPackedTime, cutOffTime) {
+        const recipeTrackerDiv = document.querySelector(`.activity-steps[data-recipe-id='${recipeId}']`);
+
+        if (recipeTrackerDiv) {
+            const spongeStartTimeElement = recipeTrackerDiv.querySelector('#spongeStartTimeTracker');
+            const spongeEndTimeElement = recipeTrackerDiv.querySelector('#spongeEndTimeTracker');
+            const doughStartTimeElement = recipeTrackerDiv.querySelector('#doughStartTimeTracker');
+            const doughEndTimeElement = recipeTrackerDiv.querySelector('#doughEndTimeTracker');
+            const firstLoafPackedElement = recipeTrackerDiv.querySelector('#firstLoafPackedTracker');
+            const cutOffTimeElement = recipeTrackerDiv.querySelector('#cutOffTimeTracker');
+
+            if (spongeStartTimeElement) spongeStartTimeElement.textContent = spongeStartTime;
+            if (spongeEndTimeElement) spongeEndTimeElement.textContent = spongeEndTime;
+            if (doughStartTimeElement) doughStartTimeElement.textContent = doughStartTime;
+            if (doughEndTimeElement) doughEndTimeElement.textContent = doughEndTime;
+            if (firstLoafPackedElement) firstLoafPackedElement.textContent = firstLoafPackedTime;
+            if (cutOffTimeElement) cutOffTimeElement.textContent = cutOffTime;
+
+            // Update the form fields as well
+            const recipeForm = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}']`);
+            if (recipeForm) {
+                const spongeStartTimeInput = recipeForm.querySelector('[name="spongeStartTime"]');
+                const spongeEndTimeInput = recipeForm.querySelector('[name="spongeEndTime"]');
+                const doughStartTimeInput = recipeForm.querySelector('[name="doughStartTime"]');
+                const doughEndTimeInput = recipeForm.querySelector('[name="doughEndTime"]');
+                const firstLoafPackedInput = recipeForm.querySelector('[name="firstLoafPacked"]');
+                const cutOffTimeInput = recipeForm.querySelector('[name="cutOffTime"]');
+
+                if (spongeStartTimeInput) spongeStartTimeInput.value = spongeStartTime;
+                if (spongeEndTimeInput) spongeEndTimeInput.value = spongeEndTime;
+                if (doughStartTimeInput) doughStartTimeInput.value = doughStartTime;
+                if (doughEndTimeInput) doughEndTimeInput.value = doughEndTime;
+                if (firstLoafPackedInput) firstLoafPackedInput.value = firstLoafPackedTime;
+                if (cutOffTimeInput) cutOffTimeInput.value = cutOffTime;
+            }
+        }
+        updateFlatpickrInstance(recipeId, spongeStartTime);
     }
 
     function calculateSpongeEndTime(spongeStartTimeValue, stdTime) {
