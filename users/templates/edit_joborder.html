@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/edit.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+    <!-- Boxicons CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
+</head>
+<body>
+{% load get_item %}
+{% csrf_token %}
+<div id="scrollContainer" class="scroll-area">
+    {% include 'sidebar.html' %}
+    <section class="home-section">
+        {% include 'view_header.html' %}
+        <div class="main-content">
+            <div class="container">
+                <div class="left-column">
+                    <div class="big-card">
+                        <div class="tab">
+                            {% for date in sorted_dates %}
+                                {% if forloop.first %}
+                                    <button id="first-tablink"  data-day="{{ date }}" class="tablinks active">
+                                        <span class="date-text">{{ date|date:"j" }}</span> <br> {{ date|date:"D" }}
+                                    </button>
+                                {% else %}
+                                    <button data-day="{{ date }}" class="tablinks">
+                                        <span class="date-text">{{ date|date:"j" }}</span> <br> {{ date|date:"D" }}
+                                    </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% for date in sorted_dates %}
+                            <div id="{{ date }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                                <p id="recipe-list">Recipe List</p>
+                                <div class="content-container">
+                                    <div class="card">
+                                        <div class="first-column">
+                                            <div class="tab-recipes" id="recipe-tabs">
+                                                <!-- Loop through recipes within each production date group -->
+                                                {% for rcp in recipes_by_date|get_item:date %}  
+                                                {% if forloop.first %}
+                                                <button class="tablinks-recipes opened" data-recipe-name="{{ rcp.recipeName }}" data-recipe-id="{{ rcp.recipeId }}">
+                                                      {{ rcp.recipeName }}
+                                                    <br>
+                                                    <span class="delete-container" data-recipe-id="{{ rcp.recipeId }}"  data-recipe-name="{{ rcp.recipeName }}">
+                                                        <i class="delete-icon fa fa-trash"></i>
+                                                        <p class="delete-text">Delete</p>
+                                                    </span>
+                                                </button>
+                                             {% else %}
+                                                <button class="tablinks-recipes" data-recipe-name="{{ rcp.recipeName }}" data-recipe-id="{{ rcp.recipeId }}">
+                                                      {{ rcp.recipeName }}
+                                                      <br>
+                                                    <span class="delete-container" data-recipe-id="{{ rcp.recipeId }}">
+                                                        <i class="delete-icon fa fa-trash"></i>
+                                                        <p class="delete-text">Delete</p>
+                                                    </span>
+                                                </button>
+                                             {% endif %}
+                                          {% endfor %}
+                                          <button class="add-recipe-tab" id="add-recipe-button">+ Add Recipe</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                    <div class="second-column">
+                                        <div class="form-container">
+                                            {% for rcp in recipes_by_date|get_item:date %}
+                                            <form id="recipeForm" class="recipe-form" data-recipe-id="{{ rcp.recipeId }}">
+                                                <div class="form-columns">
+                                                    <div class="left-div">
+                                                        <div class="input-container">
+                                                            <label for="recipeName-{{ rcp.recipeId }}">Recipe Name</label>
+                                                            <input type="text" id="recipeName-{{ rcp.recipeId }}" name="recipeName" value="{{ rcp.recipeName }}" required disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="productionRate-{{ rcp.recipeId }}">Production Rate</label>
+                                                            <input type="number" id="productionRate-{{ rcp.recipeId }}" name="productionRate" value="{{ rcp.recipeProdRate }}">
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="salesOrder-{{ rcp.recipeId }}">Total Sales Order</label>
+                                                            <input type="number" id="salesOrder-{{ rcp.recipeId }}" name="salesOrder" value="{{ rcp.recipeTotalSales }}" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="stdTime-{{ rcp.recipeId }}">Required Std. Time</label>
+                                                            <input type="text" id="stdTime-{{ rcp.recipeId }}" name="stdTime" value="{{ rcp.recipeStdTime|default:"" }}" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="waste-{{ rcp.recipeId }}">Budgeted Waste (%)</label>
+                                                            <input type="number" id="waste-{{ rcp.recipeId }}" name="waste" value="{{ rcp.recipeWaste }}">
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="totalTray-{{ rcp.recipeId }}">Total Tray</label>
+                                                            <input type="number" id="totalTray-{{ rcp.recipeId }}" name="totalTray" value="{{ rcp.recipeTotalTray }}" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="beltNo-{{ rcp.recipeId }}">Suction Cup Belt No.</label>
+                                                            <input type="number" id="beltNo-{{ rcp.recipeId }}" name="beltNo" value="{{ rcp.recipeBeltNo }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="right-div">
+                                                        <div class="input-container">
+                                                            <label for="dateTimePicker-{{ rcp.recipeId }}">Production Date</label>
+                                                            <input type="text" id="dateTimePicker-{{ rcp.recipeId }}" name="dateTimePicker" value="{{ rcp.recipeProdDate|date:"l, d M Y" }}" class="flatpickr-input" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="batchSize-{{ rcp.recipeId }}">Batch Size</label>
+                                                            <input type="number" id="batchSize-{{ rcp.recipeId }}" name="batchSize" value="{{ rcp.recipeBatchSize }}">
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="batches-{{ rcp.recipeId }}">Batches To Produce</label>
+                                                            <input type="number" id="batches-{{ rcp.recipeId }}" name="batches" value="{{ rcp.recipeBatches }}" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="cycleTime-{{ rcp.recipeId }}">Cycle Time</label>
+                                                            <input type="text" id="cycleTime-{{ rcp.recipeId }}" name="cycleTime" value="{{ rcp.recipeCycleTime|default:"" }}" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="spongeStartTime-{{ rcp.recipeId }}">Sponge Start Time</label>
+                                                            <input type="text" id="spongeStartTime-{{ rcp.recipeId }}" name="spongeStartTime" value="{{ rcp.recipeSpongeStartTime|date:"l, d M Y H:i" }}" class="spongeStart-flatpickr">
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="totalTrolley-{{ rcp.recipeId }}">Total Trolley</label>
+                                                            <input type="number" id="totalTrolley-{{ rcp.recipeId }}" name="totalTrolley" value="{{ rcp.recipeTotalTrolley }}" disabled>
+                                                        </div>
+                                                        <div class="input-container">
+                                                            <label for="gap-{{ rcp.recipeId }}">Gap</label>
+                                                            <input type="text" id="gap-{{ rcp.recipeId }}" name="gap" value="{{ rcp.recipeGap|default:"" }}"  pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00" >
+                                                        </div>
+                                                    </div>
+                                                    <input type="hidden" id="timeVariable-{{ rcp.recipeId }}" name="timeVariable" value="{{ rcp.recipeTimeVar }}" required disabled>
+                                                </div>
+                                            </form>                   
+                                            {% endfor %}
+                                            {% if forloop.first %}
+                                            <div class="footer" id="footer">
+                                                <div class="buttons-footer">
+                                                    <button class="update-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Update</button>
+                                                </div>
+                                            </div>
+                                            {% endif %} 
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="right-column">
+                    <div class="small-card" id="product-list">
+                        <p id="small-header">Product List</p>
+                        <div class="product-container">
+                            {% for date in sorted_dates %}
+                                {% for recipe in recipes_by_date|get_item:date %}
+                                    {% for product in recipe.products.all %}
+                                        <div class="product-item" data-recipe-id="{{ recipe.recipeId }}" data-product-id="{{ product.productId }}">
+                                            <div class="product-content-container">
+                                                <div class="product-info-container">
+                                                    <p>{{ product.productName }}</p>
+                                                    <p style="color: gray; font-size: 14px;">{{ product.client }}</p>
+                                                </div>
+                                                <div class="icon-container">
+                                                    <i id="editProductModalButton" class="fa fa-edit product-icon" aria-hidden="true"
+                                                        data-product-id="{{ product.productId }}"
+                                                        data-product-name="{{ product.productName }}"
+                                                        data-sales-order="{{ product.productSalesOrder }}"
+                                                        data-product-price="{{ product.productPrice }}"
+                                                        data-currency="{{ product.currency }}"
+                                                        data-client="{{ product.client }}"
+                                                        data-color-set="{{ product.colorSet }}"
+                                                        data-expiry-date="{{ product.productExpDate }}"
+                                                        data-weight="{{ product.weight }}"
+                                                        data-sale-date="{{ product.productSaleDate }}"
+                                                        data-no-of-slices="{{ product.noOfSlices }}"
+                                                        data-thickness="{{ product.thickness }}"
+                                                        data-tray="{{ product.tray }}"
+                                                        data-trolley="{{ product.trolley }}"
+                                                        data-remarks="{{ product.productRemarks }}"
+                                                        data-recipe-id="{{ recipe.recipeId }}"
+                                                        data-recipe-date="{{ recipe.recipeProdDate }}"
+                                                        onclick="populateAndShowProductModal(this)">
+                                                    </i>
+                                                    <i class="fa fa-trash product-icon" aria-hidden="true"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="button" class="add-product-button" data-recipe-id="{{ recipe.recipeId }}" data-recipe-date="{{ recipe.recipeProdDate }}" id="add-product">+ Add Product for {{recipe.recipeName}}</button>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="small-card" id="tracker">
+                        <p id="small-header">Progress Tracker</p>
+                        <div id="progressContainer">
+                            {% for date in sorted_dates %}
+                                {% for recipe in recipes_by_date|get_item:date %}
+                                    {% for activity in recipe.activity_recipe.all %}
+                                <div class="activity-steps" data-recipe-id="{{ recipe.recipeId }}">
+                                    <div class="progressStep" id="spongeStartProgress">
+                                        <span class="progressLabel">Sponge Start</span>
+                                        {% if activity.spongeStart %}
+                                            <span class="timeValue" id="spongeStartTimeTracker">{{ activity.spongeStart|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="spongeStartTimeTracker">--:--</span>
+                                        {% endif %}
+                                     </div>
+                                     <div class="progressStep" id="spongeEndProgress">
+                                        <span class="progressLabel">Sponge End</span>
+                                        {% if activity.spongeEnd %}
+                                            <span class="timeValue" id="spongeEndTimeTracker">{{ activity.spongeEnd|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="spongeEndTimeTracker">--:--</span>
+                                        {% endif %}
+                                     </div>
+                                     <div class="progressStep" id="doughStartProgress">
+                                        <span class="progressLabel">Dough Start</span>
+                                        {% if activity.doughStart %}
+                                            <span class="timeValue" id="doughStartTimeTracker">{{ activity.doughStart|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="doughStartTimeTracker">--:--</span>
+                                        {% endif %}
+                                     </div>
+                                     <div class="progressStep" id="doughEndProgress">
+                                        <span class="progressLabel">Dough End</span>
+                                        {% if activity.doughEnd %}
+                                            <span class="timeValue" id="doughEndTimeTracker">{{ activity.doughEnd|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="doughEndTimeTracker">--:--</span>
+                                        {% endif %}
+                                     </div>
+                                     <div class="progressStep" id="firstLoafPackedProgress">
+                                        <span class="progressLabel">First Loaf Packed</span>
+                                        {% if activity.firstLoafPacked %}
+                                            <span class="timeValue" id="firstLoafPackedTracker">{{ activity.firstLoafPacked|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="firstLoafPackedTracker">--:--</span>
+                                        {% endif %}
+                                     </div>
+                                     <div class="progressStep" id="cutOffProgress">
+                                        <span class="progressLabel">Cut Off Time</span>
+                                        {% if activity.cutOffTime %}
+                                            <span class="timeValue" id="cutOffTimeTracker">{{ activity.cutOffTime|date:"l, d M Y H:i" }}</span>
+                                        {% else %}
+                                            <span class="timeValue" id="cutOffTimeTracker">--:--</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                               
+                                {% endfor %}
+                            {% endfor %}
+                            <div id="progressLine"></div>
+                            <div id="progressLineOverlay"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="productModal" class="modal product-modal">
+            <div class="modal-content" id="productModalContent">
+               <div id="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Edit Product</h1>
+               </div>
+               <form id="productForm">
+                <div class="form-columns">
+                    <div class="left-div">
+                        <input type="hidden" id="productId" name="productId">
+                        <input type="hidden" id="recipeId" name="recipeId">
+                        <!-- Product Name -->
+                        <label for="productName">Product Name</label><br>
+                        <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                        
+                        <!-- Sales Order -->
+                        <label for="productSalesOrder">Sales Order</label><br>
+                        <input type="number" id="productSalesOrder" name="productSalesOrder" required autocomplete="off"><br><br>
+            
+                        <!-- Product Price Group -->
+                        <div class="product-price-group">
+                            <label for="productPrice">Product Price</label>
+                            <div class="price-container">
+                                <select id="currency" name="currency">
+                                    <option value="SGD">SGD</option>
+                                    <option value="MYR">MYR</option>
+                                </select>
+                                <input type="number" id="productPrice" step="0.01" name="productPrice">
+                            </div>
+                        </div><br>
+            
+                        <!-- Client/Color Group -->
+                        <div class="client-color-group">
+                            <label for="client">Client/Color</label>
+                            <div class="client-color-container">
+                                <select id="client" name="client">
+                                    <option value="GFS">GFS</option>
+                                    <option value="GBKL">GBKL</option>
+                                </select>
+                                <input type="text" id="colorSet" name="colorSet" disabled placeholder="Color Set">
+                            </div>
+                            <br>
+            
+                            <!-- Expiry Date -->
+                            <label for="expiryDate">Expiry Date</label>
+                            <input type="text" id="expiryDate" name="expiryDate" placeholder="N/A" required autocomplete="off">
+                        </div><br>
+            
+                        <!-- Weight Value -->
+                        <label for="weight">Weight Value</label><br>
+                        <div class="weight-value">
+                            <select id="weight" name="weight">
+                                <option value="20">300g</option>
+                                <option value="20">400g</option>
+                                <option value="15">500g</option>
+                                <option value="12">600g</option>
+                            </select><br>
+                        </div>
+                    </div>
+            
+                    <div class="right-div">
+                        <!-- Sale Date -->
+                        <label for="saleDate">Sale Date</label><br>
+                        <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
+            
+                        <!-- Number of Slices -->
+                        <label for="noOfSlices">No. of Slices</label><br>
+                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+            
+                        <!-- Thickness -->
+                        <label for="thickness">Thickness</label><br>
+                        <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+            
+                        <!-- Total Tray -->
+                        <label for="tray">Total Tray</label><br>
+                        <input type="number" id="tray" name="tray" required autocomplete="off" disabled><br><br>
+            
+                        <!-- Total Trolley -->
+                        <label for="trolley">Total Trolley</label><br>
+                        <input type="number" id="trolley" name="trolley" required autocomplete="off" disabled><br><br>
+            
+                        <!-- Remarks -->
+                        <label for="remarks">Remarks</label><br>
+                        <textarea id="remarks" name="remarks" rows="7" cols="60"></textarea><br><br>
+                        
+                        <input type="submit" value="Update">
+                    </div>
+                </div>
+            </form>                                            
+            </div>
+         </div>
+         <div id="newProductModal" class="modal product-modal">
+            <div class="modal-content" id="newProductModalContent">
+               <div id="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Add New Product</h1>
+               </div>
+               <form id="newProductForm">
+                <div class="form-columns">
+                    <div class="left-div">
+                        <!-- Product Name -->
+                        <label for="newProductName">Product Name</label><br>
+                        <input type="text" id="newProductName" name="newProductName" required autocomplete="off"><br><br>
+                        
+                        <!-- Sales Order -->
+                        <label for="newProductSalesOrder">Sales Order</label><br>
+                        <input type="number" id="newProductSalesOrder" name="newProductSalesOrder" required autocomplete="off"><br><br>
+            
+                        <!-- Product Price Group -->
+                        <div class="product-price-group">
+                            <label for="newProductPrice">Product Price</label>
+                            <div class="price-container">
+                                <select id="newCurrency" name="currency">
+                                    <option value="SGD">SGD</option>
+                                    <option value="MYR">MYR</option>
+                                </select>
+                                <input type="number" id="newProductPrice" step="0.01" name="newProductPrice">
+                            </div>
+                        </div><br>
+            
+                        <!-- Client/Color Group -->
+                        <div class="client-color-group">
+                            <label for="newClient">Client/Color</label>
+                            <div class="client-color-container">
+                                <select id="newClient" name="client">
+                                    <option value="GFS">GFS</option>
+                                    <option value="GBKL">GBKL</option>
+                                </select>
+                                <input type="text" id="newColorSet" name="newColorSet" readonly placeholder="Color Set">
+                            </div>
+                            <br>
+            
+                            <!-- Expiry Date -->
+                            <label for="newExpiryDate">Expiry Date</label>
+                            <input type="text" id="newExpiryDate" name="newExpiryDate" placeholder="N/A" autocomplete="off">
+                        </div><br>
+            
+                        <!-- Weight Value -->
+                        <label for="newWeight">Weight Value</label><br>
+                        <div class="weight-value">
+                            <select id="newWeight" name="newWeight">
+                                <option value="20">300g</option>
+                                <option value="20">400g</option>
+                                <option value="15">500g</option>
+                                <option value="12">600g</option>
+                            </select><br>
+                        </div>
+                    </div>
+            
+                    <div class="right-div">
+                        <!-- Sale Date -->
+                        <label for="newSaleDate">Sale Date</label><br>
+                        <input type="text" id="newSaleDate" name="newSaleDate" placeholder="N/A" autocomplete="off"><br><br>
+            
+                        <!-- Number of Slices -->
+                        <label for="newNoOfSlices">No. of Slices</label><br>
+                        <input type="number" id="newNoOfSlices" name="newNoOfSlices" required autocomplete="off"><br><br>
+            
+                        <!-- Thickness -->
+                        <label for="newThickness">Thickness</label><br>
+                        <input type="text" id="newThickness" name="newThickness" required autocomplete="off"><br><br>
+            
+                        <!-- Total Tray -->
+                        <label for="newTray">Total Tray</label><br>
+                        <input type="number" id="newTray" name="newTray" required autocomplete="off" disabled><br><br>
+            
+                        <!-- Total Trolley -->
+                        <label for="newTrolley">Total Trolley</label><br>
+                        <input type="number" id="newTrolley" name="newTrolley" required autocomplete="off" disabled><br><br>
+            
+                        <!-- Remarks -->
+                        <label for="newRemarks">Remarks</label><br>
+                        <textarea id="newRemarks" name="newRemarks" rows="7" cols="60"></textarea><br><br>
+                        
+                        <input type="submit" value="Submit" id="newProduct">
+                    </div>
+                </div>
+            </form>                                            
+            </div>
+         </div>
+        <div id="alertModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Confirm Delete</h1>
+               </div>
+               <p>Are you sure you want to delete the recipe <strong id="alertModalNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+               <br>
+               <button id="confirmDelete">Confirm</button>
+               <button id="cancelDelete">Cancel</button>
+            </div>
+         </div>
+         <div id="warningModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Delete Error</h1>
+               </div>
+               <p>You can't have an empty tab. Please add a new recipe before deleting this one.</p>
+               <br>
+               <button id="okayButton">Okay</button>
+            </div>
+         </div>
+         <div id="recipeModal" class="modal">
+            <!-- Modal content -->
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Add Recipe</h1>
+               </div>
+               <form id="recipeModalForm">
+                  <div class="search-container">
+                     <label for="searchField">Search Recipes</label>
+                     <input type="text" id="searchField" name="searchQuery" autocomplete="off">
+                     <div id="searchResults" class="searchResults"></div>
+                  </div>
+                  <br><b>Or</b><br>
+                  <label for="recipeName">Recipe Name</label>
+                  <input type="text" id="recipeName" name="recipeName" required autocomplete="off"><br>
+                  <label for="cycleTime">Cycle Time Variable</label>
+                  <input type="text" id="timeVariable" name="timeVariable" required placeholder="00:00:00"><br>
+
+                  <!-- HIDDEN INPUTS -->
+                  <input type="hidden" id="jobOrderId" name="jobOrderId">
+                  <input type="hidden" id="tabIndex" name="tabIndex">
+                  <input type="hidden" id="prodDate" name="prodDate">
+                  
+                  <input type="submit" value="Submit" id="newRecipe">
+               </form>
+            </div>
+         </div>                         
+    </section>
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script src="{% static 'js/scrollbar.js' %}"></script>
+    <script src="{% static 'js/edit_jo.js' %}"></script>
+</div>
+</body>
+</html>

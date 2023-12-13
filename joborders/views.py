@@ -7,9 +7,10 @@ from django.utils import timezone
 from django.shortcuts import render
 from django.http import JsonResponse
 from datetime import datetime, timedelta
+
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from .models import RecipeMapping, JobOrder, Activity, Product, RecipePerDay
+from .models import RecipeMapping, JobOrder, Activity, Product
 
 @login_required
 def create_joborder(request):
@@ -41,9 +42,9 @@ def save_recipes(request):
             userId=request.user,
         )
         
-        recipe_per_day_dict = {}
         for recipe_data in recipes_data:
             # Parse the datetime strings into aware datetime objects
+            recipe_prod_date = aware.localize(datetime.strptime(recipe_data['dateTimePicker'], '%A, %d %b %Y'))
             sponge_start = aware.localize(datetime.strptime(recipe_data['spongeStartTime'], '%A, %d %b %Y %H:%M'))
             sponge_end = aware.localize(datetime.strptime(recipe_data['spongeEndTime'], '%A, %d %b %Y %H:%M'))
             dough_start = aware.localize(datetime.strptime(recipe_data['doughStartTime'], '%A, %d %b %Y %H:%M'))
@@ -51,30 +52,17 @@ def save_recipes(request):
             first_loaf_packed = aware.localize(datetime.strptime(recipe_data['firstLoafPacked'], '%A, %d %b %Y %H:%M'))
             cut_off = aware.localize(datetime.strptime(recipe_data['cutOffTime'], '%A, %d %b %Y %H:%M'))
             std_hours, std_minutes, std_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
+            timevar_hours, timevar_minutes, timevar_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
             cycle_hours, cycle_minutes, cycle_seconds = map(int, recipe_data.get('cycleTime', '00:00:00').split(':'))
-            
-            # Extract the gap value
             gap_hours, gap_minutes, gap_seconds = map(int, recipe_data.get('gap', '00:00:00').split(':'))
-            gap_time_delta = timedelta(hours=gap_hours, minutes=gap_minutes, seconds=gap_seconds)
-
-            recipe_prod_date = aware.localize(datetime.strptime(recipe_data['dateTimePicker'], '%A, %d %b %Y'))
-
-            recipe_per_day = recipe_per_day_dict.get(recipe_prod_date)
-            if recipe_per_day is None:
-                recipe_per_day, created = RecipePerDay.objects.get_or_create(
-                    jobOrder=job_order,
-                    production_date=recipe_prod_date,
-                    defaults={'gap': gap_time_delta}
-                )
-                recipe_per_day_dict[recipe_prod_date] = recipe_per_day
-                if not created and recipe_per_day.gap != gap_time_delta:
-                    recipe_per_day.gap = gap_time_delta
-                    recipe_per_day.save()
+                        
 
             # Create RecipeMapping instance
+            timevar_time_delta = timedelta(hours=timevar_hours, minutes=timevar_minutes, seconds=timevar_seconds)
             std_time_delta = timedelta(hours=std_hours, minutes=std_minutes, seconds=std_seconds)
             cycle_time_delta = timedelta(hours=cycle_hours, minutes=cycle_minutes, seconds=cycle_seconds)
-            recipe_id = '{}_{}'.format(job_order_id, recipe_data['recipeName'])
+            gap_time_delta = timedelta(hours=gap_hours, minutes=gap_minutes, seconds=gap_seconds)
+            recipe_id = '{}_{}_{}'.format(job_order_id, recipe_data['recipeName'], recipe_data['formId'].split('-')[1])
             recipe = RecipeMapping.objects.create(
                 recipeId=recipe_id,
                 jobOrder=job_order,
@@ -85,15 +73,15 @@ def save_recipes(request):
                 recipeTotalSales=int(recipe_data.get('salesOrder', 0)),
                 recipeBatches=int(recipe_data.get('batches', 0)),
                 recipeStdTime=std_time_delta,
+                recipeSpongeStartTime=sponge_start,
                 recipeCycleTime=cycle_time_delta,
                 recipeWaste=float(recipe_data.get('waste', 0)),
                 recipeTotalTray=int(recipe_data.get('totalTray', 0)),
                 recipeTotalTrolley=int(recipe_data.get('totalTrolley', 0)),
                 recipeBeltNo=int(recipe_data.get('beltNo', 0)),
+                recipeGap=gap_time_delta,
+                recipeTimeVar=timevar_time_delta,
             )
-            
-            if created or recipe not in recipe_per_day.recipes.all():
-                recipe_per_day.recipes.add(recipe)
 
             # Create Activity instances
             Activity.objects.create(

@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let activeRecipe = {
         name: null,
         tabIndex: null,
-        dateTimePicker: null
+        dateTimePicker: null,
+        timeVar: null,
+        prodRate: null,
+        batchSize: null
     };
     localStorage.setItem('activeRecipe', JSON.stringify(activeRecipe));
 
@@ -95,15 +98,27 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function updateActiveRecipeInfo(mainTabIndex, recipeName, selectedDate) {
+    function updateActiveRecipeInfo(mainTabIndex, recipeName, selectedDate, prodRateSubmit, batchSizeSubmit, timeVariable) {
+        // Update the activeRecipe object with new values
         activeRecipe.name = recipeName;
         activeRecipe.tabIndex = mainTabIndex;
         activeRecipe.dateTimePicker = selectedDate;
 
+        // Check if the recipe exists in the recipeFormObjects and update it
+        if (recipeFormObjects[recipeName] && recipeFormObjects[recipeName][mainTabIndex]) {
+            let recipeObject = recipeFormObjects[recipeName][mainTabIndex];
+            recipeObject.prodRate = prodRateSubmit;
+            recipeObject.batchSize = batchSizeSubmit;
+            recipeObject.timeVariable = timeVariable;
+        } else {
+            console("ERROR BRO")
+        }
+
         console.log(`Updating active recipe: ${recipeName}, Tab Index: ${mainTabIndex}, Date: ${selectedDate}`);
 
+        // Update any related UI elements
         updateColorSetField(clientSelect.value, activeRecipe.dateTimePicker, activeRecipe.tabIndex);
-        displayRecipeDetails(recipeName, mainTabIndex);
+        displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, mainTabIndex, timeVariable);
     }
 
     var changeDateButton = document.getElementById('change-date');
@@ -231,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!enteredRecipeName) return;
 
         if (isExistingRecipeForm(enteredRecipeName, formIndex)) {
-            handleExistingRecipe(enteredRecipeName, formIndex);
+            handleExistingRecipe(enteredRecipeName, prodRateSubmit, batchSizeSubmit, timeVariable, formIndex);
         } else {
             handleNewRecipe(enteredRecipeName, prodRateSubmit, batchSizeSubmit, formIndex, timeVariable);
         }
@@ -241,16 +256,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function isExistingRecipeForm(recipeName, index) {
-        return recipeFormObjects[recipeName] && recipeFormObjects[recipeName][index];
+        // Check if the recipe with the given name and formIndex already exists
+        return recipeFormObjects.hasOwnProperty(recipeName) && recipeFormObjects[recipeName].hasOwnProperty(index);
     }
 
-    function handleExistingRecipe(recipeName, index) {
-        displayRecipeDetails(recipeName, index);
+    function handleExistingRecipe(recipeName, prodRateSubmit, batchSizeSubmit, timeVariable, index) {
+        // Update the existing recipe details with new values
+        let recipeObject = recipeFormObjects[recipeName][index];
+        recipeObject.prodRate = prodRateSubmit;
+        recipeObject.batchSize = batchSizeSubmit;
+        recipeObject.timeVariable = timeVariable;
+
+        // Assuming displayRecipeDetails is a function that updates the UI with the new recipe details
+        displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
         setActiveTabByName(recipeName);
     }
 
     function handleNewRecipe(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable) {
-        const newRecipeButton = createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index);
+        const newRecipeButton = createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
         displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
@@ -259,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
         checkAndToggleTrackerVisibility();
     }
 
-    function createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index) {
+    function createRecipeTabButton(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable) {
         const button = document.createElement('button');
         button.classList.add('tablinks-recipes');
         button.textContent = recipeName;
@@ -287,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.appendChild(document.createElement('br'));
         button.appendChild(deleteContainer);  // Append the delete container to the button
         button.addEventListener('click', function () {
-            displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index);
+            displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
             setActiveTab(button);
         });
 
@@ -1056,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return formatDateTime(newStartTime);
     }
 
-    function calculateSpongeEndTime(tabIdx, startTime, stdTimeInput, spongeEndTimeElement, uniqueFormId) {
+    function calculateSpongeEndTime(tabIdx, startTime, stdTimeInput, spongeEndTimeElement) {
 
         console.log(`StdTimeInput: ${stdTimeInput}`)
 
@@ -1402,9 +1425,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(`Time Variable: ${timeVariableInput.value} for calculateCycleTime`);
         const batchSizeValue = parseFloat(batchSizeInput.value) || 0;
         const productionRateValue = parseFloat(productionRateInput.value) || 0;
+        const timeVariableInSeconds = convertToSeconds(timeVariableInput.value);
 
-        if (batchSizeValue > 0 && productionRateValue > 0) {
-            const timeVariableInSeconds = convertToSeconds(timeVariableInput.value);
+        if (batchSizeValue > 0 && productionRateValue > 0 && timeVariableInSeconds > 0) {
             const cycleTimeInSeconds = (batchSizeValue / productionRateValue) * timeVariableInSeconds;
             cycleTimeInput.value = convertToHHMMSS(cycleTimeInSeconds);
         } else {
@@ -1638,7 +1661,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (recipeButtonsInCurrentTab.length > 0) {
             console.log('Length of', recipeButtonsInCurrentTab.length)
             setActiveTab(recipeButtonsInCurrentTab[0]);
-            displayRecipeDetails(activeRecipe.name, activeRecipe.tabIndex);
+            displayRecipeDetails(activeRecipe.name, activeRecipe.prodRate, activeRecipe.batchSize, activeRecipe.tabIndex, activeRecipe.timeVar);
             printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
             updateTrackerDisplay(uniqueFormId)
         }
@@ -1647,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         checkAndToggleTrackerVisibility();
 
-        // activateFirstRecipeInMainTab(day);
+        activateFirstRecipeInMainTab(day);
     }
 
     function activateFirstRecipeInMainTab(day) {
@@ -1656,7 +1679,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var firstRecipeButton = tabContent.querySelector('.tablinks-recipes');
             if (firstRecipeButton) {
                 setActiveTab(firstRecipeButton);
-                displayRecipeDetails(activeRecipe.name, activeRecipe.tabIndex);
+                displayRecipeDetails(activeRecipe.name, activeRecipe.prodRate, activeRecipe.batchSize, activeRecipe.tabIndex, activeRecipe.timeVar);
             }
         }
     }
@@ -1669,14 +1692,19 @@ document.addEventListener('DOMContentLoaded', function () {
         var recipeName = clickedButton.innerText.replace('Delete', '').trim();
         var selectedDate = addDaysToDate(mainTabIndex);
         var activeButtonId = `add-product-for-${recipeName}-${mainTabIndex}`;
+        var uniqueFormId = `recipeForm-${recipeName}-${mainTabIndex}`;
+        var timeVar = 'timeVariable-' + uniqueFormId;
+        var batchesSubmit = 'batches-' + uniqueFormId;
+        var prodRateSubmit = 'productionRate-' + uniqueFormId;
         var activeButton = document.getElementById(activeButtonId);
         var allAddProductButtons = document.querySelectorAll('.add-product-button');
 
         activeRecipe.name = recipeName;
         activeRecipe.tabIndex = mainTabIndex;
         activeRecipe.dateTimePicker = selectedDate;
-
-        var uniqueFormId = `recipeForm-${recipeName}-${mainTabIndex}`;
+        activeRecipe.timeVar = timeVar;
+        activeRecipe.batchSize = batchesSubmit;
+        activeRecipe.prodRate = prodRateSubmit;
 
         allRecipeButtons.forEach(function (button) {
             button.classList.remove('opened');

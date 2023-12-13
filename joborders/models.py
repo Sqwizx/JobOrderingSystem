@@ -23,45 +23,31 @@ class RecipeMapping(models.Model):
     recipeId = models.CharField(max_length=50)
     recipeName = models.CharField(max_length=50)
     recipeProdDate = models.DateField()
+    recipeTimeVar = models.DurationField(max_length=50, null=True)
     recipeProdRate = models.PositiveIntegerField(null=True)
     recipeBatchSize = models.PositiveIntegerField(null=True)
     recipeTotalSales = models.PositiveIntegerField(null=True)
     recipeBatches = models.PositiveIntegerField(null=True)
     recipeStdTime = models.DurationField(null=True)
     recipeCycleTime = models.DurationField(null=True)
-    recipeWaste = models.DecimalField(max_digits=5, decimal_places=2)
-    recipeSpongeStartTime = models.DurationField(null=True)
+    recipeWaste = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    recipeSpongeStartTime = models.DateTimeField(null=True)
     recipeTotalTray = models.PositiveIntegerField(null=True)
     recipeTotalTrolley = models.PositiveIntegerField(null=True)
     recipeBeltNo = models.PositiveIntegerField(null=True)
+    recipeGap = models.DurationField(null=True)
     jobOrder = models.ForeignKey(JobOrder, related_name='recipes', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.recipeId
     
-class RecipePerDay(models.Model):
-    id = models.CharField(max_length=100, primary_key=True, editable=False)
-    jobOrder = models.ForeignKey(JobOrder, related_name='recipe_days', on_delete=models.CASCADE)
-    production_date = models.DateField()
-    gap = models.CharField(max_length=50, null=True)
-    recipes = models.ManyToManyField(RecipeMapping, related_name='recipe_days')
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            dateday = self.production_date.strftime("%d%a")  # Format: DayOfWeekDayOfMonth, e.g., "Friday23"
-            self.id = f"{self.jobOrder.jobOrderId}_{dateday}"
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.id
-    
 class Activity(models.Model):
-    cutOffTime = models.DateTimeField()
-    spongeStart = models.DateTimeField()
-    spongeEnd = models.DateTimeField()
-    doughStart = models.DateTimeField()
-    doughEnd = models.DateTimeField()
-    firstLoafPacked = models.DateTimeField()
+    cutOffTime = models.DateTimeField(null=True)
+    spongeStart = models.DateTimeField(null=True)
+    spongeEnd = models.DateTimeField(null=True)
+    doughStart = models.DateTimeField(null=True)
+    doughEnd = models.DateTimeField(null=True)
+    firstLoafPacked = models.DateTimeField(null=True)
     recipe = models.ForeignKey(RecipeMapping, on_delete=models.CASCADE, related_name="activity_recipe")
 
     def __str__(self):

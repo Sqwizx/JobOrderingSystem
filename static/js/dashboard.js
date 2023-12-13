@@ -93,7 +93,8 @@ document.addEventListener("DOMContentLoaded", function () {
     rows.forEach(function (row) {
         row.addEventListener("click", function () {
             const jobOrderId = this.getAttribute("data-job-order-id"); // Get the job order ID from data attribute
-            window.location.href = `/job_order_detail/${jobOrderId}/`; // Redirect to the details page
+            localStorage.setItem("jobOrderId", jobOrderId); // Store job order ID in localStorage
+            window.location.href = `/details/${jobOrderId}/`; // Redirect to the details page
         });
     });
 });

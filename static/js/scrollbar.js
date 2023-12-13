@@ -2,6 +2,8 @@ function initializeCustomScrollbar() {
     const mainScrollContainer = document.getElementById('scrollContainer');
     const modalContent = document.getElementById('productModalContent');
     const productList = document.getElementById('product-list');
+    const modalNewContent = document.getElementById('newProductModalContent');
+
 
 
     OverlayScrollbars(mainScrollContainer, {
@@ -17,6 +19,19 @@ function initializeCustomScrollbar() {
 
     if (modalContent) {
         OverlayScrollbars(modalContent, {
+            className: "os-theme-dark",
+            resize: "none",
+            sizeAutoCapable: true,
+            paddingAbsolute: true,
+            scrollbars: {
+                autoHide: 'leave',
+                autoHideDelay: 1000
+            }
+        });
+    }
+
+    if (modalNewContent) {
+        OverlayScrollbars(modalNewContent, {
             className: "os-theme-dark",
             resize: "none",
             sizeAutoCapable: true,

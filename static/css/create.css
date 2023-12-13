@@ -10,6 +10,10 @@
     height: 100vh
 }
 
+.main-content {
+    overflow-x: hidden;
+}
+
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
@@ -36,6 +40,12 @@
 
 #product-list {
     height: 300px
+}
+
+#progressContainer .timeValue {
+    word-wrap: break-word;
+    max-width: 120px;
+    /* Adjust as needed */
 }
 
 #tracker {
@@ -160,9 +170,9 @@
     background-color: rgba(4, 66, 168, 1);
     color: #FFFFFF;
     border: none;
-    border-radius: 10px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     width: 100px;
     align-self: flex-end;
 }
@@ -716,8 +726,8 @@ select option {
     margin-top: 20px;
     position: relative;
     width: 100%;
-
-    height: 300px
+    height: 300px;
+    z-index: 1;
 }
 
 #progressLine {
@@ -734,9 +744,7 @@ select option {
     left: 50%;
     top: 0;
     height: 100%;
-
     border-left: 3px solid #ccc;
-
     z-index: 1
 }
 
@@ -774,7 +782,7 @@ select option {
     position: absolute;
     left: 2vw;
     display: block;
-    width: 150px;
+    width: 300px;
     text-align: left;
     top: 51%;
     transform: translateY(-40%);
@@ -1106,7 +1114,3 @@ details>div.date-details>details>div.form-details>div.form-column>div.form-field
 .searchResults div:hover {
     background-color: rgba(4, 66, 168, 0.2);
 }
-
-/* strong {
-    color: black;
-} */
