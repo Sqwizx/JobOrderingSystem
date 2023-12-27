@@ -104,6 +104,78 @@ document.addEventListener('DOMContentLoaded', function () {
     if (firstRecipeTab) {
         openRecipeTab(firstRecipeTab.getAttribute('data-recipe-id'));
     }
+
+    // Get the modal
+    var reviseModal = document.getElementById("reviseModal");
+
+    // Get the button that opens the modal
+    var reviseButtons = document.querySelectorAll(".revise-button");
+
+    // Get the <span> element that closes the modal
+    var closeModal = document.getElementsByClassName("modal-close")[0];
+
+    // When the user clicks the button, open the modal 
+    reviseButtons.forEach(function (button) {
+        button.onclick = function () {
+            reviseModal.style.display = "block";
+        }
+    });
+
+    // When the user clicks on <span> (x), close the modal
+    closeModal.onclick = function () {
+        reviseModal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+        if (event.target == reviseModal) {
+            reviseModal.style.display = "none";
+        }
+    }
+
+    var submitButton = document.getElementById("submit-revision");
+    var reviseModal = document.getElementById("reviseModal");
+    var revisionText = document.getElementById("revisionText");
+
+    submitButton.addEventListener('click', function () {
+        var jobOrderId = reviseModal.getAttribute('data-joborder-id');
+        var revisionData = {
+            'revisionText': revisionText.value
+        };
+
+        fetch(`/add_revision/${jobOrderId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(revisionData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    reviseModal.style.display = 'none';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 });
 
 const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
@@ -129,7 +201,7 @@ function submitJobOrder(jobOrderId) {
         success: function (data) {
             if (data.status === 'success') {
                 // Redirect to the dashboard page on success
-                window.location.href = '/';  // Update the URL as needed
+                window.location.reload();
             } else {
                 // Handle errors or display a message
                 console.error(data.message);
@@ -155,6 +227,32 @@ function deleteJobOrder(jobOrderId) {
             if (data.status === 'success') {
                 // Redirect to the dashboard page on success
                 window.location.href = '/';  // Update the URL as needed
+            } else {
+                // Handle errors or display a message
+                console.error(data.message);
+            }
+        },
+        error: function (xhr, status, error) {
+            // Handle AJAX errors
+            console.error(error);
+        }
+    });
+}
+
+function approveJobOrder(jobOrderId) {
+
+    // Send a POST request to the submit URL with the jobOrderId
+    $.ajax({
+        type: "POST",
+        url: `/approve/${jobOrderId}/`,  // Update the URL pattern as needed
+        dataType: "json",
+        headers: {
+            'X-CSRFToken': csrfToken  // Include the CSRF token in the headers
+        },
+        success: function (data) {
+            if (data.status === 'success') {
+                // Redirect to the dashboard page on success
+                window.location.reload();
             } else {
                 // Handle errors or display a message
                 console.error(data.message);

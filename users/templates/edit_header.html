@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="header">
+  <div class="text" id="jobOrderIdDisplay"></div>
+    <div class="top-menu">
+        <input type="text" placeholder="Search Job Orders">
+        <a href="{% url 'create_joborder' %}">
+        <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
+         </a>
+    </div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const jobOrderIdDisplay = document.getElementById("jobOrderIdDisplay");
+    const storedJobOrderId = localStorage.getItem("jobOrderId");
+
+    const titleText = storedJobOrderId ;
+
+    if (jobOrderIdDisplay && storedJobOrderId) {
+        jobOrderIdDisplay.textContent = titleText;
+    }
+});
+</script>
+</body>
+</html>

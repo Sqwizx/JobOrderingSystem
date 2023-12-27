@@ -12,8 +12,8 @@ let isFormSubmission = false;
 
 document.addEventListener('DOMContentLoaded', function () {
 
-
     initializeRecipeCalculations();
+
     // Attach event listeners for recipe form fields
     document.querySelectorAll('.recipe-form').forEach(recipeForm => {
         const recipeId = recipeForm.getAttribute('data-recipe-id');
@@ -164,20 +164,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var recipeModal = document.getElementById('recipeModal');
     var openModalButtons = document.querySelectorAll('.add-recipe-tab');
 
-    // Get references to the product modal
-    var newProductModal = document.getElementById('newProductModal');
     var openProductModalButton = document.getElementById('add-product');
 
     var confirmationModal = document.getElementById('alertModal');
     var confirmDeleteButton = document.getElementById('confirmDelete');
     var deleteButtons = document.querySelectorAll('.delete-container');
 
-    function openConfirmationModal(recipeId) {
+    function openConfirmationModal(recipeId, recipeName) {
         // Set the recipeId as a data attribute in the confirmation modal
         confirmationModal.setAttribute('data-recipe-id', recipeId);
-
-        // Get the recipe name from the clicked delete-container
-        var recipeName = this.getAttribute('data-recipe-name');
+        confirmationModal.setAttribute('data-recipe-name', recipeName);
+        console.log(recipeName);
 
         // Update the content of the <strong> element with the recipe name
         var alertModalNamePlaceholder = document.getElementById('alertModalNamePlaceholder');
@@ -243,6 +240,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var prodDate = formatDate(document.getElementById('prodDate').value);
         var recipeName = document.getElementById('recipeName').value;
         var timeVariable = document.getElementById('timeVariable').value;
+        var prodRate = document.getElementById('prodRate').value;
+        var batchSize = document.getElementById('batchSize').value;
+        var cycleTime = document.getElementById('cycleTime').value;
+
         isFormSubmission = true;
 
         var data = {
@@ -250,7 +251,10 @@ document.addEventListener('DOMContentLoaded', function () {
             tabIndex: tabIndex,
             prodDate: prodDate,
             recipeName: recipeName,
-            timeVariable: timeVariable
+            timeVariable: timeVariable,
+            prodRate: prodRate,
+            batchSize: batchSize,
+            cycleTime: cycleTime,
         };
 
         // AJAX call to the server
@@ -359,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
     deleteButtons.forEach(function (button) {
         button.addEventListener('click', function () {
             var recipeId = this.getAttribute('data-recipe-id');
+            var recipeName = this.getAttribute('data-recipe-name');
             var tabcontent = this.closest('.tabcontent');
 
             if (tabcontent) {
@@ -367,7 +372,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Display the warning modal instead of deleting
                     document.getElementById('warningModal').style.display = 'block';
                 } else {
-                    openConfirmationModal.call(this, recipeId);
+                    console.log('Recipe Name:', recipeName);
+                    console.log('Recipe IDID:', recipeId);
+                    openConfirmationModal(recipeId, recipeName);
                 }
             }
         });
@@ -417,11 +424,13 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 console.log(data.message);
-                location.reload();
+                document.querySelectorAll(`.recipe-form[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
+                document.querySelectorAll(`.tablinks-recipes[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
+                document.querySelectorAll(`.product-item[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
+                document.querySelectorAll(`.activity-steps[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
             })
             .catch(error => console.error('Error:', error));
     }
-
 
     function getCookie(name) {
         let cookieValue = null;
@@ -438,26 +447,97 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
+    function updateAllRecipeTimes(recipeId, newStartTime) {
+        const stdTime = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}'] [name="stdTime"]`).value;
+        let previousSpongeEndTime = null;
+
+        // Update the current recipe's times first
+        const newSpongeEndTime = calculateSpongeEndTime(newStartTime, stdTime);
+        const newDoughStartTime = calculateDoughStartTime(newSpongeEndTime);
+        const newDoughEndTime = calculateDoughEndTime(newDoughStartTime, stdTime);
+        const newFirstLoafPackedTime = calculateFirstLoafPacked(newDoughEndTime);
+        const newCutOffTime = calculateCutOffTime(newFirstLoafPackedTime, stdTime);
+        updateTracker(recipeId, newStartTime, newSpongeEndTime, newDoughStartTime, newDoughEndTime, newFirstLoafPackedTime, newCutOffTime);
+
+        // Now update subsequent recipes
+        const currentRecipeContainer = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}']`).closest('.tabcontent');
+        if (currentRecipeContainer) {
+            const allRecipeForms = currentRecipeContainer.querySelectorAll('.recipe-form');
+            let updateNext = false;
+
+            allRecipeForms.forEach(form => {
+                const nextRecipeId = form.getAttribute('data-recipe-id');
+
+                if (nextRecipeId === recipeId) {
+                    updateNext = true; // Start updating from the next recipe
+                    previousSpongeEndTime = newSpongeEndTime; // Set the end time for the next recipe calculation
+                    return;
+                }
+
+                if (updateNext) {
+                    // Calculate new start time for the next recipe
+                    const newNextStartTime = new Date(previousSpongeEndTime);
+                    newNextStartTime.setMinutes(newNextStartTime.getMinutes() + 45); // Add 45 minutes buffer
+                    const formattedNextStartTime = formatDateTime(newNextStartTime);
+
+                    // Recalculate times for the next recipe
+                    const nextSpongeEndTime = calculateSpongeEndTime(formattedNextStartTime, stdTime);
+                    const nextDoughStartTime = calculateDoughStartTime(nextSpongeEndTime);
+                    const nextDoughEndTime = calculateDoughEndTime(nextDoughStartTime, stdTime);
+                    const nextFirstLoafPackedTime = calculateFirstLoafPacked(nextDoughEndTime);
+                    const nextCutOffTime = calculateCutOffTime(nextFirstLoafPackedTime, stdTime);
+                    updateTracker(nextRecipeId, formattedNextStartTime, nextSpongeEndTime, nextDoughStartTime, nextDoughEndTime, nextFirstLoafPackedTime, nextCutOffTime);
+
+                    // Set the end time for the next recipe calculation
+                    previousSpongeEndTime = nextSpongeEndTime;
+                }
+            });
+        }
+    }
+
     var flatpickrInstances = {};
 
     document.querySelectorAll('.spongeStart-flatpickr').forEach(function (el) {
         var originalDate = el.value; // Get the original date string
         var formattedDate = moment(originalDate, "dddd, DD MMM YYYY HH:mm").format("YYYY-MM-DD HH:mm");
+        var justDate = moment(originalDate, "dddd, DD MMM YYYY HH:mm").format("YYYY-MM-DD");
 
-        console.log('This is original date', originalDate);
-        console.log('This is formatted date', formattedDate);
+        console.log('Original date:', originalDate);
+        console.log('Formatted date:', formattedDate);
 
         var recipeId = el.closest('.recipe-form').getAttribute('data-recipe-id');
+
+        // Initialize Flatpickr
         flatpickrInstances[recipeId] = flatpickr(el, {
             enableTime: true,
-            noCalendar: true,
             altInput: true,
             altFormat: "l, d M Y H:i",
             dateFormat: "Y-m-d H:i",
             defaultDate: formattedDate,
-            minDate: formattedDate, // Set the minDate to the formatted date
+            minDate: justDate, // Set the minDate to the start of the specified day
+            maxDate: justDate + " 23:59", // Set the maxDate to the end of the specified day
+            onChange: function (selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    const recipeId = instance.element.getAttribute('data-recipe-id');
+                    var formattedDate = moment(dateStr, "YYYY-MM-DD HH:mm").format("dddd, DD MMM YYYY HH:mm");
+                    updateAllRecipeTimes(recipeId, formattedDate); // Use the new function here
+                } else {
+                    console.log('Invalid or empty date/time:', dateStr);
+                }
+            }
+        });
+
+        // Handle manual input changes in the alternative input
+        flatpickrInstances[recipeId].altInput.addEventListener('input', function () {
+            var manuallyEnteredDate = this.value;
+            var parsedDate = moment(manuallyEnteredDate, "dddd, DD MMM YYYY HH:mm").toDate();
+
+            if (parsedDate && !isNaN(parsedDate.getTime())) {
+                flatpickrInstances[recipeId].setDate(parsedDate, false);
+            }
         });
     });
+
 
     function initializeRecipeCalculations() {
         const recipeForms = document.querySelectorAll('.recipe-form');
@@ -481,13 +561,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const stdTimeInput = document.querySelector(`#stdTime-${recipeId}`);
         const timeVariableInput = document.querySelector(`#timeVariable-${recipeId}`);
 
-        // calculateBatchesToProduce(salesOrderInput.value, wasteInput.value, batchSizeInput.value, batchesInput);
-        // calculateCycleTime(batchSizeInput.value, productionRateInput.value, timeVariableInput.value, cycleTimeInput);
-        // calculateStdTime(batchesInput.value, cycleTimeInput.value, stdTimeInput, recipeId);
-
         console.log('cycleTimeInput [FIRST]:', cycleTimeInput.value);
         // Attach event listeners to these elements
-        salesOrderInput.addEventListener('change', () => {
+        salesOrderInput.addEventListener('input', () => {
             calculateBatchesToProduce(salesOrderInput.value, wasteInput.value, batchSizeInput.value, batchesInput.value, timeVariableInput);
             updateTotalValues(recipeId)
         });
@@ -519,6 +595,20 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTotalValues(recipeId)
         });
     }
+
+    document.querySelectorAll('.gap-field').forEach(function (field) {
+        field.addEventListener('change', function () {
+            var newValue = this.value;
+
+            // Find the nearest parent container that represents a date group
+            var dateGroupContainer = this.closest('.tabcontent');
+
+            // Update all gap fields within this container
+            dateGroupContainer.querySelectorAll('.gap-field').forEach(function (otherField) {
+                otherField.value = newValue;
+            });
+        });
+    });
 
     function updateTotalValues(recipeId) {
         const totalSalesOrder = calculateTotalSalesOrderForRecipe(recipeId);
@@ -591,25 +681,54 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateCycleTime(batchSize, productionRate, timeVariable, cycleTimeInput) {
         console.log(`Time Variable: ${timeVariable} for calculateCycleTime`);
 
-        const timeVariableInSeconds = convertToSeconds(timeVariable);
+        let timeVariableInSeconds;
+
+        // Check if timeVariable is a string and convert it to seconds
+        if (typeof timeVariable === 'string') {
+            timeVariableInSeconds = convertToSeconds(timeVariable);
+        } else {
+            // Assume timeVariable is already a number in seconds
+            timeVariableInSeconds = timeVariable;
+        }
 
         if (batchSize > 0 && productionRate > 0 && timeVariableInSeconds > 0) {
             const cycleTimeInSeconds = Math.round((batchSize / productionRate) * timeVariableInSeconds);
+            console.log('cycleTimeInSeconds [SECOND]:', cycleTimeInSeconds);
             cycleTimeInput.value = convertToHHMMSS(cycleTimeInSeconds);
+            console.log('cycleTimeInput [SECOND]:', cycleTimeInput.value);
         } else {
             cycleTimeInput.value = "00:00:00";
+        }
+    }
+
+    function calculateCycleTimeSearch(batchSize, productionRate, timeVariable) {
+        let timeVariableInSeconds;
+
+        if (typeof timeVariable === 'string') {
+            timeVariableInSeconds = convertToSeconds(timeVariable);
+        } else {
+            timeVariableInSeconds = timeVariable;
+        }
+
+        if (batchSize > 0 && productionRate > 0 && timeVariableInSeconds > 0) {
+            const cycleTimeInSeconds = Math.round((batchSize / productionRate) * timeVariableInSeconds);
+            return convertToHHMMSS(cycleTimeInSeconds);
+        } else {
+            return "00:00:00";
         }
     }
 
     function calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput) {
 
         if (salesOrderInput && wasteInput && batchSizeInput && batchesInput) {
+            console.log(batchSizeInput + " " + salesOrderInput + " " + wasteInput)
             const salesOrderValue = parseFloat(salesOrderInput) || 0;
             const wastePercentage = parseFloat(wasteInput) / 100 || 0.02;
             const batchSizeValue = parseFloat(batchSizeInput) || 1;
 
             const totalOrderWithWaste = salesOrderValue + (salesOrderValue * wastePercentage);
             const batches = totalOrderWithWaste / batchSizeValue;
+            console.log(batches)
             batchesInput.value = Math.ceil(batches);
         }
     }
@@ -936,8 +1055,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         var flatpickrInstance = flatpickrInstances[recipeId];
-        console.log('flatpickrInstance:', flatpickrInstance, 'newTime:', formattedDate)
+
+        // Temporarily remove the onChange event
+        var currentOnChange = flatpickrInstance.config.onChange;
+        flatpickrInstance.set('onChange', null);
+
+        // Set the new date
         flatpickrInstance.setDate(formattedDate, true);
+
+        // Re-assign the onChange event
+        flatpickrInstance.set('onChange', currentOnChange);
     }
 
 
@@ -1019,6 +1146,102 @@ document.addEventListener('DOMContentLoaded', function () {
         return formatDateTime(cutOffTime);
     }
 
+    function formatDurationInput(inputElem) {
+        let val = inputElem.value.replace(/[^0-9]/g, '');
+
+        while (val.length < 6) {
+            val = val + '0';
+        }
+
+        const hours = val.slice(-6, -4);
+        const minutes = val.slice(-4, -2);
+        const seconds = val.slice(-2);
+
+        inputElem.value = `${hours}:${minutes}:${seconds}`;
+    }
+
+    document.addEventListener('input', function (e) {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"], [name="gap"]')) {
+            formatDurationInput(e.target);
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.target.matches('[name="stdTime"], [name="cycleTime"], [name="timeVariable"], [name="gap"]') && e.key == 'Backspace' || e.key == 'Delete') {
+            e.preventDefault(); // Prevent default backspace behavior
+            e.target.value = '00:00:00'; // Clear the input field
+        }
+    });
+
+    document.querySelectorAll('.modal').forEach(function (modal) {
+        const searchField = modal.querySelector('#searchField');
+        const resultsDiv = modal.querySelector('#searchResults');
+
+        if (searchField) {
+            searchField.addEventListener('input', function () {
+                const query = this.value;
+
+                if (query.length > 0) {
+                    fetch('/search/?query=' + query)
+                        .then(response => response.json())
+                        .then(data => {
+                            var results = data.recipes;
+                            resultsDiv.innerHTML = '';
+                            resultsDiv.style.display = 'block';
+
+                            if (results.length === 0) {
+                                resultsDiv.innerHTML = '<div>Nothing found.</div>';
+                            } else {
+                                results.forEach(function (recipe, index) {
+                                    var div = document.createElement('div');
+                                    var regex = new RegExp(query, 'gi');
+                                    var highlightedName = recipe.recipeName.replace(regex, function (match) { return `<strong>${match}</strong>`; });
+                                    div.innerHTML = highlightedName;
+                                    div.onclick = function () {
+                                        console.log("Recipe clicked:", recipe);
+
+                                        var cycleTimeVarInSeconds = recipe.cycleTimeVariable;
+                                        var formattedCycleTime = convertToHHMMSS(cycleTimeVarInSeconds);
+                                        console.log("Formatted Cycle Time:", formattedCycleTime);
+
+                                        // Call the function to set modal field values
+                                        setModalFieldValues(recipe);
+
+                                        resultsDiv.style.display = 'none';
+                                    };
+                                    resultsDiv.appendChild(div);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching recipes:', error);
+                        });
+                } else {
+                    resultsDiv.innerHTML = '';
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    function setModalFieldValues(recipe) {
+        // Set the recipe name
+        document.getElementById('recipeName').value = recipe.recipeName;
+
+        // Set the cycle time variable (convert seconds to HH:MM:SS format)
+        var cycleTimeVarInSeconds = recipe.cycleTimeVariable;
+        var formattedCycleTime = convertToHHMMSS(cycleTimeVarInSeconds);
+        document.getElementById('timeVariable').value = formattedCycleTime;
+
+        // Set the production rate and batch size
+        document.getElementById('prodRate').value = recipe.productionRate;
+        document.getElementById('batchSize').value = recipe.stdBatchSize;
+
+        var cycleTimeValue = calculateCycleTimeSearch(recipe.stdBatchSize, recipe.productionRate, cycleTimeVarInSeconds);
+        document.getElementById('cycleTime').value = cycleTimeValue;
+        console.log('cycleTimeValue:', cycleTimeValue);
+    }
+
 });
 
 function formatDate(dateString) {
@@ -1029,6 +1252,62 @@ function formatDate(dateString) {
 
     return `${year}-${month}-${day}`;
 }
+
+
+// Add event listener for Product Price inputs
+document.querySelectorAll("[id=newProductPrice]").forEach(function (input) {
+    input.addEventListener("input", function () {
+        let val = this.value.replace(/[^0-9]/g, '');
+        while (val.length < 4) {
+            val = '0' + val;
+        }
+        let formattedValue = (parseInt(val.substring(0, 2)) + '.' + parseInt(val.substring(2, 4))).toString();
+        this.value = formattedValue;
+    });
+});
+
+// Add event listener for Product Name inputs
+document.querySelectorAll("[id=productName]").forEach(function (input) {
+    input.addEventListener("input", function () {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+});
+
+// Add event listener for Product Price inputs
+document.querySelectorAll("[id=productPrice]").forEach(function (input) {
+    input.addEventListener("input", function () {
+        let val = this.value.replace(/[^0-9]/g, '');
+        while (val.length < 4) {
+            val = '0' + val;
+        }
+        let formattedValue = (parseInt(val.substring(0, 2)) + '.' + parseInt(val.substring(2, 4))).toString();
+        this.value = formattedValue;
+    });
+});
+
+// Add event listener for Product Name inputs
+document.querySelectorAll("[id=newProductName]").forEach(function (input) {
+    input.addEventListener("input", function () {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+});
+
+// Add event listener for Recipe Name input
+document.querySelectorAll("[id=searchField]").forEach(function (input) {
+    // Convert to uppercase and restrict non-alphanumeric on input event
+    input.addEventListener("input", function (e) {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+});
+
+// Add event listener for Recipe Name input
+document.querySelectorAll("[id=recipeName]").forEach(function (input) {
+    // Convert to uppercase and restrict non-alphanumeric on input event
+    input.addEventListener("input", function (e) {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+});
+
 
 function populateAndShowProductModal(editButton) {
     // Retrieve product data from "hidden"
@@ -1254,6 +1533,8 @@ function submitJobOrder(jobOrderId) {
             stdTime: form.querySelector('[name="stdTime"]').value,
             cycleTime: form.querySelector('[name="cycleTime"]').value,
             timeVariable: form.querySelector('[name="timeVariable"]').value,
+            totalTray: form.querySelector('[name="totalTray"]').value,
+            totalTrolley: form.querySelector('[name="totalTrolley"]').value,
             spongeStartTime: form.querySelector('[name="spongeStartTime"]').value,
             activity: getActivityData(recipeId)
         };
@@ -1261,6 +1542,7 @@ function submitJobOrder(jobOrderId) {
     });
 
     const data = { recipes: recipes };
+    console.log(data);
 
     fetch(url, {
         method: 'POST',
@@ -1313,6 +1595,79 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Function to open the modal and set the product information
+function openProductAlertModal(productElement) {
+    var productName = productElement.getAttribute('data-product-name');
+    var recipeName = productElement.getAttribute('data-recipe-name');
+    var productId = productElement.getAttribute('data-product-id');
+    console.log(productName)
+
+    document.getElementById('alertProductNamePlaceholder').textContent = productName;
+    document.getElementById('alertRecipeNamePlaceholder').textContent = recipeName;
+    document.getElementById('productConfirmDelete').setAttribute('data-product-id', productId);
+
+    document.getElementById('productAlertModal').style.display = 'block';
+}
+
+// Attach event listener to Confirm Delete button
+document.getElementById('productConfirmDelete').addEventListener('click', function () {
+    var productId = this.getAttribute('data-product-id');
+
+    // AJAX call to delete the product
+    fetch(`/delete_product/${productId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+
+                var productElement = document.querySelector(`.product-item[data-product-id='${productId}']`);
+                var recipeId = productElement.getAttribute('data-recipe-id');
+                productElement.remove();
+
+                var recipeTotalTrayElement = document.querySelector(`#totalTray-${recipeId}`);
+                var recipeTotalTrolleyElement = document.querySelector(`#totalTrolley-${recipeId}`);
+                var recipeTotalSalesElement = document.querySelector(`#salesOrder-${recipeId}`);
+
+                // Ensure values are numeric and default to 0 if not
+                var currentTray = parseInt(recipeTotalTrayElement.value) || 0;
+                var currentTrolley = parseInt(recipeTotalTrolleyElement.value) || 0;
+                var currentSales = parseInt(recipeTotalSalesElement.value) || 0;
+                var trayRemoved = parseInt(data.trayRemoved) || 0;
+                var trolleyRemoved = parseInt(data.trolleyRemoved) || 0;
+                var salesOrderRemoved = parseInt(data.salesOrderRemoved) || 0;
+
+                // Calculate new values
+                var newTotalTray = Math.max(0, currentTray - trayRemoved);
+                var newTotalTrolley = Math.max(0, currentTrolley - trolleyRemoved);
+                var newTotalSales = Math.max(0, currentSales - salesOrderRemoved);
+
+                // Update the elements with new values
+                recipeTotalTrayElement.value = newTotalTray;
+                recipeTotalTrolleyElement.value = newTotalTrolley;
+                recipeTotalSalesElement.value = newTotalSales;
+            } else if (data.error) {
+                alert(data.error);
+            }
+            document.getElementById('productAlertModal').style.display = 'none';
+        })
+        .catch(error => console.error('Error:', error));
+});
+
+// Close modal functionality
+document.querySelector('.modal-close').addEventListener('click', function () {
+    document.getElementById('productAlertModal').style.display = 'none';
+});
+
+document.getElementById('productCancelDelete').addEventListener('click', function () {
+    document.getElementById('productAlertModal').style.display = 'none';
+});
 
 
 window.addEventListener('beforeunload', function (e) {

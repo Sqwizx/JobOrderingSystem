@@ -93,7 +93,7 @@ DATABASES = {
 # Use the database to store session data
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-SESSION_COOKIE_AGE = 604800
+SESSION_COOKIE_AGE = 57600
 
 APPEND_SLASH = False
 

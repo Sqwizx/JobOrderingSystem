@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <title>Create Job Order | Farmland Bakery (M) Sdn. Bhd.</title>
+    <title>Details | Farmland Bakery (M) Sdn. Bhd.</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/view.css' %}">
     <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
@@ -129,16 +129,34 @@
                                                 </div>
                                             </form>                                            
                                             {% endfor %}
-                                            {% if forloop.first %}
                                             <div class="footer" id="footer">
-                                                <div class="buttons-footer">
-                                                    <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
-                                                    <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
-                                                    <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
-
-                                                </div>
+                                                <div class="footer-container">
+                                                    <div class="revision-footer">
+                                                        <button class="open-revisions" onclick="">You have pending revisions.</button>
+                                                    </div>
+                                                    <div class="buttons-footer">
+                                                        {% if job_order.jobOrderStatus == "PENDING" %}
+                                                            {% if user_role == "manager" %}
+                                                                <button class="approve-button" onclick="approveJobOrder('{{ job_order.jobOrderId }}')">Approve</button>
+                                                                <button class="revise-button" data-joborder-id="{{ job_order.jobOrderId }}">Revise</button>
+                                                            {% else %}
+                                                                <button class="submitted-button" disabled>Job Order Submitted</button>
+                                                            {% endif %}
+                                                        {% elif job_order.jobOrderStatus == "APPROVED" %}
+                                                            {% if user_role == "production" %}
+                                                                <button class="activate-button" onclick="activateJobOrder('{{ job_order.jobOrderId }}')">Activate</button>
+                                                                <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
+                                                            {% else %}
+                                                                <button class="approved-button" disabled>You have approved this Job Order</button>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
+                                                            <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
+                                                            <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
+                                                        {% endif %}
+                                                    </div>   
+                                                </div>                     
                                             </div>
-                                            {% endif %} 
                                         </div>
                                     </div>
                                 </div>
@@ -207,6 +225,20 @@
                 </div>
             </div>
         </div>
+        <div id="reviseModal" class="modal" data-joborder-id="{{ job_order.jobOrderId }}">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close">&times;</span>
+                  <h1>Add Revision</h1>
+               </div>
+               <p>Add revisions to make below.</p>
+               <textarea id="revisionText" name="revisionText" placeholder="Enter revisions here..."></textarea>
+               <br>
+               <div class="modal-footer">
+                <button id="submit-revision">Submit</button>
+               </div>
+            </div>
+         </div>
     </section>
     <script src="{% static 'js/sidebar.js' %}"></script>
     <script src="{% static 'js/scrollbar.js' %}"></script>

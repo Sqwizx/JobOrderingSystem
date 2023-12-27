@@ -313,3 +313,31 @@
     height: 100%;
     /* Set a minimum height for the content area */
 }
+
+.edit-btn {
+    background-color: rgba(4, 66, 168, 1);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-btn {
+    background-color: rgb(168, 4, 4);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+    background-color: rgba(5, 57, 141)
+}
+
+.delete-btn:hover {
+    background-color: rgb(141, 5, 5)
+}

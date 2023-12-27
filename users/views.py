@@ -8,23 +8,130 @@ import pytz
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
-from joborders.models import Activity, JobOrder, Product, RecipeMapping
+from joborders.models import Activity, JobOrder, Product, RecipeMapping, Revision
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
+from recipes.models import Recipe
+from users.models import UserRole
+
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
-     
+        # Redirect to role-specific dashboard if already logged in
+        return redirect_dashboard(request.user)
+
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
+
         if user is not None:
             login(request, user)
-            return redirect('dashboard')  # Redirect to the 'dashboard' URL pattern
+            # Redirect to role-specific dashboard after login
+            return redirect_dashboard(user)
+
     return render(request, 'login.html')
+
+def redirect_dashboard(user):
+    # Check the user's role and redirect accordingly
+    try:
+        user_role = UserRole.objects.get(user=user)
+        if user_role.role == UserRole.MANAGER:
+            return redirect('manager_dashboard')
+        # Add more role checks if needed
+        else:
+            return redirect('dashboard')
+    except UserRole.DoesNotExist:
+        # Default redirect if user role is not set
+        return redirect('dashboard')
+
+@login_required
+def manager_dashboard_view(request):
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+    job_orders_list = []
+
+    job_orders = JobOrder.objects.filter(
+    jobOrderStatus__in=['PENDING', 'APPROVED', 'REVISE']
+).prefetch_related('recipes__activity_recipe')
+
+    for job_order in job_orders:
+        # Initialize the variables to store the earliest upcoming or ongoing activity
+        earliest_activity = {
+            'recipeName': None,
+            'name': 'Not Started',
+            'time': None
+        }
+
+        for recipe in job_order.recipes.all():
+            activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
+
+            for activity in activities:
+                if now < activity.spongeStart:
+                    if earliest_activity['time'] is None or activity.spongeStart < earliest_activity['time']:
+                        earliest_activity['recipeName'] = recipe.recipeName
+                        earliest_activity['name'] = 'Starting Sponge'
+                        earliest_activity['time'] = activity.spongeStart
+
+                elif activity.spongeStart <= now <= activity.spongeEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Sponge Ending'
+                    earliest_activity['time'] = activity.spongeEnd
+                    break
+
+                elif activity.spongeEnd <= now <= activity.doughStart:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Starting Dough'
+                    earliest_activity['time'] = activity.doughStart
+                    break
+
+                elif activity.doughStart <= now <= activity.doughEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Dough Ending'
+                    earliest_activity['time'] = activity.doughEnd
+                    break
+
+                elif activity.doughEnd <= now <= activity.firstLoafPacked:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'First Loaf Packing'
+                    earliest_activity['time'] = activity.firstLoafPacked
+                    break
+
+                elif activity.firstLoafPacked <= now < activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Cut Off Time'
+                    earliest_activity['time'] = activity.cutOffTime
+                    break
+
+                elif now >= activity.cutOffTime:
+                    earliest_activity['recipeName'] = 'All'
+                    earliest_activity['name'] = 'Finished'
+                    earliest_activity['time'] = None
+
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
+            
+        # Construct the job order data with the current activity information
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+            'current_recipe_name': earliest_activity['recipeName'],
+            'current_activity_name': earliest_activity['name'],
+            'current_activity_time': earliest_activity['time'],
+        }
+
+        # Append the job data to the job orders list
+        job_orders_list.append(job_data)
+
+    context = {
+        'job_orders': job_orders_list
+    }
+
+    return render(request, 'manager_dashboard.html', context)
 
 @login_required
 def dashboard_view(request):
@@ -86,6 +193,11 @@ def dashboard_view(request):
                     earliest_activity['recipeName'] = 'All'
                     earliest_activity['name'] = 'Finished'
                     earliest_activity['time'] = None
+
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
 
         # Construct the job order data with the current activity information
         job_data = {
@@ -167,6 +279,95 @@ def update_dashboard_table(request):
                     earliest_activity['name'] = 'Finished'
                     earliest_activity['time'] = None
 
+        
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
+
+        # Construct the job order data with the current activity information
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+            'current_recipe_name': earliest_activity['recipeName'],
+            'current_activity_name': earliest_activity['name'],
+            'current_activity_time':  earliest_activity['time'],
+        }
+
+       # Append the job data to the job orders list
+        job_orders_list.append(job_data)
+
+    return JsonResponse({'job_orders': job_orders_list})
+
+@login_required
+def update_manager_dashboard_table(request):
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+    job_orders_list = []
+
+    job_orders = JobOrder.objects.filter(
+    jobOrderStatus__in=['PENDING', 'APPROVED', 'REVISE', 'ACTIVE']
+).prefetch_related('recipes__activity_recipe')
+
+    for job_order in job_orders:
+        # Initialize the variables to store the earliest upcoming or ongoing activity
+        earliest_activity = {
+            'recipeName': None,
+            'name': 'Not Started',
+            'time': None
+        }
+
+        for recipe in job_order.recipes.all():
+            activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
+
+            for activity in activities:
+                if now < activity.spongeStart:
+                    if earliest_activity['time'] is None or activity.spongeStart < earliest_activity['time']:
+                        earliest_activity['recipeName'] = recipe.recipeName
+                        earliest_activity['name'] = 'Starting Sponge'
+                        earliest_activity['time'] = activity.spongeStart
+
+                elif activity.spongeStart <= now <= activity.spongeEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Sponge Ending'
+                    earliest_activity['time'] = activity.spongeEnd
+                    break
+
+                elif activity.spongeEnd <= now <= activity.doughStart:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Starting Dough'
+                    earliest_activity['time'] = activity.doughStart
+                    break
+
+                elif activity.doughStart <= now <= activity.doughEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Dough Ending'
+                    earliest_activity['time'] = activity.doughEnd
+                    break
+
+                elif activity.doughEnd <= now <= activity.firstLoafPacked:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'First Loaf Packing'
+                    earliest_activity['time'] = activity.firstLoafPacked
+                    break
+
+                elif activity.firstLoafPacked <= now < activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Cut Off Time'
+                    earliest_activity['time'] = activity.cutOffTime
+                    break
+
+                elif now >= activity.cutOffTime:
+                    earliest_activity['recipeName'] = 'All'
+                    earliest_activity['name'] = 'Finished'
+                    earliest_activity['time'] = None
+
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
+
         # Construct the job order data with the current activity information
         job_data = {
             'jobOrderId': job_order.jobOrderId,
@@ -183,25 +384,26 @@ def update_dashboard_table(request):
     return JsonResponse({'job_orders': job_orders_list})
 
 def job_order_recipes(request, job_order_id):
-    # Get the specific Job Order
     job_order = JobOrder.objects.get(jobOrderId=job_order_id)
-
-    # Fetch recipes associated with the Job Order
     recipes = RecipeMapping.objects.filter(jobOrder=job_order)
 
-    # Group recipes by production date
     recipes_by_date = defaultdict(list)
     for recipe in recipes:
         recipes_by_date[recipe.recipeProdDate].append(recipe)
 
-    # Sort the dates
     sorted_dates = sorted(recipes_by_date.keys())
 
-    # Prepare context
+    # Get the role of the current user
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # or set a default role
+
     context = {
         'job_order': job_order,
         'recipes_by_date': recipes_by_date,
         'sorted_dates': sorted_dates,
+        'user_role': user_role,  # Include the user role in the context
     }
 
     return render(request, 'view_joborder.html', context)
@@ -221,8 +423,28 @@ def submit_job_order(request, job_order_id):
             job_order.jobOrderStatus = 'PENDING'
             job_order.save()
 
-            # Redirect to dashboard.html
-            return JsonResponse({'status': 'success', 'redirect': reverse('dashboard')})
+                        # Return success status
+            return JsonResponse({'status': 'success', 'message': 'Job Order submitted successfully'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+def approve_job_order(request, job_order_id):
+    try:
+        job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+    except JobOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
+
+    if job_order.jobOrderStatus != 'PENDING':
+        return JsonResponse({'status': 'error', 'message': 'Job Order status is not PENDING'}, status=400)
+
+    try:
+        with transaction.atomic():
+            # Update the status to "PENDING"
+            job_order.jobOrderStatus = 'APPROVED'
+            job_order.save()
+
+                        # Return success status
+            return JsonResponse({'status': 'success', 'message': 'Job Order submitted successfully'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
@@ -274,15 +496,30 @@ def add_recipe(request, job_order_id):
 
         recipe_name = data["recipeName"]
         tab_index = data["tabIndex"]
+        prod_rate = data["prodRate"]
+        batch_size = data["batchSize"]
+        cycle_time = data["cycleTime"]
         recipe_id = f"{job_order_id}_{recipe_name}_{tab_index}"
         prod_date = datetime.strptime(data["prodDate"], "%Y-%m-%d").date()
         time_parts = map(int, data.get("timeVariable", "00:00:00").split(':'))
         time_variable = timedelta(hours=next(time_parts, 0), minutes=next(time_parts, 0), seconds=next(time_parts, 0))
 
+        if "cycleTime" in data and data["cycleTime"]:
+            cycle_time_parts = map(int, data["cycleTime"].split(':'))
+            cycle_time = timedelta(hours=next(cycle_time_parts, 0), minutes=next(cycle_time_parts, 0), seconds=next(cycle_time_parts, 0))
+        else:
+            cycle_time = None  # Or set a default value
+
         # Get the last spongeEndTime for the same date
         last_sponge_end = Activity.objects.filter(
             recipe__recipeProdDate=prod_date
         ).order_by('-spongeEnd').values_list('spongeEnd', flat=True).first()
+
+        existing_recipe = RecipeMapping.objects.filter(
+                    recipeProdDate=prod_date
+                ).order_by('-id').first()
+        
+        gap_value = existing_recipe.recipeGap if existing_recipe else 0
 
         # Calculate new spongeStartTime
         new_sponge_start = last_sponge_end + timedelta(minutes=45) if last_sponge_end else None
@@ -294,7 +531,11 @@ def add_recipe(request, job_order_id):
             recipeName=recipe_name,
             recipeProdDate=prod_date,
             recipeTimeVar=time_variable,
+            recipeCycleTime=cycle_time,
+            recipeProdRate = None if not prod_rate else prod_rate,
+            recipeBatchSize = None if not batch_size else batch_size,
             recipeWaste=2,
+            recipeGap=gap_value,
             recipeSpongeStartTime=new_sponge_start,
         )
 
@@ -331,6 +572,8 @@ def submitJobOrder(request, job_order_id):
                 recipe.recipeWaste = recipe_data.get('waste', recipe.recipeWaste)
                 recipe.recipeBeltNo = recipe_data.get('beltNo', recipe.recipeBeltNo)
                 recipe.recipeGap = recipe_data.get('gap', recipe.recipeGap)
+                recipe.recipeTotalTray = recipe_data.get('totalTray', recipe.recipeTotalTray)
+                recipe.recipeTotalTrolley = recipe_data.get('totalTrolleyes', recipe.recipeTotalTrolley)
                 recipe.recipeTimeVar = recipe_data.get('timeVariable', recipe.recipeTimeVar)
 
                 # Parse stdTime and cycleTime
@@ -355,11 +598,11 @@ def submitJobOrder(request, job_order_id):
                 if sponge_start_time_str:
                     recipe.recipeSpongeStartTime = datetime.strptime(sponge_start_time_str, '%Y-%m-%d %H:%M')
 
-                # Calculate totalTray and totalTrolley
-                total_tray = sum([int(prod_data.get('tray', 0)) for prod_data in recipe_data.get('products', [])])
-                total_trolley = sum([int(prod_data.get('trolley', 0)) for prod_data in recipe_data.get('products', [])])
-                recipe.recipeTotalTray = total_tray
-                recipe.recipeTotalTrolley = total_trolley
+                # # Calculate totalTray and totalTrolley
+                # total_tray = sum([int(prod_data.get('tray')) for prod_data in recipe_data.get('products', [])])
+                # total_trolley = sum([int(prod_data.get('trolley')) for prod_data in recipe_data.get('products', [])])
+                # recipe.recipeTotalTray = total_tray
+                # recipe.recipeTotalTrolley = total_trolley
 
                 recipe.save()
 
@@ -498,11 +741,80 @@ def delete_product(request, product_id):
     if request.method == "DELETE":
         try:
             product = Product.objects.get(productId=product_id)
+            recipe = product.recipe
+
+            tray_removed = product.tray
+            trolley_removed = product.trolley
+            sales_order_removed = product.productSalesOrder
+
+            # Subtract product's tray and trolley from the recipe's totals
+            recipe.recipeTotalTray = max((recipe.recipeTotalTray or 0) - tray_removed, 0)
+            recipe.recipeTotalTrolley = max((recipe.recipeTotalTrolley or 0) - trolley_removed, 0)
+            
+            # Subtract product's sales order from the recipe's total sales
+            recipe.recipeTotalSales = max((recipe.recipeTotalSales or 0) - sales_order_removed, 0)
+            recipe.save()
+
+            # Now delete the product
             product.delete()
-            return JsonResponse({"message": "Product deleted successfully"})
+            return JsonResponse({
+                "message": "Product deleted successfully",
+                "trayRemoved": tray_removed,
+                "trolleyRemoved": trolley_removed,
+                "salesOrderRemoved": sales_order_removed
+            })
         except Product.DoesNotExist:
             return JsonResponse({"error": "Product not found"}, status=404)
-    
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+def search_recipes(request):
+    query = request.GET.get('query', '')
+    recipes = Recipe.objects.filter(recipeName__icontains=query)
+
+    # Prepare the data for JSON response
+    recipe_data = []
+    for recipe in recipes:
+        recipe_dict = {
+            'recipeName': recipe.recipeName,
+            'cycleTimeVariable': recipe.cycleTimeVariable.total_seconds(),  # Convert timedelta to seconds
+            'productionRate': recipe.productionRate,
+            'stdBatchSize': recipe.stdBatchSize
+        }
+        recipe_data.append(recipe_dict)
+
+    return JsonResponse({'recipes': recipe_data})
+
+@login_required
+def add_revision(request, job_order_id):
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+
+    if request.method == 'POST':
+        user = request.user
+        revision_text = request.POST.get('revisionText')
+
+        try:
+            job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+            
+            # Update the job order's status to 'REVISE'
+            job_order.jobOrderStatus = 'REVISE'
+            job_order.save()
+
+            # Create a new revision
+            Revision.objects.create(
+                dateTime=now,
+                userId=user,
+                jobOrder=job_order,
+                revision=revision_text  # Make sure this field exists in your model
+            )
+
+            return JsonResponse({'status': 'success', 'message': 'Revision added successfully.'})
+        except JobOrder.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Job Order not found.'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+        
 def logout_view(request):
     logout(request)  # This logs the user out
     return redirect('login')  # Redirect to the 'login' URL pattern

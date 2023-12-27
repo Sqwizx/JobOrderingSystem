@@ -855,6 +855,7 @@ select option {
 }
 
 .submit-button,
+.update-button,
 .edit-button,
 .delete-button {
     padding: 10px 25px;
@@ -869,11 +870,50 @@ select option {
 
 .submit-button:hover,
 .edit-button:hover,
-.delete-button:hover {
+.update-button:hover {
     background-color: rgb(5, 57, 139);
+    transition: all 0.3s ease
+}
+
+.delete-button:hover {
+    background-color: rgb(139, 5, 5);
     transition: all 0.3s ease
 }
 
 .buttons-footer {
     margin-right: 22px;
+}
+
+
+/* Style search container */
+.search-container {
+    position: relative;
+    /* Create a positioning context for children */
+}
+
+/* Style search results container */
+.searchResults {
+    display: none;
+    /* Hide by default */
+    position: absolute;
+    width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 10px;
+    top: 100%;
+    /* Make sure it's above other content */
+}
+
+/* Style individual search results */
+.searchResults div {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+/* Style hover effect */
+.searchResults div:hover {
+    background-color: rgba(4, 66, 168, 0.2);
 }

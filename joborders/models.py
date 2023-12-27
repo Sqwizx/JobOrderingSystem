@@ -2,14 +2,6 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 
-class Revision(models.Model):
-    revisionId = models.CharField(max_length=50)
-    dateTime = models.DateTimeField(default=timezone.now)
-    userId = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.revisionId
-
 class JobOrder(models.Model):
     jobOrderId = models.CharField(max_length=50, unique=True)
     jobOrderCreatedDate = models.DateTimeField()
@@ -18,6 +10,23 @@ class JobOrder(models.Model):
 
     def __str__(self):
         return self.jobOrderId
+
+class Revision(models.Model):
+    revisionId = models.CharField(max_length=100, blank=True, null=True)  # Increased length and made it blank
+    dateTime = models.DateTimeField(default=timezone.now, null=True)
+    userId = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    revision = models.CharField(max_length=255, blank=True, null=True)
+    jobOrder = models.ForeignKey(JobOrder, on_delete=models.CASCADE, related_name='revisions', null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.revisionId:
+            # Format the date as YYYYMMDD
+            date_str = timezone.now().strftime("%Y%m%d")
+            self.revisionId = f"R{self.jobOrder.jobOrderId}{date_str}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.revisionId
 
 class RecipeMapping(models.Model):
     recipeId = models.CharField(max_length=50)

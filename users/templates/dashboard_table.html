@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
-<table id="dashboard-table">
+<body>
+    <table id="dashboard-table">
         <thead>
             <tr>
                 <th>No. Code</th>
@@ -18,13 +19,18 @@
         </thead>
         <tbody>
             {% for job in job_orders %}
-            <tr id="job_order_row_{{ job.jobOrderId }}" class="clickable-row" data-job-order-id="{{ job.jobOrderId }}" data-href="{% url 'details' job.jobOrderId %}">
+                <tr id="job_order_row_{{ job.jobOrderId }}" class="clickable-row" data-job-order-id="{{ job.jobOrderId }}">
                     <td>{{ job.jobOrderId }}</td>
                     <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
                     <td>{{ job.jobOrderStatus }}</td>
                     <td>{{ job.current_recipe_name }}</td>
-                    <td>{{ job.current_activity_name }}</td>
-                    <td>{{ job.current_activity_time|date:"l, d M Y H:i A" }}</td>
+                    {% if job.jobOrderStatus == "ACTIVE" %}
+                        <td>{{ job.current_activity_name }}</td>
+                        <td>{{ job.current_activity_time|date:"l, d M Y H:i A" }}</td>
+                    {% else %}
+                        <td></td> <!-- Empty cell for non-active status -->
+                        <td></td> <!-- Empty cell for non-active status -->
+                    {% endif %}
                 </tr>
             {% empty %}
                 <tr>  
@@ -32,5 +38,6 @@
                 </tr>
             {% endfor %}
         </tbody>
-      </table>
-    </html>
+    </table>
+</body>
+</html>

@@ -586,8 +586,9 @@ select option {
 }
 
 .submit-button,
+.update-button,
 .edit-button,
-.delete-button {
+.approve-button {
     padding: 10px 25px;
     background-color: rgba(4, 66, 168, 1);
     color: #FFFFFF;
@@ -596,6 +597,65 @@ select option {
     cursor: pointer;
     font-size: 14px;
     width: 100px;
+}
+
+.open-revisions {
+    padding: 10px 25px;
+    background-color: #EBA6B2;
+    color: #FF0D0D;
+    border: 1px solid #FF0D0D;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    width: 220px;
+}
+
+.revision-footer {
+    margin-left: 22px;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    /* This will place them at opposite ends */
+    align-items: center;
+    /* Aligns items vertically in the center */
+    /* Add more styling as needed */
+}
+
+.activate-button {
+    padding: 10px 25px;
+    background-color: #04A81E;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100px;
+}
+
+.delete-button,
+.revise-button {
+    padding: 10px 25px;
+    background-color: rgb(168, 4, 4);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100px;
+}
+
+.approved-button,
+.submitted-button {
+    padding: 10px 0px;
+    background-color: rgba(4, 67, 168, 0.2);
+    color: rgba(4, 67, 168, 0.6);
+    border: 1px solid rgba(4, 67, 168, 0.6);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 250px;
 }
 
 .submit-button:hover,
@@ -607,4 +667,35 @@ select option {
 
 .buttons-footer {
     margin-right: 22px;
+}
+
+.modal textarea {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 15px;
+    height: 250px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .3s;
+    margin-bottom: 10px
+}
+
+.modal textarea {
+    resize: vertical
+}
+
+.modal button {
+    padding: 10px 25px;
+    background-color: rgba(4, 66, 168, 1);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100px;
+}
+
+.modal-footer {
+    text-align: right;
 }

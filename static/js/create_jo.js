@@ -682,10 +682,10 @@ document.addEventListener('DOMContentLoaded', function () {
         batchSizeValue = batchSizeSubmit || null;
 
         var datetimeLabel = createLabelElement(dateTimePicker.id, "Production Date");
-        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate", prodRateValue, false, true);
+        var productionRateInput = createInputElement("number", `productionRate-${uniqueFormId}`, "productionRate", prodRateValue, false, true, "0");
         var productionRateLabel = createLabelElement(productionRateInput.id, "Production Rate");
 
-        var salesOrderInput = createInputElement("number", `salesOrder-${uniqueFormId}`, "salesOrder", null, true, true);
+        var salesOrderInput = createInputElement("number", `salesOrder-${uniqueFormId}`, "salesOrder", null, true, true, "0");
         var salesOrderLabel = createLabelElement(salesOrderInput.id, "Total Sales Order");
 
         var wasteInput = createInputElement("number", `waste-${uniqueFormId}`, "waste", 2, false, true);
@@ -694,16 +694,16 @@ document.addEventListener('DOMContentLoaded', function () {
         var stdTimeInput = createInputElement("text", `stdTime-${uniqueFormId}`, "stdTime", null, true, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
         var stdTimeLabel = createLabelElement(stdTimeInput.id, "Required Std. Time");
 
-        var totalTrayInput = createInputElement("number", `totalTray-${uniqueFormId}`, "totalTray", null, true);
+        var totalTrayInput = createInputElement("number", `totalTray-${uniqueFormId}`, "totalTray", null, true, true, "0");
         var totalTrayLabel = createLabelElement(totalTrayInput.id, "Total Tray");
 
-        var beltNoInput = createInputElement("number", `beltNo-${uniqueFormId}`, "beltNo", null, false, true);
+        var beltNoInput = createInputElement("number", `beltNo-${uniqueFormId}`, "beltNo", null, false, true, "0");
         var beltNoLabel = createLabelElement(beltNoInput.id, "Suction Cup Belt No.");
 
-        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize", batchSizeValue, false, true);
+        var batchSizeInput = createInputElement("number", `batchSize-${uniqueFormId}`, "batchSize", batchSizeValue, false, true, "0");
         var batchSizeLabel = createLabelElement(batchSizeInput.id, "Batch Size");
 
-        var batchesInput = createInputElement("number", `batches-${uniqueFormId}`, "batches", null, true);
+        var batchesInput = createInputElement("number", `batches-${uniqueFormId}`, "batches", null, true, true, "0");
         var batchesLabel = createLabelElement(batchesInput.id, "Batches To Produce");
 
         var cycleTimeInput = createInputElement("text", `cycleTime-${uniqueFormId}`, "cycleTime", null, true, false, "00:00:00", "[0-9]{2}:[0-9]{2}:[0-9]{2}");
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var spongeStartTimeLabel = createLabelElement(spongeStartTimePicker.id, "Sponge Start Time");
 
-        var totalTrolleyInput = createInputElement("number", `totalTrolley-${uniqueFormId}`, "totalTrolley", null, true);
+        var totalTrolleyInput = createInputElement("number", `totalTrolley-${uniqueFormId}`, "totalTrolley", null, true, true, "0");
         var totalTrolleyLabel = createLabelElement(totalTrolleyInput.id, "Total Trolley");
 
         var gapValue = gapValuesByTabIdx[tabIdx] || "00:00:00"; // Use default or existing value
@@ -783,24 +783,42 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Set up input event listeners
-        addInputEventListener(salesOrderInput, 'change', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
+        addInputEventListener(salesOrderInput, 'change', () => {
+            calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable);
+            calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+
+            // Trigger the cascade of updates with the correct parameters
+            triggerCascadeUpdate(tabIdx, spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime, uniqueFormId);
+        });
+
         addInputEventListener(wasteInput, 'input', () => calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable));
+
         addInputEventListener(batchSizeInput, 'input', () => {
             calculateBatchesToProduce(salesOrderInput, wasteInput, batchSizeInput, batchesInput, timeVariable);
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
+
+            // Trigger the cascade of updates with the correct parameters
+            triggerCascadeUpdate(tabIdx, spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime, uniqueFormId);
         });
+
         addInputEventListener(productionRateInput, 'input', () => {
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
-            calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
         });
+
         addInputEventListener(batchesInput, 'input', () => {
             calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput);
             calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput);
             updateTrackerDisplay(uniqueFormId);
         });
+
         addInputEventListener(stdTimeInput, 'input', () => {
             calculateSpongeEndTime(tabIdx, spongeStartTimePicker.value, stdTimeInput.value, spongeEndTime, uniqueFormId);
+            // Only update subsequent times if this is not the first form
+            if (!firstFormTracker[tabIdx] || firstFormTracker[tabIdx] === false) {
+                updateSpongeStartTimes(tabIdx, new Date(spongeEndTime.value));
+            }
+
             calculateSpongeStartTime(tabIdx);
             calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
             calculateCutOffTime(firstLoafPacked.value, stdTimeInput.value, cutOffTime);
@@ -923,24 +941,17 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(`Dough End Time (formatted): ${cutOffTimeElement.value}`); // Log the formatted dough end time
     }
 
-    // Helper function to calculate the end time for the 1st loaf
     function calculateFirstLoafPacked(doughStartTimeValue, firstLoafPackedElement) {
         let doughStartTime = new Date(doughStartTimeValue);
 
         console.log(`Dough Start Time: ${doughStartTime}`); // Log the dough start time
 
-        // Calculate the end time by adding all the durations to the dough start time
-        let firstLoafPacked = new Date(doughStartTime.getTime() +
-            SPONGE_MIXING * 1000 +
-            FERMENTATION * 1000 +
-            DOUGH_MIXING * 1000 +
-            FLOOR_TIME * 1000 +
-            MAKEUP_TIME * 1000 +
-            FINAL_PROOF * 1000 +
-            BAKING * 1000 +
-            COOLING * 1000 +
-            PACKING * 1000
-        );
+        // Calculate the total duration in milliseconds
+        let totalDurationMs = (DOUGH_MIXING + FLOOR_TIME +
+            MAKEUP_TIME + FINAL_PROOF + BAKING + COOLING + PACKING) * 1000;
+
+        // Add the duration to the dough start time
+        let firstLoafPacked = new Date(doughStartTime.getTime() + totalDurationMs);
 
         console.log(`Loaf End Time (calculated): ${firstLoafPacked}`); // Log the calculated loaf end time
 
@@ -1388,37 +1399,73 @@ document.addEventListener('DOMContentLoaded', function () {
         return hours * 3600 + minutes * 60 + seconds;
     }
 
-    function convertToHHMMSS(totalSeconds) {
-        let seconds = Math.round(totalSeconds % 60);
-        let minutes = Math.floor((totalSeconds % 3600) / 60);
-        const hours = Math.floor(totalSeconds / 3600);
+    function bankersRounding(num) {
+        var integerPart = Math.floor(num);
+        var decimalPart = num - integerPart;
 
-        if (seconds === 60) {
-            minutes += 1;
-            seconds = 0;
+        if (decimalPart === 0.5) {
+            return integerPart % 2 === 0 ? integerPart : integerPart + 1;
         }
 
-        if (minutes === 60) {
-            hours += 1;
-            minutes = 0;
-        }
-
-        return [
-            hours.toString().padStart(2, '0'),
-            minutes.toString().padStart(2, '0'),
-            seconds.toString().padStart(2, '0'),
-        ].join(':');
+        return Math.round(num);
     }
 
+    function convertToHHMMSS(totalSeconds) {
+        let hours = Math.floor(totalSeconds / 3600);
+        totalSeconds %= 3600;
+        let minutes = Math.floor(totalSeconds / 60);
+        let seconds = totalSeconds % 60;
+
+        // Apply Banker's rounding to seconds
+        seconds = bankersRounding(seconds);
+
+        // Adjust minutes if seconds rounded up to 60
+        if (seconds === 60) {
+            seconds = 0;
+            minutes++;
+        }
+
+        // Adjust hours if minutes rounded up to 60
+        if (minutes === 60) {
+            minutes = 0;
+            hours++;
+        }
+
+        // Zero padding
+        hours = String(hours).padStart(2, '0');
+        minutes = String(minutes).padStart(2, '0');
+        seconds = String(seconds).padStart(2, '0');
+
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+
     function calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput) {
-        const batches = parseInt(batchesInput.value, 10) || 0;
-        const cycleTimeSeconds = convertToSeconds(cycleTimeInput.value);
-        const additionalTime = Math.round(batches / 16) * 720;
+        const batches = parseInt(batchesInput.value, 10);
+        const cycleTime = cycleTimeInput.value.split(':');
+        const cycleTimeSeconds = parseInt(cycleTime[0], 10) * 3600 + parseInt(cycleTime[1], 10) * 60 + parseInt(cycleTime[2], 10);
 
-        const totalStdTimeSeconds = batches * cycleTimeSeconds + additionalTime;
-        stdTimeInput.value = convertToHHMMSS(totalStdTimeSeconds);
+        // Calculate additional time as 12 minutes for every 16 full batches
+        const setsOfSixteen = Math.floor(batches / 16);
+        const additionalMinutes = setsOfSixteen * 12;
+        const additionalTimeSeconds = additionalMinutes * 60;
 
+        // Calculate total time in seconds
+        const totalStdTimeSeconds = batches * cycleTimeSeconds + additionalTimeSeconds;
+
+        // Convert the total time in seconds to HH:MM:SS format
+        const stdTimeValue = convertToHHMMSS(totalStdTimeSeconds);
+
+        // Update the stdTimeInput value and dispatch an input event
+        stdTimeInput.value = stdTimeValue;
         stdTimeInput.dispatchEvent(new Event('input'));
+
+        // Debugging logs
+        console.log('[STD TIME] Batches:', batches);
+        console.log('[STD TIME] Cycle Time (s):', cycleTimeSeconds);
+        console.log('[STD TIME] Additional Time (s):', additionalTimeSeconds);
+        console.log('[STD TIME] Total Std Time (s):', totalStdTimeSeconds);
+        console.log('[STD TIME] Std Time:', stdTimeValue);
     }
 
     function calculateCycleTime(batchSizeInput, productionRateInput, timeVariableInput, cycleTimeInput) {
@@ -1444,23 +1491,54 @@ document.addEventListener('DOMContentLoaded', function () {
         var totalOrderWithWaste = salesOrderValue + (salesOrderValue * wastePercentage);
         var batches = totalOrderWithWaste / batchSizeValue;
 
-        batchesInput.value = Math.ceil(batches);
+        console.log('The batches value: ', batches)
+
+        batchesInput.value = Math.round(batches);
+
+        console.log('The waste value: ', wastePercentage);
+
+        console.log('the sales order value with waste: ', totalOrderWithWaste);
+
+        console.log('The batches value after ceil: ', batchesInput.value);
 
         batchesInput.dispatchEvent(new Event('input'));
     }
 
-    function formatDurationInput(inputElem) {
-        let val = inputElem.value.replace(/[^0-9]/g, '');
-        while (val.length < 6) {
-            val = val + '0';
-        }
+    function triggerCascadeUpdate(tabIdx, spongeStartTime, stdTime, spongeEndTimeElement, uniqueFormId) {
+        console.log('[CASCADE] Triggering cascade update for tab index:', tabIdx);
+        console.log('[CASCADE] Sponge Start Time:', spongeStartTime);
+        console.log('[CASCADE] Std Time:', stdTime);
+        console.log('[CASCADE] Sponge End Time Element:', spongeEndTimeElement);
+        console.log('[CASCADE] Unique Form ID:', uniqueFormId);
+        calculateSpongeEndTime(tabIdx, spongeStartTime, stdTime, spongeEndTimeElement, uniqueFormId);
 
-        const hours = val.slice(-6, -4);
-        const minutes = val.slice(-4, -2);
-        const seconds = val.slice(-2);
-
-        inputElem.value = `${hours}:${minutes}:${seconds}`;
+        const currentPickerId = `spongeStartTime-${uniqueFormId}`;
+        updateSubsequentStartTimes(tabIdx, spongeEndTimeElement.value, currentPickerId);
     }
+
+    function updateSubsequentStartTimes(tabIdx, newEndTime, currentPickerId) {
+        const timePickers = spongeStartTimePickersByTab[tabIdx] || [];
+        let subsequentStartTime = new Date(newEndTime);
+
+        // Find the index of the current recipe's time picker
+        const currentIndex = timePickers.findIndex(picker => picker.id === currentPickerId);
+
+        console.log(`Updating sponge start times for tab index: ${tabIdx}, starting from index: ${currentIndex + 1}`);
+
+        timePickers.forEach(function (picker, index) {
+            if (index <= currentIndex) return; // Skip the current and all previous pickers
+
+            subsequentStartTime = new Date(subsequentStartTime.getTime() + 45 * 60000);
+            picker.value = formatDateTime(subsequentStartTime);
+            updateSpongeEndTimes(picker.value);
+            updateDoughStartTimes(picker.value);
+            updateDoughEndTimes();
+            updateFirstLoafPacked();
+            updateCutOffTimes();
+        });
+    }
+
+
 
     function formatDurationInput(inputElem) {
         let val = inputElem.value.replace(/[^0-9]/g, '');
@@ -2132,10 +2210,24 @@ document.addEventListener('DOMContentLoaded', function () {
     checkAndToggleProductModalButton();
     checkAndToggleTrackerVisibility();
 
+    document.getElementById('client').addEventListener('change', function () {
+        const weightSelect = document.getElementById('weight');
+        const isGBKL = this.value === 'GBKL';
+
+        // Loop through all options and adjust the 600g option's value
+        for (let i = 0; i < weightSelect.options.length; i++) {
+            if (weightSelect.options[i].text === '600g') {
+                weightSelect.options[i].value = isGBKL ? '10' : '12';
+            }
+        }
+
+        // Recalculate the tray and trolley values after adjusting the weight options
+        calculateTrayAndTrolley();
+    });
     // Product Event Listeners
     document.getElementById('weight').addEventListener('change', calculateTrayAndTrolley);
     document.getElementById('salesOrder').addEventListener('input', calculateTrayAndTrolley);
-    document.getElementById('client').addEventListener('change', calculateTrayAndTrolley);
+    document.getElementById('client').dispatchEvent(new Event('change'));
 
     //Formatting
     document.getElementById("productPrice").addEventListener("input", function () {

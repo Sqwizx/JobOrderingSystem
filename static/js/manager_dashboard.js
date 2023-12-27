@@ -41,7 +41,7 @@ function formatDate(date) {
 // Function to update the dashboard table
 function updateDashboardTable() {
     $.ajax({
-        url: '/update_dashboard_table/',  // Update with the actual endpoint URL
+        url: '/update_manager_dashboard_table/',  // Update with the actual endpoint URL
         type: 'GET',
         dataType: 'json',
         success: function (data) {
