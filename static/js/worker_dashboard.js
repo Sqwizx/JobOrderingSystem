@@ -41,7 +41,7 @@ function formatDate(date) {
 // Function to update the dashboard table
 function updateDashboardTable() {
     $.ajax({
-        url: '/update_manager_dashboard_table/',  // Update with the actual endpoint URL
+        url: '/update_worker_dashboard_table/',  // Update with the actual endpoint URL
         type: 'GET',
         dataType: 'json',
         success: function (data) {
@@ -83,12 +83,22 @@ function updateTable(jobOrders) {
     }
 }
 
-// Event delegation for handling click event on table rows
 $(document).on("click", ".clickable-row", function () {
     const jobOrderId = $(this).data("job-order-id"); // Retrieve the job order ID
     localStorage.setItem("jobOrderId", jobOrderId); // Store job order ID in localStorage
-    window.location.href = `/details/${jobOrderId}/`; // Redirect to the details page
+
+    // Fetch user role from a hidden field or other means
+    const userRole = document.getElementById('userRole').value; // Assume there's an element storing user role
+    console.log('userRole:', userRole);
+
+    // Redirect based on user role
+    if (userRole === 'mixing') {
+        window.location.href = `/mixing/${jobOrderId}/`;
+    } else if (userRole === 'packaging') {
+        window.location.href = `/packaging/${jobOrderId}/`;
+    }
 });
+
 
 // Call updateDashboardTable immediately and set an interval to update it every 1 minute
 $(document).ready(function () {

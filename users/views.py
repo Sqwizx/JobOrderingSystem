@@ -1,17 +1,19 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from django.db.models import Sum
+from itertools import groupby
+from django.db.models import Sum, Max
 import json
 from django.http import JsonResponse
 from django.urls import reverse
 import pytz
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 from joborders.models import Activity, JobOrder, Product, RecipeMapping, Revision
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 
 from recipes.models import Recipe
 from users.models import UserRole
@@ -39,12 +41,14 @@ def redirect_dashboard(user):
         user_role = UserRole.objects.get(user=user)
         if user_role.role == UserRole.MANAGER:
             return redirect('manager_dashboard')
-        # Add more role checks if needed
+        elif user_role.role in [UserRole.MIXING, UserRole.PACKAGING]:
+            return redirect('worker_dashboard')
         else:
             return redirect('dashboard')
     except UserRole.DoesNotExist:
         # Default redirect if user role is not set
         return redirect('dashboard')
+
 
 @login_required
 def manager_dashboard_view(request):
@@ -53,7 +57,193 @@ def manager_dashboard_view(request):
     job_orders_list = []
 
     job_orders = JobOrder.objects.filter(
-    jobOrderStatus__in=['PENDING', 'APPROVED', 'REVISE']
+    jobOrderStatus__in=['PENDING', 'APPROVED', 'REVISE', 'ACTIVE']
+).prefetch_related('recipes__activity_recipe')
+    
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+    for job_order in job_orders:
+        # Initialize the variables to store the earliest upcoming or ongoing activity
+        earliest_activity = {
+            'recipeName': None,
+            'name': 'Not Started',
+            'time': None
+        }
+
+        for recipe in job_order.recipes.all():
+            activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
+
+            for activity in activities:
+                if now < activity.spongeStart:
+                    if earliest_activity['time'] is None or activity.spongeStart < earliest_activity['time']:
+                        earliest_activity['recipeName'] = recipe.recipeName
+                        earliest_activity['name'] = 'Starting Sponge'
+                        earliest_activity['time'] = activity.spongeStart
+
+                elif activity.spongeStart <= now <= activity.spongeEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Sponge Ending'
+                    earliest_activity['time'] = activity.spongeEnd
+                    break
+
+                elif activity.spongeEnd <= now <= activity.doughStart:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Starting Dough'
+                    earliest_activity['time'] = activity.doughStart
+                    break
+
+                elif activity.doughStart <= now <= activity.doughEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Dough Ending'
+                    earliest_activity['time'] = activity.doughEnd
+                    break
+
+                elif activity.doughEnd <= now <= activity.firstLoafPacked:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'First Loaf Packing'
+                    earliest_activity['time'] = activity.firstLoafPacked
+                    break
+
+                elif activity.firstLoafPacked <= now < activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Cut Off Time'
+                    earliest_activity['time'] = activity.cutOffTime
+                    break
+
+                elif now >= activity.cutOffTime:
+                    earliest_activity['recipeName'] = 'All'
+                    earliest_activity['name'] = 'Finished'
+                    earliest_activity['time'] = None
+
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
+            
+        # Construct the job order data with the current activity information
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+            'current_recipe_name': earliest_activity['recipeName'],
+            'current_activity_name': earliest_activity['name'],
+            'current_activity_time': earliest_activity['time'],
+        }
+
+        # Append the job data to the job orders list
+        job_orders_list.append(job_data)
+
+    context = {
+        'job_orders': job_orders_list,
+        'user_role': user_role,
+    }
+
+    return render(request, 'manager_dashboard.html', context)
+
+@login_required
+def worker_dashboard(request):
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+    job_orders_list = []
+
+    job_orders = JobOrder.objects.filter(
+    jobOrderStatus__in=['ACTIVE']
+).prefetch_related('recipes__activity_recipe')
+    
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+    for job_order in job_orders:
+        # Initialize the variables to store the earliest upcoming or ongoing activity
+        earliest_activity = {
+            'recipeName': None,
+            'name': 'Not Started',
+            'time': None
+        }
+
+        for recipe in job_order.recipes.all():
+            activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
+
+            for activity in activities:
+                if now < activity.spongeStart:
+                    if earliest_activity['time'] is None or activity.spongeStart < earliest_activity['time']:
+                        earliest_activity['recipeName'] = recipe.recipeName
+                        earliest_activity['name'] = 'Starting Sponge'
+                        earliest_activity['time'] = activity.spongeStart
+
+                elif activity.spongeStart <= now <= activity.spongeEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Sponge Ending'
+                    earliest_activity['time'] = activity.spongeEnd
+                    break
+
+                elif activity.spongeEnd <= now <= activity.doughStart:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Starting Dough'
+                    earliest_activity['time'] = activity.doughStart
+                    break
+
+                elif activity.doughStart <= now <= activity.doughEnd:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Dough Ending'
+                    earliest_activity['time'] = activity.doughEnd
+                    break
+
+                elif activity.doughEnd <= now <= activity.firstLoafPacked:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'First Loaf Packing'
+                    earliest_activity['time'] = activity.firstLoafPacked
+                    break
+
+                elif activity.firstLoafPacked <= now < activity.cutOffTime:
+                    earliest_activity['recipeName'] = recipe.recipeName
+                    earliest_activity['name'] = 'Cut Off Time'
+                    earliest_activity['time'] = activity.cutOffTime
+                    break
+
+                elif now >= activity.cutOffTime:
+                    earliest_activity['recipeName'] = 'All'
+                    earliest_activity['name'] = 'Finished'
+                    earliest_activity['time'] = None
+
+        if job_order.jobOrderStatus != "ACTIVE":
+            earliest_activity['recipeName'] = ''
+            earliest_activity['name'] = ''
+            earliest_activity['time'] = ''
+            
+        # Construct the job order data with the current activity information
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+            'current_recipe_name': earliest_activity['recipeName'],
+            'current_activity_name': earliest_activity['name'],
+            'current_activity_time': earliest_activity['time'],
+        }
+
+        # Append the job data to the job orders list
+        job_orders_list.append(job_data)
+
+    context = {
+        'job_orders': job_orders_list,
+        'user_role': user_role,
+    }
+
+    return render(request, 'worker_dashboard.html', context)
+
+@login_required
+def update_worker_dashboard_table(request):
+    malaysian_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    now = timezone.now().astimezone(malaysian_tz)
+    job_orders_list = []
+
+    job_orders = JobOrder.objects.filter(
+    jobOrderStatus__in=['ACTIVE']
 ).prefetch_related('recipes__activity_recipe')
 
     for job_order in job_orders:
@@ -131,7 +321,7 @@ def manager_dashboard_view(request):
         'job_orders': job_orders_list
     }
 
-    return render(request, 'manager_dashboard.html', context)
+    return JsonResponse({'job_orders': job_orders_list})
 
 @login_required
 def dashboard_view(request):
@@ -140,6 +330,11 @@ def dashboard_view(request):
     job_orders_list = []
 
     job_orders = JobOrder.objects.all().prefetch_related('recipes__activity_recipe')
+
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
 
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
@@ -213,7 +408,8 @@ def dashboard_view(request):
         job_orders_list.append(job_data)
 
     context = {
-        'job_orders': job_orders_list
+        'job_orders': job_orders_list,
+        'user_role': user_role,
     }
 
     return render(request, 'dashboard.html', context)
@@ -390,23 +586,43 @@ def job_order_recipes(request, job_order_id):
     recipes_by_date = defaultdict(list)
     for recipe in recipes:
         recipes_by_date[recipe.recipeProdDate].append(recipe)
-
     sorted_dates = sorted(recipes_by_date.keys())
 
+    revisions = Revision.objects.filter(jobOrder=job_order).order_by('-dateTime')
+
+    # Check if there are any unamended revisions for this job order
+    new_revisions = Revision.objects.filter(jobOrder=job_order, ammended=False).exists()
+
+    # Group revisions by date
+    grouped_revisions = {}
+    for date, group in groupby(revisions, key=lambda x: x.dateTime.date()):
+        grouped_revisions[date] = list(group)
+
     # Get the role of the current user
+    template_name = 'view_joborder.html'  # Default template
     try:
         user_role = UserRole.objects.get(user=request.user).role
+        if user_role == UserRole.MIXING:
+            template_name = 'mixing_view.html'  # Template for MIXING role
+        elif user_role == UserRole.PACKAGING:
+            template_name = 'packaging_view.html'  # Template for PACKAGING role
     except UserRole.DoesNotExist:
-        user_role = None  # or set a default role
+        user_role = None
+
+    revisions_count = Revision.objects.filter(jobOrder=job_order, ammended=False).count()
 
     context = {
         'job_order': job_order,
         'recipes_by_date': recipes_by_date,
         'sorted_dates': sorted_dates,
-        'user_role': user_role,  # Include the user role in the context
+        'user_role': user_role,
+        'grouped_revisions': grouped_revisions,
+        'new_revisions': new_revisions,
+        'revisions_count': revisions_count,
     }
 
-    return render(request, 'view_joborder.html', context)
+    return render(request, template_name, context)
+
 
 def submit_job_order(request, job_order_id):
     try:
@@ -414,19 +630,26 @@ def submit_job_order(request, job_order_id):
     except JobOrder.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
 
-    if job_order.jobOrderStatus != 'DRAFT':
-        return JsonResponse({'status': 'error', 'message': 'Job Order status is not DRAFT'}, status=400)
+    if job_order.jobOrderStatus not in ['DRAFT', 'REVISE']:
+        return JsonResponse({'status': 'error', 'message': 'Job Order status is not DRAFT or REVISE'}, status=400)
 
     try:
         with transaction.atomic():
-            # Update the status to "PENDING"
+            # Check if the job order is in 'REVISE' status, then update revisions
+            if job_order.jobOrderStatus == 'REVISE':
+                revisions = Revision.objects.filter(jobOrder=job_order)
+                if revisions.exists():
+                    revisions.update(ammended=True)
+
+            # Update the job order status to "PENDING"
             job_order.jobOrderStatus = 'PENDING'
             job_order.save()
 
-                        # Return success status
+            # Return success status
             return JsonResponse({'status': 'success', 'message': 'Job Order submitted successfully'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
     
 def approve_job_order(request, job_order_id):
     try:
@@ -439,7 +662,7 @@ def approve_job_order(request, job_order_id):
 
     try:
         with transaction.atomic():
-            # Update the status to "PENDING"
+            # Update the status to "APPROVED"
             job_order.jobOrderStatus = 'APPROVED'
             job_order.save()
 
@@ -466,8 +689,12 @@ def delete_job_order(request, job_order_id):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def edit_joborder(request, job_order_id):
-    # Get the specific Job Order
-    job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+    # Get the specific Job Order or return a 404 if not found
+    job_order = get_object_or_404(JobOrder, jobOrderId=job_order_id)
+
+    # Set job order status to 'DRAFT' and save
+    job_order.jobOrderStatus = 'DRAFT'
+    job_order.save()
 
     # Fetch recipes associated with the Job Order
     recipes = RecipeMapping.objects.filter(jobOrder=job_order)
@@ -480,11 +707,18 @@ def edit_joborder(request, job_order_id):
     # Sort the dates
     sorted_dates = sorted(recipes_by_date.keys())
 
+
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
     # Prepare context
     context = {
         'job_order': job_order,
         'recipes_by_date': recipes_by_date,
         'sorted_dates': sorted_dates,
+        'user_role': user_role,
     }
 
     return render(request, 'edit_joborder.html', context)
@@ -536,6 +770,7 @@ def add_recipe(request, job_order_id):
             recipeBatchSize = None if not batch_size else batch_size,
             recipeWaste=2,
             recipeGap=gap_value,
+            isDraft=True,
             recipeSpongeStartTime=new_sponge_start,
         )
 
@@ -554,6 +789,17 @@ def add_recipe(request, job_order_id):
         return JsonResponse({"message": "Recipe added successfully", "recipe_id": recipe.id})
 
     return JsonResponse({"message": "Invalid request"}, status=400)
+
+def delete_recipe_if_draft(request, recipe_id):
+    try:
+        recipe = RecipeMapping.objects.get(id=recipe_id)
+        if recipe.isDraft and not recipe.products.exists():
+            recipe.delete()
+            return JsonResponse({"message": "Draft recipe deleted"})
+    except RecipeMapping.DoesNotExist:
+        pass
+
+    return JsonResponse({"message": "No action taken"})
 
 def submitJobOrder(request, job_order_id):
     if request.method == "POST":
@@ -682,6 +928,44 @@ def add_product(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
+def activate_job_order(request, job_order_id):
+    try:
+        job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+        job_order.jobOrderStatus = 'ACTIVE'
+        job_order.save()
+        return JsonResponse({'status': 'success', 'message': 'Job Order activated successfully'})
+    except JobOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+def archive_job_order(request, job_order_id):
+    if request.method == 'POST':
+        try:
+            job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+            # Update the job order status to 'ARCHIVED'
+            job_order.jobOrderStatus = 'ARCHIVED'
+            job_order.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Job Order archived successfully'})
+        except JobOrder.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+def deactivate_job_order(request, job_order_id):
+    try:
+        job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+        job_order.jobOrderStatus = 'APPROVED'
+        job_order.save()
+        return JsonResponse({'status': 'success', 'message': 'Job Order deactivated successfully'})
+    except JobOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 
 def update_product(request, product_id):
     if request.method == "POST":
@@ -792,7 +1076,8 @@ def add_revision(request, job_order_id):
 
     if request.method == 'POST':
         user = request.user
-        revision_text = request.POST.get('revisionText')
+        data = json.loads(request.body)
+        revision_text = data.get('revisionText')
 
         try:
             job_order = JobOrder.objects.get(jobOrderId=job_order_id)
@@ -812,8 +1097,77 @@ def add_revision(request, job_order_id):
             return JsonResponse({'status': 'success', 'message': 'Revision added successfully.'})
         except JobOrder.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Job Order not found.'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+
+def archives_view(request):
+    archived_job_orders_list = []
+
+    # Fetch only archived job orders
+    archived_job_orders = JobOrder.objects.filter(jobOrderStatus="ARCHIVED")
+
+    for job_order in archived_job_orders:
+        job_data = {
+            'jobOrderId': job_order.jobOrderId,
+            'jobOrderCreatedDate': job_order.jobOrderCreatedDate,
+            'jobOrderStatus': job_order.jobOrderStatus,
+        }
+        archived_job_orders_list.append(job_data)
+
+    context = {
+        'job_orders': archived_job_orders_list
+    }
+
+    return render(request, 'archives.html', context)
+
+def get_product_details(request, product_id):
+    try:
+        product = Product.objects.get(productId=product_id)
+        product_data = {
+            'productName': product.productName,
+            'productSalesOrder': product.productSalesOrder,
+            'currency': product.currency,
+            'productPrice': product.productPrice,
+            'client': product.client,
+            'colorSet': product.colorSet,
+            'productExpDate': product.productExpDate.strftime("%Y-%m-%d") if product.productExpDate else '',
+            'productSaleDate': product.productSaleDate.strftime("%Y-%m-%d") if product.productSaleDate else '',
+            'weight': product.weight,
+            'noOfSlices': product.noOfSlices,
+            'thickness': product.thickness,
+            'tray': product.tray,
+            'trolley': product.trolley,
+            'productRemarks': product.productRemarks
+        }
+        return JsonResponse(product_data, safe=False, encoder=DjangoJSONEncoder)
+    except ObjectDoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+
+def get_recipe_details(request, recipe_id):
+    try:
+        recipe = RecipeMapping.objects.get(recipeId=recipe_id)
+        recipe_data = {
+            'recipeId': recipe.recipeId,
+            'recipeName': recipe.recipeName,
+            'recipeProdDate': recipe.recipeProdDate.strftime("%Y-%m-%d"),
+            'recipeProdRate': recipe.recipeProdRate,
+            'recipeBatchSize': recipe.recipeBatchSize,
+            'recipeTotalSales': recipe.recipeTotalSales,
+            'recipeBatches': recipe.recipeBatches,
+            'recipeStdTime': str(recipe.recipeStdTime),
+            'recipeCycleTime': str(recipe.recipeCycleTime),
+            'recipeWaste': float(recipe.recipeWaste) if recipe.recipeWaste else None,
+            'recipeSpongeStartTime': recipe.recipeSpongeStartTime.strftime("%Y-%m-%d %H:%M:%S") if recipe.recipeSpongeStartTime else '',
+            'recipeTotalTray': recipe.recipeTotalTray,
+            'recipeTotalTrolley': recipe.recipeTotalTrolley,
+            'recipeBeltNo': recipe.recipeBeltNo,
+            'recipeGap': str(recipe.recipeGap),
+        }
+        return JsonResponse(recipe_data, safe=False)
+    except ObjectDoesNotExist:
+        return JsonResponse({'error': 'Recipe not found'}, status=404)
         
 def logout_view(request):
     logout(request)  # This logs the user out

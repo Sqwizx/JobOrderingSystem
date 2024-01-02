@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Details | Farmland Bakery (M) Sdn. Bhd.</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/packaging_view.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+    <!-- Boxicons CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
+</head>
+<body>
+{% load get_item %}
+{% csrf_token %}
+<div id="scrollContainer" class="scroll-area">
+    {% include 'sidebar.html' %}
+    <section class="home-section">
+        {% include 'view_header.html' %}
+        <div class="main-content">
+            <div class="container">
+                <div class="left-column">
+                    <div class="small-card" id="product-list">
+                        <p id="small-header">Recipe List</p>
+                        <div class="product-container">
+                            {% for date in sorted_dates %}
+                                {% for recipe in recipes_by_date|get_item:date %}
+                                    <div class="product-item" data-day="{{ date }}" data-recipe-id="{{ recipe.recipeId }}">
+                                        <div class="product-content-container">
+                                            <div class="product-info-container">
+                                                <p>{{ recipe.recipeName }}</p>
+                                                <p style="color: gray; font-size: 14px;">{{ recipe.products.count }} Products</p>
+                                            </div>
+                                            <div class="icon-container">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>                        
+                    </div>
+                    <div class="small-card" id="tracker">
+                        <p id="small-header">Progress Tracker</p>
+                        <div id="progressContainer">
+                            {% for date in sorted_dates %}
+                                {% for recipe in recipes_by_date|get_item:date %}
+                                    <!-- Display activities for the current recipe -->
+                                    {% for activity in recipe.activity_recipe.all %}
+                                <div class="activity-steps" data-recipe-id="{{ recipe.recipeId }}">
+                                    <input type="hidden" class="startTime" value="{{ activity.spongeStart|date:'U' }}">
+                                    <input type="hidden" class="endTime" value="{{ activity.cutOffTime|date:'U' }}">
+                                    <div class="progressStep" id="spongeStartProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">Sponge Start</span>
+                                        <span class="timeValue" id="spongeStartTimeTracker">{{ activity.spongeStart|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressStep" id="spongeEndProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">Sponge End</span>
+                                        <span class="timeValue" id="spongeEndTimeTracker">{{ activity.spongeEnd|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressStep" id="doughStartProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">Dough Start</span>
+                                        <span class="timeValue" id="doughStartTimeTracker">{{ activity.doughStart|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressStep" id="doughEndProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">Dough End</span>
+                                        <span class="timeValue" id="doughEndTimeTracker">{{ activity.doughEnd|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressStep" id="firstLoafPackedProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">First Loaf Packed</span>
+                                        <span class="timeValue" id="firstLoafPackedTracker">{{ activity.firstLoafPacked|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressStep" id="cutOffProgress_{{ recipe.recipeId }}" data-timestamp="{{ activity.spongeStart|date:'U' }}">
+                                        <span class="progressLabel">Cut Off Time</span>
+                                        <span class="timeValue" id="cutOffTimeTracker">{{ activity.cutOffTime|date:"l, d M Y H:i" }}</span>
+                                     </div>
+                                     <div class="progressLine" data-recipe-id="{{ recipe.recipeId }}"></div>
+                                     <div class="progressLineOverlay" data-recipe-id="{{ recipe.recipeId }}"></div>
+                                </div>
+                                        {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="right-column">
+                    <div class="big-card">
+                        <div class="tab">
+                            {% for date in sorted_dates %}
+                                {% if forloop.first %}
+                                    <button id="first-tablink"  data-day="{{ date }}" class="tablinks active">
+                                        <span class="date-text">{{ date|date:"j" }}</span> <br> {{ date|date:"D" }}
+                                    </button>
+                                {% else %}
+                                    <button data-day="{{ date }}" class="tablinks">
+                                        <span class="date-text">{{ date|date:"j" }}</span> <br> {{ date|date:"D" }}
+                                    </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% for date in sorted_dates %}
+                            <div id="{{ date }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                                <p id="recipe-list">Product List</p>
+                                <div class="content-container">
+                                    <div class="card">
+                                        <div class="first-column">
+                                            <div class="tab-recipes" id="recipe-tabs">
+                                                <!-- Loop through recipes within each production date group -->
+                                                {% for rcp in recipes_by_date|get_item:date %}  
+                                                {% for product in rcp.products.all %}
+                                                {% if forloop.first %}
+                                                <button class="tablinks-recipes opened" data-recipe-name="{{ rcp.recipeName }}" data-recipe-id="{{ rcp.recipeId }}">
+                                                    {{ product.productName }}
+                                                </button>
+                                             {% else %}
+                                                <button class="tablinks-recipes" data-recipe-name="{{ rcp.recipeName }}" data-recipe-id="{{ rcp.recipeId }}">
+                                                    {{ product.productName }}
+                                                </button>
+                                             {% endif %}
+                                          {% endfor %}
+                                          {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                    <div class="second-column">
+                                        <div class="form-container">
+                                            {% for rcp in recipes_by_date|get_item:date %}
+                                            {% for product in rcp.products.all %}
+                                            <form id="recipeForm" class="recipe-form" data-recipe-id="{{ rcp.recipeId }}" data-product-id="{{ product.productId }}">
+                                                <div class="form-columns">
+                                                    <div class="left-div">
+                                                        <!-- Product Name -->
+                                                        <label for="productName">Product Name</label><br>
+                                                        <input type="text" id="productName" name="productName" required autocomplete="off" readonly value="{{ product.productName }}"><br>
+                                                        
+                                                        <!-- Sales Order -->
+                                                        <label for="productSalesOrder">Sales Order</label><br>
+                                                        <input type="number" id="productSalesOrder" name="productSalesOrder" required autocomplete="off" readonly value="{{ product.productSalesOrder }}"><br>
+                                            
+                                                        <!-- Product Price Group -->
+                                                        <div class="product-price-group">
+                                                            <label for="productPrice">Product Price</label>
+                                                            <div class="price-container">
+                                                                <select id="currency" name="currency" disabled>
+                                                                    <option value="SGD">SGD</option>
+                                                                    <option value="MYR">MYR</option>
+                                                                </select>
+                                                                <input type="number" id="productPrice" step="0.01" name="productPrice" readonly value="{{ product.productPrice }}">
+                                                            </div>
+                                                        </div>
+                                            
+                                                        <!-- Client/Color Group -->
+                                                        <div class="client-color-group">
+                                                            <label for="client">Client/Color</label>
+                                                            <div class="client-color-container">
+                                                                <select id="client" name="client" disabled>
+                                                                    <option value="GFS">GFS</option>
+                                                                    <option value="GBKL">GBKL</option>
+                                                                </select>
+                                                                <input type="text" id="colorSet" name="colorSet" readonly placeholder="Color Set" value="{{ product.colorSet }}">
+                                                            </div>
+
+                                                            <!-- Expiry Date -->
+                                                            <label for="expiryDate">Expiry Date</label>
+                                                            <input type="text" id="expiryDate" name="expiryDate" placeholder="N/A" autocomplete="off" readonly value="{{ product.productExpDate }}">
+                                                        </div>
+                                            
+                                                        <!-- Weight Value -->
+                                                        <label for="weight">Weight Value</label><br>
+                                                        <input type="hidden" id="hiddenWeight" value="{{ product.weight }}">
+                                                        <div class="weight-value">
+                                                            <select id="weight" name="weight" disabled>
+                                                                <option value="20" data-weight="300">300g</option>
+                                                                <option value="20" data-weight="400">400g</option>
+                                                                <option value="15" data-weight="500">500g</option>
+                                                                <option value="12" data-weight="600">600g</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                            
+                                                    <div class="right-div">
+                                                        <!-- Sale Date -->
+                                                        <label for="saleDate">Sale Date</label><br>
+                                                        <input type="text" id="saleDate" name="saleDate" placeholder="N/A" autocomplete="off" readonly value="{{ product.productSaleDate }}"><br>
+                                            
+                                                        <!-- Number of Slices -->
+                                                        <label for="noOfSlices">No. of Slices</label><br>
+                                                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off" readonly value="{{ product.noOfSlices }}"><br>
+                                            
+                                                        <!-- Thickness -->
+                                                        <label for="thickness">Thickness</label><br>
+                                                        <input type="text" id="thickness" name="thickness" required autocomplete="off" readonly value="{{ product.thickness }}"><br>
+                                            
+                                                        <!-- Total Tray -->
+                                                        <label for="tray">Total Tray</label><br>
+                                                        <input type="number" id="tray" name="tray" required autocomplete="off" readonly value="{{ product.tray }}"><br>
+                                            
+                                                        <!-- Total Trolley -->
+                                                        <label for="trolley">Total Trolley</label><br>
+                                                        <input type="number" id="trolley" name="trolley" required autocomplete="off" readonly value="{{ product.trolley }}"><br>
+                                            
+                                                        <!-- Remarks -->
+                                                        <label for="remarks">Remarks</label><br>
+                                                        <textarea id="remarks" name="remarks" rows="7" cols="60" readonly>{{ product.productRemarks }}</textarea><br>
+                                                    </div>
+                                                </div>
+                                            </form>                                            
+                                            {% endfor %}
+                                            {% endfor %}
+                                            <div class="footer" id="footer">
+                                                <div class="buttons-footer">
+                                                    {% if user_role != "mixing" and user_role != "packaging" %}
+                                                        {% if job_order.jobOrderStatus == "ARCHIVED" %}
+                                                            <button class="archived-button" onclick="redirectToArchives('{{ job_order.jobOrderId }}')">Archived</button>
+                                                        {% else %}
+                                                            {% if job_order.jobOrderStatus == "PENDING" or job_order.jobOrderStatus == "REVISE" %}
+                                                                {% if user_role == "manager" %}
+                                                                    <button class="approve-button" onclick="approveJobOrder('{{ job_order.jobOrderId }}')">Approve</button>
+                                                                    <button class="revise-button" data-joborder-id="{{ job_order.jobOrderId }}">Revise</button>
+                                                                {% elif user_role == "production" and job_order.jobOrderStatus == "REVISE" %}
+                                                                    <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
+                                                                    <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
+                                                                    <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
+                                                                {% else %}
+                                                                    <button class="submitted-button" disabled>Job Order Submitted</button>
+                                                                {% endif %}
+                                                            {% elif job_order.jobOrderStatus == "APPROVED" %}
+                                                                {% if user_role == "production" %}
+                                                                    <button class="activate-button" onclick="activateJobOrder('{{ job_order.jobOrderId }}')">Activate</button>
+                                                                    <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}', '{{ job_order.jobOrderStatus }}')">Edit</button>
+                                                                {% else %}
+                                                                    <button class="approved-button" disabled>You have approved this Job Order</button>
+                                                                {% endif %}
+                                                            {% elif job_order.jobOrderStatus == "ACTIVE" %}
+                                                                <button class="archive-button" onclick="archiveJobOrder('{{ job_order.jobOrderId }}')">Archive</button>
+                                                                <button class="deactivate-button" onclick="deactivateJobOrder('{{ job_order.jobOrderId }}')">Deactivate</button>
+                                                            {% else %}
+                                                                <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
+                                                                <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
+                                                                <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>                                                                                               
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div id="reviseModal" class="modal" data-joborder-id="{{ job_order.jobOrderId }}">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeReviseModal">&times;</span>
+                  <h1>Add Revision</h1>
+               </div>
+               <p>Add revisions to make below.</p>
+               <textarea id="revisionText" name="revisionText" placeholder="Enter revisions here..."></textarea>
+               <br>
+               <div class="modal-footer">
+                <button id="submit-revision">Submit</button>
+               </div>
+            </div>
+         </div>
+
+         <div id="revisionModal" class="modal" data-joborder-id="{{ job_order.jobOrderId }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close modal-close" id="closeRevisionModal">&times;</span>
+                    <h1>Revision History</h1>
+                </div>
+                <div class="modal-body">
+                    {% if grouped_revisions %}
+                        {% for date, revisions_by_date in grouped_revisions.items %}
+                            <button class="accordion">{{ date|date:"l, d M Y" }}</button>
+                            <div class="panel">
+                                {% regroup revisions_by_date by userId as user_grouped_revisions %}
+                                {% for user_group in user_grouped_revisions %}
+                                    <div class="user-revision-group">
+                                        <h4>{{ user_group.grouper.username }}</h4>
+                                        <hr>
+                                        {% for revision in user_group.list %}
+                                            <div class="revision-entry">
+                                                <p class="revision-text">{{ revision.revision }}</p>
+                                                <p class="revision-date-time">Created: {{ revision.dateTime|date:"H:i" }} {% if revision.ammended %}(AMENDED){% endif %}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No revisions found for this job order.</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button class="close-button">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="productModal" class="modal product-modal">
+            <div class="modal-content" id="productModalContent">
+               <div id="modal-header">
+                  <span class="close modal-close" id="closeProductModal">&times;</span>
+                  <h1>View Product</h1>
+               </div>
+               <form id="productForm">
+                <div class="form-columns">
+                    <div class="left-div">
+                        <div class="input-container">
+                            <label for="recipeName">Recipe Name</label>
+                            <input type="text" id="recipeName" name="recipeName" value="{{ rcp.recipeName }}" required disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="productionRate">Production Rate</label>
+                            <input type="number" id="productionRate" name="productionRate" value="{{ rcp.recipeProdRate }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="salesOrder">Total Sales Order</label>
+                            <input type="number" id="salesOrder" name="salesOrder" value="{{ rcp.recipeTotalSales }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="waste">Budgeted Waste (%)</label>
+                            <input type="number" id="waste" name="waste" value="{{ rcp.recipeWaste }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="stdTime">Required Std. Time</label>
+                            <input type="text" id="stdTime" name="stdTime" value="{{ rcp.recipeStdTime|default:"" }}" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="totalTray">Total Tray</label>
+                            <input type="number" id="totalTray" name="totalTray" value="{{ rcp.recipeTotalTray }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="beltNo">Suction Cup Belt No.</label>
+                            <input type="number" id="beltNo" name="beltNo" value="{{ rcp.recipeBeltNo }}" disabled>
+                        </div>
+                    </div>
+                    <div class="right-div">
+                        <div class="input-container">
+                            <label for="dateTimePicker">Production Date</label>
+                            <input type="text" id="dateTimePicker" name="dateTimePicker" value="{{ rcp.recipeProdDate|date:"l, d M Y" }}" class="flatpickr-input" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="batchSize">Batch Size</label>
+                            <input type="number" id="batchSize" name="batchSize" value="{{ rcp.recipeBatchSize }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="batches">Batches To Produce</label>
+                            <input type="number" id="batches" name="batches" value="{{ rcp.recipeBatches }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="cycleTime">Cycle Time</label>
+                            <input type="text" id="cycleTime" name="cycleTime" value="{{ rcp.recipeCycleTime|default:"" }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="spongeStartTime">Sponge Start Time</label>
+                            <input type="text" id="spongeStartTime" name="spongeStartTime" value="{{ rcp.recipeSpongeStartTime|date:"l, d M Y H:i" }}" class="flatpickr-input" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="totalTrolley">Total Trolley</label>
+                            <input type="number" id="totalTrolley" name="totalTrolley" value="{{ rcp.recipeTotalTrolley }}" disabled>
+                        </div>
+                        <div class="input-container">
+                            <label for="gap">Gap</label>
+                            <input type="text" id="gap" name="gap" value="{{ rcp.recipeGap|default:"" }}" disabled>
+                        </div>
+                    </div>
+                </div>
+            </form>                                            
+            </div>
+         </div>
+        
+        <div id="alertModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeAlertModal">&times;</span>
+                  <h1>Submit Job Order</h1>
+               </div>
+               <p>Are you sure you want to submit this job order for approval? <strong>Click confirm to submit job order.</strong></p>
+               <br>
+               <button class="confirmButton" id="confirmButton">Confirm</button>
+               <button class="cancelButton" id="cancelButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="confirmModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeConfirmModal">&times;</span>
+                  <h1>Approve Job Order</h1>
+               </div>
+               <p>Are you sure you want to approve this job order?<strong>You can still create revisions for this job order if necessary.</strong></p>
+               <br>
+               <button class="confirmApproveButton" id="confirmApproveButton">Confirm</button>
+               <button class="cancelApproveButton" id="cancelApproveButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="confirmDeleteModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeConfirmDeleteModal">&times;</span>
+                  <h1>Approve Job Order</h1>
+               </div>
+               <p>Are you sure you want to delete this job order? <strong>You won't be able to recover this job order.</strong></p>
+               <br>
+               <button class="confirmDeleteButton" id="confirmDeleteButton">Confirm</button>
+               <button class="cancelDeleteButton" id="cancelDeleteButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="alertEditModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeAlertEditModal">&times;</span>
+                  <h1>Edit Job Order</h1>
+               </div>
+               <p>Are you sure you want to edit this APPROVED Job Order? <strong>You will need to submit this again for approval.</strong></p>
+               <br>
+               <button class="confirmEditButton" id="confirmEditButton">Confirm</button>
+               <button class="cancelEditButton" id="cancelEditButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="activateModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeActivateModal">&times;</span>
+                  <h1>Edit Job Order</h1>
+               </div>
+               <p>Are you sure you want to activate this Job Order? <strong>Once it is active, it will be visible to others.</strong></p>
+               <br>
+               <button class="confirmActivateButton" id="confirmActivateButton">Confirm</button>
+               <button class="cancelActivateButton" id="cancelActivateButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="archiveModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeArchiveModal">&times;</span>
+                  <h1>Edit Job Order</h1>
+               </div>
+               <p>Are you sure you want to archive this Job Order? <strong>Once it is archived, changes cannot be made.</strong></p>
+               <br>
+               <button class="confirmArchiveButton" id="confirmArchiveButton">Confirm</button>
+               <button class="cancelArchiveButton" id="cancelArchiveButton">Cancel</button>
+            </div>
+         </div>
+
+         <div id="deactivateModal" class="modal">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <span class="close modal-close" id="closeDeactivateModal">&times;</span>
+                  <h1>Edit Job Order</h1>
+               </div>
+               <p>Are you sure you want to archive this Job Order? <strong>Once it is archived, changes cannot be made.</strong></p>
+               <br>
+               <button class="confirmDeactivateButton" id="confirmDeactivateButton">Confirm</button>
+               <button class="cancelDeactivateButton" id="cancelDeactivateButton">Cancel</button>
+            </div>
+         </div>
+
+    </section>
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script src="{% static 'js/scrollbar.js' %}"></script>
+    <script src="{% static 'js/packaging_view.js' %}"></script>
+</div>
+</body>
+</html>

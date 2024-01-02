@@ -872,7 +872,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var client = document.getElementById("client").value;
         var colorSet = document.getElementById("colorSet").value;
         var expiryDate = document.getElementById("expiryDate").value;
-        var weight = document.getElementById("weight").value;
         var saleDate = document.getElementById("saleDate").value;
         var noOfSlices = document.getElementById("noOfSlices").value;
         var thickness = document.getElementById("thickness").value;
@@ -880,6 +879,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var trolley = document.getElementById("trolley").value;
         var remarks = document.getElementById("remarks").value;
         var csrfToken = getCookie('csrftoken');
+        var weightSelect = document.getElementById("weight");
+        var selectedWeightOption = weightSelect.options[weightSelect.selectedIndex];
+        var weight = selectedWeightOption.getAttribute("data-weight");
 
         expiryDate = expiryDate ? expiryDate : null;
         saleDate = saleDate ? saleDate : null;
@@ -1242,6 +1244,21 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('cycleTimeValue:', cycleTimeValue);
     }
 
+    window.onclick = function (event) {
+        // Get all elements with the class 'modal'
+        var modals = document.getElementsByClassName('modal');
+
+        // Iterate over each modal
+        for (var i = 0; i < modals.length; i++) {
+            var modal = modals[i];
+
+            // Check if the click event target is the modal itself
+            if (event.target == modal) {
+                // Close the modal
+                modal.style.display = "none";
+            }
+        }
+    }
 });
 
 function formatDate(dateString) {
@@ -1361,12 +1378,15 @@ function populateAndShowProductModal(editButton) {
     document.getElementById("productId").value = productId;
     document.getElementById("recipeId").value = recipeId;
 
-    // Set the selected option for the 'weight' select element
     var weightSelect = document.getElementById('weight');
     var weightOptions = weightSelect.options;
+    var iconWeight = parseInt(editButton.getAttribute('data-weight'), 10);
+
     for (var i = 0; i < weightOptions.length; i++) {
-        if (weightOptions[i].value === weight) {
+        var optionWeight = parseInt(weightOptions[i].getAttribute('data-weight'), 10);
+        if (optionWeight === iconWeight) {
             weightOptions[i].selected = true;
+            console.log('Selected weight:', weightOptions[i].value);
             break;
         }
     }

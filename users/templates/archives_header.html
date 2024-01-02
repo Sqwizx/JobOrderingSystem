@@ -7,14 +7,12 @@
 </head>
 <body>
 <div class="header">
-    <div class="text">Dashboard</div>
+    <div class="text">Job Order Archives</div>
     <div class="top-menu">
         <input type="text" placeholder="Search Job Orders">
-        {% if user_role != 'mixing' and user_role != 'packaging' %}
         <a href="{% url 'create_joborder' %}">
-            <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
-        </a>
-    {% endif %}
+        <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
+         </a>
     </div>
 </div>
 </body>

@@ -324,10 +324,10 @@
                         <label for="weight">Weight Value</label><br>
                         <div class="weight-value">
                             <select id="weight" name="weight">
-                                <option value="20">300g</option>
-                                <option value="20">400g</option>
-                                <option value="15">500g</option>
-                                <option value="12">600g</option>
+                                <option value="20" data-weight="300">300g</option>
+                                <option value="20" data-weight="400">400g</option>
+                                <option value="15" data-weight="500">500g</option>
+                                <option value="12" data-weight="600">600g</option>
                             </select><br>
                         </div>
                     </div>
@@ -413,10 +413,10 @@
                         <label for="newWeight">Weight Value</label><br>
                         <div class="weight-value">
                             <select id="newWeight" name="newWeight">
-                                <option value="20">300g</option>
-                                <option value="20">400g</option>
-                                <option value="15">500g</option>
-                                <option value="12">600g</option>
+                                <option value="20" data-weight="300">300g</option>
+                                <option value="20" data-weight="400">400g</option>
+                                <option value="15" data-weight="500">500g</option>
+                                <option value="12" data-weight="600">600g</option>
                             </select><br>
                         </div>
                     </div>
@@ -452,6 +452,7 @@
             </form>                                            
             </div>
          </div>
+
         <div id="alertModal" class="modal">
             <div class="modal-content">
                <div class="modal-header">
@@ -517,7 +518,7 @@
                   <input type="submit" value="Submit" id="newRecipe">
                </form>
             </div>
-         </div>                         
+         </div>
     </section>
     <script src="{% static 'js/sidebar.js' %}"></script>
     <script src="{% static 'js/scrollbar.js' %}"></script>

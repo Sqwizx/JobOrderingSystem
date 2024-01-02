@@ -17,6 +17,7 @@ class Revision(models.Model):
     userId = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     revision = models.CharField(max_length=255, blank=True, null=True)
     jobOrder = models.ForeignKey(JobOrder, on_delete=models.CASCADE, related_name='revisions', null=True)
+    ammended = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.revisionId:
@@ -45,6 +46,7 @@ class RecipeMapping(models.Model):
     recipeTotalTrolley = models.PositiveIntegerField(null=True)
     recipeBeltNo = models.PositiveIntegerField(null=True)
     recipeGap = models.DurationField(null=True)
+    isDraft = models.BooleanField(null=True)
     jobOrder = models.ForeignKey(JobOrder, related_name='recipes', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -67,19 +69,19 @@ class Product(models.Model):
     productId = models.CharField(max_length=50, unique=True, null=True)
     productName = models.CharField(max_length=100, null=True)
     productSalesOrder = models.PositiveIntegerField(null=True)
-    currency = models.CharField(max_length=3, null=True)  # Assuming currency codes like 'SGD', 'MYR'
+    currency = models.CharField(max_length=3, null=True)
     productPrice = models.DecimalField(max_digits=10, decimal_places=2)
     client = models.CharField(max_length=100, null=True)
-    colorSet = models.CharField(max_length=100, null=True)  # Assuming this can be optional
+    colorSet = models.CharField(max_length=100, null=True)
     productExpDate = models.DateTimeField(null=True)
     productSaleDate = models.DateTimeField(null=True)
-    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)  # Assuming weight might need decimal values
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)
     noOfSlices = models.PositiveIntegerField(null=True)
     thickness = models.PositiveIntegerField(null=True)
-    tray = models.PositiveIntegerField(null=True)  # Assuming this can be optional
-    trolley = models.PositiveIntegerField(null=True)  # Assuming this can be optional
-    productRemarks = models.TextField(blank=True, null=True)  # Text fields are better for longer, variable-length text
-    recipe = models.ForeignKey(RecipeMapping, on_delete=models.CASCADE, related_name="products", null=True)  # Removed the null=True since ForeignKey should not be null in most cases
+    tray = models.PositiveIntegerField(null=True)
+    trolley = models.PositiveIntegerField(null=True)
+    productRemarks = models.TextField(blank=True, null=True)
+    recipe = models.ForeignKey(RecipeMapping, on_delete=models.CASCADE, related_name="products", null=True)
 
     def __str__(self):
         return self.productId

@@ -6,26 +6,29 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-<div class="header">
-  <div class="text" id="jobOrderIdDisplay"></div>
+  <div class="header">
+    <div class="text" id="jobOrderInfo"></div>
     <div class="top-menu">
         <input type="text" placeholder="Search Job Orders">
         <a href="{% url 'create_joborder' %}">
-        <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
-         </a>
+            <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
+        </a>
     </div>
-</div>
+  </div>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const jobOrderIdDisplay = document.getElementById("jobOrderIdDisplay");
+    const jobOrderInfo = document.getElementById("jobOrderInfo");
     const storedJobOrderId = localStorage.getItem("jobOrderId");
+    const storedJobOrderStatus = localStorage.getItem("jobOrderStatus");
 
-    const titleText = storedJobOrderId ;
+    console.log("Job Order ID:", storedJobOrderId);
+    console.log("Job Order Status:", storedJobOrderStatus);
 
-    if (jobOrderIdDisplay && storedJobOrderId) {
-        jobOrderIdDisplay.textContent = titleText;
+    if (jobOrderInfo && storedJobOrderId && storedJobOrderStatus) {
+        jobOrderInfo.innerHTML = storedJobOrderId + 
+            " <button class='status-button status-" + storedJobOrderStatus.toLowerCase() + "'>" + storedJobOrderStatus + "</button>";
     }
-});
+  });
 </script>
 </body>
 </html>

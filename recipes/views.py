@@ -1,16 +1,30 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+
+from users.models import UserRole
 from .models import Recipe
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 
 @login_required
 def recipe_dashboard(request):
-
     recipes = Recipe.objects.all()
+    user_role = None
 
-    return render(request, 'recipe_dashboard.html', {'recipes': recipes})
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        # Handle the case where the user role is not set
+        pass
+
+    context = {
+        'recipes': recipes,
+        'user_role': user_role,
+    }
+
+    return render(request, 'recipe_dashboard.html', context)
+
 
 @require_POST
 def create_recipe(request):

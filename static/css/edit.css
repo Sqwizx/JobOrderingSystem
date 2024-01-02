@@ -917,3 +917,42 @@ select option {
 .searchResults div:hover {
     background-color: rgba(4, 66, 168, 0.2);
 }
+
+
+.status-button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 400;
+    cursor: default;
+    vertical-align: middle;
+}
+
+.status-pending {
+    background-color: #ffcc00;
+}
+
+.status-draft {
+    background-color: #ffb26e;
+}
+
+/* Yellow */
+.status-approved {
+    background-color: #4CAF50;
+}
+
+/* Green */
+.status-active {
+    background-color: #2196F3;
+}
+
+/* Blue */
+.status-revise {
+    background-color: #f44336;
+}
+
+/* Red */
+.status-archived {
+    background-color: #9E9E9E;
+}

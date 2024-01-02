@@ -8,19 +8,32 @@
 {% load static %}
 <div class="sidebar">
     <div class="logo-details">
-      <a href="{% url 'dashboard' %}">
-        <img src="{% static 'img/FLlogo.png' %}" alt="Farmland Logo">
+      {% if user_role == 'manager' %}
+          <a href="{% url 'manager_dashboard' %}">
+      {% elif user_role == 'production' %}
+          <a href="{% url 'dashboard' %}">
+      {% else %}
+          <a href="{% url 'worker_dashboard' %}">
+      {% endif %}
+          <img src="{% static 'img/FLlogo.png' %}" alt="Farmland Logo">
       </a>
-        <i class='bx bx-menu' id="btn"></i>
-    </div>
-    <ul class="nav-list">
+      <i class='bx bx-menu' id="btn"></i>
+  </div>
+  <ul class="nav-list">
       <li>
-        <a href="{% url 'dashboard' %}">
-          <i class='bx bx-grid-alt'></i>
-          <span class="links_name">Job Order</span>
-        </a>
-         <span class="tooltip">Job Order</span>
+          {% if user_role == 'manager' %}
+              <a href="{% url 'manager_dashboard' %}">
+          {% elif user_role == 'production' %}
+              <a href="{% url 'dashboard' %}">
+          {% else %}
+              <a href="{% url 'worker_dashboard' %}">
+          {% endif %}
+              <i class='bx bx-grid-alt'></i>
+              <span class="links_name">Job Order</span>
+          </a>
+          <span class="tooltip">Job Order</span>
       </li>
+      {% if user_role != 'packaging' and user_role != 'mixing' %}
       <li>
        <a href="{% url 'recipe_dashboard' %}">
          <i class='bx bx-user' ></i>
@@ -28,10 +41,11 @@
        </a>
        <span class="tooltip">Recipe</span>
      </li>
+    {% endif %}
      <li>
-       <a href="#">
+       <a href="{% url 'archives' %}">
          <i class='bx bx-chat' ></i>
-         <span class="links_name">Archive</span>
+         <span class="links_name">Archives</span>
        </a>
        <span class="tooltip">Archive</span>
      </li>
@@ -46,8 +60,8 @@
          <div class="profile-details">
            <img src="{% static 'img/defaultpp.jpg' %}" alt="profileImg">
            <div class="name_job">
-             <div class="name">Name Place</div>
-             <div class="job">Position Place</div>
+             <div class="name">{{ username }}</div>
+             <div class="job">{{ user_role }}</div>
            </div>
          </div>
          <a href="{% url 'logout' %}"" id="logout_btn">

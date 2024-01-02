@@ -130,48 +130,41 @@
                                             </form>                                            
                                             {% endfor %}
                                             <div class="footer" id="footer">
-                                                <div class="footer-container">
-                                                    <div class="revision-footer">
-                                                        <button id="revisionButton" class="open-revisions {% if unamended_revisions_count > 0 %}new-revisions-button{% endif %}" onclick="openRevisionsModal('{{ job_order.jobOrderId }}')">
-                                                            Revision History{% if unamended_revisions_count > 0 %} ({{ unamended_revisions_count }} New){% endif %}
-                                                        </button>
-                                                    </div>
-                                                    <div class="buttons-footer">
-                                                        {% if user_role != "mixing" and user_role != "packaging" %}
-                                                            {% if job_order.jobOrderStatus == "ARCHIVED" %}
-                                                                <button class="archived-button" onclick="redirectToArchives('{{ job_order.jobOrderId }}')">Archived</button>
-                                                            {% else %}
-                                                                {% if job_order.jobOrderStatus == "PENDING" or job_order.jobOrderStatus == "REVISE" %}
-                                                                    {% if user_role == "manager" %}
-                                                                        <button class="approve-button" onclick="approveJobOrder('{{ job_order.jobOrderId }}')">Approve</button>
-                                                                        <button class="revise-button" data-joborder-id="{{ job_order.jobOrderId }}">Revise</button>
-                                                                    {% elif user_role == "production" and job_order.jobOrderStatus == "REVISE" %}
-                                                                        <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
-                                                                        <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
-                                                                        <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
-                                                                    {% else %}
-                                                                        <button class="submitted-button" disabled>Job Order Submitted</button>
-                                                                    {% endif %}
-                                                                {% elif job_order.jobOrderStatus == "APPROVED" %}
-                                                                    {% if user_role == "production" %}
-                                                                        <button class="activate-button" onclick="activateJobOrder('{{ job_order.jobOrderId }}')">Activate</button>
-                                                                        <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}', '{{ job_order.jobOrderStatus }}')">Edit</button>
-                                                                    {% else %}
-                                                                        <button class="approved-button" disabled>You have approved this Job Order</button>
-                                                                    {% endif %}
-                                                                {% elif job_order.jobOrderStatus == "ACTIVE" %}
-                                                                    <button class="archive-button" onclick="archiveJobOrder('{{ job_order.jobOrderId }}')">Archive</button>
-                                                                    <button class="deactivate-button" onclick="deactivateJobOrder('{{ job_order.jobOrderId }}')">Deactivate</button>
-                                                                {% else %}
+                                                <div class="buttons-footer">
+                                                    {% if user_role != "mixing" and user_role != "packaging" %}
+                                                        {% if job_order.jobOrderStatus == "ARCHIVED" %}
+                                                            <button class="archived-button" onclick="redirectToArchives('{{ job_order.jobOrderId }}')">Archived</button>
+                                                        {% else %}
+                                                            {% if job_order.jobOrderStatus == "PENDING" or job_order.jobOrderStatus == "REVISE" %}
+                                                                {% if user_role == "manager" %}
+                                                                    <button class="approve-button" onclick="approveJobOrder('{{ job_order.jobOrderId }}')">Approve</button>
+                                                                    <button class="revise-button" data-joborder-id="{{ job_order.jobOrderId }}">Revise</button>
+                                                                {% elif user_role == "production" and job_order.jobOrderStatus == "REVISE" %}
                                                                     <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
                                                                     <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
                                                                     <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
+                                                                {% else %}
+                                                                    <button class="submitted-button" disabled>Job Order Submitted</button>
                                                                 {% endif %}
+                                                            {% elif job_order.jobOrderStatus == "APPROVED" %}
+                                                                {% if user_role == "production" %}
+                                                                    <button class="activate-button" onclick="activateJobOrder('{{ job_order.jobOrderId }}')">Activate</button>
+                                                                    <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}', '{{ job_order.jobOrderStatus }}')">Edit</button>
+                                                                {% else %}
+                                                                    <button class="approved-button" disabled>You have approved this Job Order</button>
+                                                                {% endif %}
+                                                            {% elif job_order.jobOrderStatus == "ACTIVE" %}
+                                                                <button class="archive-button" onclick="archiveJobOrder('{{ job_order.jobOrderId }}')">Archive</button>
+                                                                <button class="deactivate-button" onclick="deactivateJobOrder('{{ job_order.jobOrderId }}')">Deactivate</button>
+                                                            {% else %}
+                                                                <button class="submit-button" onclick="submitJobOrder('{{ job_order.jobOrderId }}')">Submit</button>
+                                                                <button class="edit-button" onclick="editJobOrder('{{ job_order.jobOrderId }}')">Edit</button>
+                                                                <button class="delete-button" onclick="deleteJobOrder('{{ job_order.jobOrderId }}')">Delete</button>
                                                             {% endif %}
                                                         {% endif %}
-                                                    </div>
-                                                </div>                                                                                  
-                                            </div>      
+                                                    {% endif %}
+                                                </div>                                                                                               
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -309,11 +302,11 @@
                 <div class="form-columns">
                     <div class="left-div">
                         <!-- Product Name -->
-                        <label for="productName">Product Name</label><br>
+                        <label for="newProductName">Product Name</label><br>
                         <input type="text" id="productName" name="productName" required autocomplete="off" disabled><br><br>
                         
                         <!-- Sales Order -->
-                        <label for="productSalesOrder">Sales Order</label><br>
+                        <label for="newProductSalesOrder">Sales Order</label><br>
                         <input type="number" id="productSalesOrder" name="productSalesOrder" required autocomplete="off" disabled><br><br>
             
                         <!-- Product Price Group -->
@@ -456,7 +449,7 @@
             <div class="modal-content">
                <div class="modal-header">
                   <span class="close modal-close" id="closeArchiveModal">&times;</span>
-                  <h1>Archive Job Order</h1>
+                  <h1>Edit Job Order</h1>
                </div>
                <p>Are you sure you want to archive this Job Order? <strong>Once it is archived, changes cannot be made.</strong></p>
                <br>

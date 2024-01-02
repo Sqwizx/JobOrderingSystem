@@ -6,6 +6,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
+    <input type="hidden" id="userRole" value="{{ user_role }}">
     <table id="dashboard-table">
         <thead>
             <tr>
@@ -22,7 +23,11 @@
                 <tr id="job_order_row_{{ job.jobOrderId }}" class="clickable-row" data-job-order-id="{{ job.jobOrderId }}">
                     <td>{{ job.jobOrderId }}</td>
                     <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
-                    <td>{{ job.jobOrderStatus }}</td>
+                    <td>
+                        <button class="status-button status-{{ job.jobOrderStatus|lower }}">
+                            {{ job.jobOrderStatus }}
+                        </button>
+                    </td>
                     <td>{{ job.current_recipe_name }}</td>
                     {% if job.jobOrderStatus == "ACTIVE" %}
                         <td>{{ job.current_activity_name }}</td>

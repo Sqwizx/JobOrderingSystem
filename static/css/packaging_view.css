@@ -12,7 +12,7 @@
 
 .container {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 1fr 3fr;
     gap: 10px
 }
 
@@ -232,6 +232,13 @@
     background-color: rgba(4, 66, 168, .2);
     color: rgba(4, 66, 168, 1);
     border-bottom: 1px solid rgba(4, 66, 168, 1)
+}
+
+.product-item.active {
+    background-color: rgba(4, 66, 168, .2);
+    color: rgba(4, 66, 168, 1);
+    border-bottom: 1px solid rgba(4, 66, 168, 1);
+    border-top: 1px solid rgba(4, 66, 168, 1) !important;
 }
 
 .modal {
@@ -582,6 +589,43 @@ select option {
 }
 
 
+.status-button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 400;
+    cursor: default;
+    vertical-align: middle;
+}
+
+.status-pending {
+    background-color: #ffcc00;
+}
+
+/* Yellow */
+.status-approved {
+    background-color: #4CAF50;
+}
+
+/* Green */
+.status-active {
+    background-color: #2196F3;
+}
+
+/* Blue */
+.status-revise {
+    background-color: #f44336;
+}
+
+/* Red */
+.status-archived {
+    background-color: #9E9E9E;
+}
+
+.status-draft {
+    background-color: #ffb26e;
+}
 
 .progressStep.active {
     border-color: #3498db;
@@ -751,11 +795,10 @@ select option {
     margin-right: 22px;
 }
 
-.modal textarea {
-    width: 100%;
-    margin-top: 10px;
+textarea {
+    width: 300px;
+    height: 100px;
     padding: 10px 15px;
-    height: 250px;
     border: 2px solid #ccc;
     border-radius: 10px;
     outline: none;
@@ -763,7 +806,7 @@ select option {
     margin-bottom: 10px
 }
 
-.modal textarea {
+.textarea {
     resize: vertical
 }
 
@@ -922,10 +965,6 @@ hr {
     justify-content: space-between
 }
 
-#productModalContent .right-div textarea {
-    resize: none
-}
-
 #productModalContent {
     background-color: #fefefe;
     margin: 3% auto;
@@ -969,7 +1008,8 @@ hr {
     padding: 10px;
     outline: none;
     transition: border-color .3s;
-    border-radius: 10px
+    border-radius: 10px;
+    width: 190px;
 }
 
 .price-container input[type="number"]:focus,
@@ -998,7 +1038,8 @@ hr {
     padding: 10px;
     outline: none;
     transition: border-color .3s;
-    border-radius: 10px
+    border-radius: 10px;
+    width: 190px;
 }
 
 .client-color-container input[type="text"]:focus,
@@ -1017,7 +1058,7 @@ hr {
 }
 
 .weight-value select {
-    width: 100%;
+    width: 250;
     border: 2px solid #ccc;
     padding: 10px;
     outline: none;
@@ -1031,52 +1072,4 @@ hr {
 
 .fa-eye {
     color: #0442a8;
-}
-
-.status-button {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-weight: 400;
-    cursor: default;
-    vertical-align: middle;
-}
-
-.status-pending {
-    background-color: #ffcc00;
-}
-
-/* Yellow */
-.status-approved {
-    background-color: #4CAF50;
-}
-
-/* Green */
-.status-active {
-    background-color: #2196F3;
-}
-
-/* Blue */
-.status-revise {
-    background-color: #f44336;
-}
-
-/* Red */
-.status-archived {
-    background-color: #9E9E9E;
-}
-
-.status-draft {
-    background-color: #ffb26e;
-}
-
-.progress-tooltip {
-    position: absolute;
-    background-color: black;
-    color: white;
-    padding: 5px;
-    border-radius: 4px;
-    font-size: 12px;
-    z-index: 100;
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <table id="dashboard-table">
+        <thead>
+            <tr>
+                <th>No. Code</th>
+                <th>Date Created</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in job_orders %}
+                <tr id="job_order_row_{{ job.jobOrderId }}" class="clickable-row" data-job-order-id="{{ job.jobOrderId }}">
+                    <td>{{ job.jobOrderId }}</td>
+                    <td>{{ job.jobOrderCreatedDate|date:"l, d M Y" }}</td>
+                    <td>{{ job.jobOrderStatus }}</td>
+                </tr>
+            {% empty %}
+                <tr>  
+                    <td colspan="3">No archived job orders found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

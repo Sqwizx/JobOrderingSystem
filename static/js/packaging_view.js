@@ -1,71 +1,92 @@
 document.addEventListener('DOMContentLoaded', function () {
-    var tabButtons = document.querySelectorAll('.tablinks');
-    tabButtons.forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            var dataDayValue = button.getAttribute('data-day');
-            if (!button.classList.contains('active')) {
-                openTab(event, dataDayValue);
-            }
+    var dateTabs = document.querySelectorAll('.tablinks');
+    // Ensure this logic is applied when a main tab is clicked
+    dateTabs.forEach(function (tab) {
+        tab.addEventListener('click', function (event) {
+            setActiveTab(tab);
         });
     });
 
-    function openTab(event, day) {
-        event.preventDefault();
-        activeDay = day;
-
-        var allProducts = document.querySelectorAll('.product-item');
-        var allTabContents = document.querySelectorAll('.tabcontent');
-        allProducts.forEach(function (product) {
-            product.style.display = 'none';
+    function setActiveTab(selectedTab) {
+        dateTabs.forEach(function (tab) {
+            tab.classList.remove('active');
         });
+        selectedTab.classList.add('active');
+
+        var day = selectedTab.getAttribute('data-day');
+        openDateTab(day);
+        activateFirstProductAndRecipe(selectedTab.getAttribute('data-day'));
+    }
+
+
+    function activateFirstProductAndRecipe(day) {
+        var productItemsForDay = document.querySelectorAll('.product-item[data-day="' + day + '"]');
+        if (productItemsForDay.length > 0) {
+            setActiveProductItem(productItemsForDay[0]);
+        }
+    }
+    function openDateTab(day) {
+        // Hide all product items first
+        var allProductItems = document.querySelectorAll('.product-item');
+        allProductItems.forEach(function (item) {
+            item.style.display = 'none';
+            item.classList.remove('active');
+        });
+
+        // Show product items for the selected day
+        var productItemsForDay = document.querySelectorAll('.product-item[data-day="' + day + '"]');
+        if (productItemsForDay.length > 0) {
+            productItemsForDay.forEach(function (item) {
+                item.style.display = 'block';
+            });
+            setActiveProductItem(productItemsForDay[0]);
+        }
+
+        // Hide all tab contents first
+        var allTabContents = document.querySelectorAll('.tabcontent');
         allTabContents.forEach(function (content) {
             content.style.display = 'none';
         });
 
-        var allTabLinks = document.querySelectorAll('.tablinks');
-        allTabLinks.forEach(function (link) {
-            link.classList.remove('active');
-        });
-
+        // Show tab content for the selected day
         var selectedTabContent = document.getElementById(day);
-        selectedTabContent.style.display = 'block';
-        event.currentTarget.classList.add('active');
-
-        var firstTabLinksRecipe = selectedTabContent.querySelector('.tablinks-recipes');
-        if (firstTabLinksRecipe) {
-            selectedTabContent.querySelectorAll('.tablinks-recipes').forEach(function (recipeTab) {
-                recipeTab.classList.remove('opened');
-            });
-            firstTabLinksRecipe.classList.add('opened');
-            openRecipeTab(firstTabLinksRecipe.getAttribute('data-recipe-id'));
+        if (selectedTabContent) {
+            selectedTabContent.style.display = 'block';
         }
     }
 
-    var tabRecipesButtons = document.querySelectorAll('.tablinks-recipes');
-    tabRecipesButtons.forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            var recipeId = button.getAttribute('data-recipe-id');
-            if (!button.classList.contains('opened')) {
-                var currentTabContent = button.closest('.tabcontent');
-                currentTabContent.querySelectorAll('.tablinks-recipes.opened').forEach(function (openedButton) {
-                    openedButton.classList.remove('opened');
-                });
 
-                button.classList.add('opened');
-                openRecipeTab(recipeId);
+    function setActiveProductItem(product) {
+        var productItems = document.querySelectorAll('.product-item');
+        productItems.forEach(function (item) {
+            item.classList.remove('active');
+        });
+        console.log("Recipe pressed")
+        product.classList.add('active');
+
+        var recipeId = product.getAttribute('data-recipe-id');
+        showProductsForRecipe(recipeId);
+
+        var firstRecipeTab = document.querySelector('.tablinks-recipes[data-recipe-id="' + recipeId + '"]');
+        if (firstRecipeTab) {
+            firstRecipeTab.click();
+        }
+    }
+    function showProductsForRecipe(recipeId) {
+        // Hide all recipe tabs first
+        var allProductTabs = document.querySelectorAll('.tablinks-recipes');
+        allProductTabs.forEach(function (tab) {
+            tab.style.display = 'none';
+            tab.classList.remove('active'); // Remove the active class if it's there
+        });
+
+        // Show recipe tabs for the selected recipe
+        var productTabsForRecipe = document.querySelectorAll('.tablinks-recipes[data-recipe-id="' + recipeId + '"]');
+        productTabsForRecipe.forEach(function (tab) {
+            tab.style.display = 'block';
+            if (!tab.classList.contains('active')) {
+                tab.classList.add('active'); // Set the first one as active
             }
-        });
-    });
-
-    function openRecipeTab(recipeId) {
-        var allProducts = document.querySelectorAll('.product-item');
-        allProducts.forEach(function (product) {
-            product.style.display = 'none';
-        });
-
-        var matchingProducts = document.querySelectorAll('.product-item[data-recipe-id="' + recipeId + '"]');
-        matchingProducts.forEach(function (product) {
-            product.style.display = 'block';
         });
 
         // Hide all activity steps first
@@ -80,9 +101,17 @@ document.addEventListener('DOMContentLoaded', function () {
             step.style.display = 'block';
         });
 
-
+        // Show the recipe form for the selected recipe
         showRecipeForm(recipeId);
     }
+
+
+    var productItems = document.querySelectorAll('.product-item');
+    productItems.forEach(function (product) {
+        product.addEventListener('click', function (event) {
+            setActiveProductItem(product);
+        });
+    });
 
     function showRecipeForm(recipeId) {
         var allRecipeForms = document.querySelectorAll('.recipe-form');
@@ -96,13 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    var firstTab = document.querySelector('.tablinks.active');
-    var firstRecipeTab = document.querySelector('.tablinks-recipes.opened');
-    if (firstTab) {
-        openTab({ preventDefault: function () { }, currentTarget: firstTab }, firstTab.getAttribute('data-day'));
-    }
-    if (firstRecipeTab) {
-        openRecipeTab(firstRecipeTab.getAttribute('data-recipe-id'));
+    var activeTab = document.querySelector('.tablinks.active');
+    if (activeTab) {
+        setActiveTab(activeTab);
     }
 
     // Get the modal
@@ -196,6 +221,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
+    var hiddenWeightValue = document.getElementById('hiddenWeight').value;
+    setSelectedWeight(hiddenWeightValue);
 
     // Close button for reviseModal
     var closeReviseModal = document.getElementById("closeReviseModal");
@@ -276,8 +303,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event delegation to handle click on eye icon
     document.querySelector('.product-container').addEventListener('click', function (event) {
         if (event.target.classList.contains('fa-eye')) {
-            var productId = event.target.closest('.product-item').getAttribute('data-product-id');
-            fetchProductDetails(productId);
+            var recipeId = event.target.closest('.product-item').getAttribute('data-recipe-id');
+            fetchRecipeDetails(recipeId);
         }
     });
 
@@ -310,8 +337,6 @@ document.addEventListener('DOMContentLoaded', function () {
             'cutOffProgress'
         ];
 
-        let latestActiveStep = null;
-
         steps.forEach(stepBaseId => {
             const stepId = `${stepBaseId}_${recipeId}`;
             const element = recipeElement.querySelector('#' + stepId);
@@ -320,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Retrieve the timestamp for the current step
             const stepTimestamp = parseInt(element.dataset.timestamp, 10);
             if (!stepTimestamp) {
                 console.error("Timestamp not found for step:", stepId);
@@ -332,15 +358,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Check if the current time has passed the step's timestamp
             if (currentTime >= stepTimestamp) {
                 element.classList.add('active');
-                label.classList.add('active');
-                latestActiveStep = stepId;
+                label.classList.add('active'); // Apply active class to label
             } else {
-                if (stepId !== latestActiveStep) {
-                    element.classList.remove('active');
-                    label.classList.remove('active');
-                }
+                element.classList.remove('active');
+                label.classList.remove('active'); // Remove active class from label
             }
         });
     }
@@ -370,31 +394,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
-function fetchProductDetails(productId) {
-    fetch(`/product/${productId}/`) // Adjust URL as needed
+function fetchRecipeDetails(recipeId) {
+    fetch(`/recipe/${recipeId}/`) // Adjust URL as needed
         .then(response => response.json())
         .then(data => {
-            populateProductModal(data);
-            openProductModal();
+            populateRecipeModal(data);
+            openRecipeModal();
         })
         .catch(error => console.error('Error:', error));
-}
-
-function populateProductModal(product) {
-    document.getElementById('productName').value = product.productName;
-    document.getElementById('productSalesOrder').value = product.productSalesOrder;
-    document.getElementById('currency').value = product.currency;
-    document.getElementById('productPrice').value = product.productPrice;
-    document.getElementById('client').value = product.client;
-    document.getElementById('colorSet').value = product.colorSet;
-    document.getElementById('expiryDate').value = product.productExpDate;
-    document.getElementById('saleDate').value = product.productSaleDate;
-    setSelectedWeight(product.weight);
-    document.getElementById('noOfSlices').value = product.noOfSlices;
-    document.getElementById('thickness').value = product.thickness;
-    document.getElementById('tray').value = product.tray;
-    document.getElementById('trolley').value = product.trolley;
-    document.getElementById('remarks').value = product.productRemarks;
 }
 
 function setSelectedWeight(weight) {
@@ -415,7 +422,26 @@ function setSelectedWeight(weight) {
     }
 }
 
-function openProductModal() {
+
+function populateRecipeModal(recipe) {
+    document.getElementById('recipeName').value = recipe.recipeName || '';
+    document.getElementById('productionRate').value = recipe.recipeProdRate || 0;
+    document.getElementById('salesOrder').value = recipe.recipeTotalSales || 0;
+    document.getElementById('waste').value = recipe.recipeWaste || 0;
+    document.getElementById('stdTime').value = recipe.recipeStdTime || '';
+    document.getElementById('totalTray').value = recipe.recipeTotalTray || 0;
+    document.getElementById('beltNo').value = recipe.recipeBeltNo || 0;
+    document.getElementById('dateTimePicker').value = recipe.recipeProdDate || '';
+    document.getElementById('batchSize').value = recipe.recipeBatchSize || 0;
+    document.getElementById('batches').value = recipe.recipeBatches || 0;
+    document.getElementById('cycleTime').value = recipe.recipeCycleTime || '';
+    document.getElementById('spongeStartTime').value = recipe.recipeSpongeStartTime || '';
+    document.getElementById('totalTrolley').value = recipe.recipeTotalTrolley || 0;
+    document.getElementById('gap').value = recipe.recipeGap || '';
+    // ...additional fields as needed
+}
+
+function openRecipeModal() {
     var modal = document.getElementById('productModal');
     modal.style.display = 'block';
 }

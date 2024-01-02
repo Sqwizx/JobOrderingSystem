@@ -1884,6 +1884,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getProductFormData() {
+        // Get the selected weight option
+        var selectedWeightOption = document.querySelector('#weight option:checked');
+        var weightData = selectedWeightOption.getAttribute('data-weight');
+
+        // Rest of the form data
         return {
             productName: document.getElementById('productName').value,
             client: document.getElementById('client').value,
@@ -1896,7 +1901,7 @@ document.addEventListener('DOMContentLoaded', function () {
             productPrice: parseFloat(document.getElementById('productPrice').value),
             thickness: document.getElementById('thickness').value,
             remarks: document.getElementById('remarks').value,
-            weight: document.getElementById('weight').value,
+            weight: weightData, // Use the data-weight value
             tray: document.getElementById('tray').value,
             trolley: document.getElementById('trolley').value
         };
@@ -1993,7 +1998,15 @@ document.addEventListener('DOMContentLoaded', function () {
         setFormFieldValue('remarks', product.remarks);
         setFormFieldValue('tray', product.tray);
         setFormFieldValue('trolley', product.trolley);
-        setFormFieldValue('weight', product.weight);
+        // Repopulate the weight field
+        var weightSelect = document.getElementById('weight');
+        var weightOptions = weightSelect.options;
+        for (var i = 0; i < weightOptions.length; i++) {
+            if (weightOptions[i].getAttribute('data-weight') === product.weight) {
+                weightOptions[i].selected = true;
+                break;
+            }
+        }
     }
 
     function openEditModal(tabIndex, recipeName, index) {
@@ -2257,48 +2270,48 @@ document.addEventListener('DOMContentLoaded', function () {
         this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
     });
 
-    const steps = [
-        'spongeStartProgress',
-        'spongeEndProgress',
-        'doughStartProgress',
-        'doughEndProgress',
-        'firstLoafPackedProgress',
-        'cutOffProgress'
-    ];
+    // const steps = [
+    //     'spongeStartProgress',
+    //     'spongeEndProgress',
+    //     'doughStartProgress',
+    //     'doughEndProgress',
+    //     'firstLoafPackedProgress',
+    //     'cutOffProgress'
+    // ];
 
-    function setProgress(percentage) {
-        // Ensure the percentage is within bounds
-        const clampedPercentage = Math.max(0, Math.min(100, percentage));
+    // function setProgress(percentage) {
+    //     // Ensure the percentage is within bounds
+    //     const clampedPercentage = Math.max(0, Math.min(100, percentage));
 
-        // Update the overlay to cover the inactive part of the progress line
-        const progressLineOverlay = document.getElementById('progressLineOverlay');
-        progressLineOverlay.style.top = `${clampedPercentage}%`;
-        progressLineOverlay.style.height = `${100 - clampedPercentage}%`;
+    //     // Update the overlay to cover the inactive part of the progress line
+    //     const progressLineOverlay = document.getElementById('progressLineOverlay');
+    //     progressLineOverlay.style.top = `${clampedPercentage}%`;
+    //     progressLineOverlay.style.height = `${100 - clampedPercentage}%`;
 
-        // Activate steps and labels up to the percentage
-        steps.forEach(step => {
-            const element = document.getElementById(step);
-            const label = element.querySelector('.progressLabel'); // Get the label within the step
-            const stepPosition = element.offsetTop / progressLineOverlay.parentElement.offsetHeight * 100;
+    //     // Activate steps and labels up to the percentage
+    //     steps.forEach(step => {
+    //         const element = document.getElementById(step);
+    //         const label = element.querySelector('.progressLabel'); // Get the label within the step
+    //         const stepPosition = element.offsetTop / progressLineOverlay.parentElement.offsetHeight * 100;
 
-            if (stepPosition < clampedPercentage) {
-                element.classList.add('active');
-                if (label) {
-                    label.classList.add('active');
-                    label.style.color = '#3498db'; // Blue color for active steps
-                }
-            } else {
-                element.classList.remove('active');
-                if (label) {
-                    label.classList.remove('active');
-                    label.style.color = '#ccc'; // Gray color for inactive steps
-                }
-            }
-        });
-    }
+    //         if (stepPosition < clampedPercentage) {
+    //             element.classList.add('active');
+    //             if (label) {
+    //                 label.classList.add('active');
+    //                 label.style.color = '#3498db'; // Blue color for active steps
+    //             }
+    //         } else {
+    //             element.classList.remove('active');
+    //             if (label) {
+    //                 label.classList.remove('active');
+    //                 label.style.color = '#ccc'; // Gray color for inactive steps
+    //             }
+    //         }
+    //     });
+    // }
 
-    // Example usage:
-    setProgress(70); // Set progress to 10%   
+    // // Example usage:
+    // setProgress(20); // Set progress to 10%   
 
     // Function to handle setting values in the modal fields
     function setModalFieldValues(tabIdx, recipe) {
@@ -2363,6 +2376,22 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
+
+    window.onclick = function (event) {
+        // Get all elements with the class 'modal'
+        var modals = document.getElementsByClassName('modal');
+
+        // Iterate over each modal
+        for (var i = 0; i < modals.length; i++) {
+            var modal = modals[i];
+
+            // Check if the click event target is the modal itself
+            if (event.target == modal) {
+                // Close the modal
+                modal.style.display = "none";
+            }
+        }
+    }
 });
 
 window.addEventListener('beforeunload', function (e) {
