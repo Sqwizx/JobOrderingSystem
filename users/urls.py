@@ -22,6 +22,7 @@ urlpatterns = [
     path('archive/<str:job_order_id>/', views.archive_job_order, name='archive_job_order'),
     path('deactivate/<str:job_order_id>/', views.deactivate_job_order, name='deactivate_job_order'),
     path('product/<str:product_id>/', views.get_product_details, name='product_details'),
+    path('draft/<str:recipe_id>/', views.delete_recipe_if_draft, name='draft_recipe'),
 
     path('manager/', views.manager_dashboard_view, name='manager_dashboard'),
     path('approve/<str:job_order_id>/', views.approve_job_order, name='approve_job_order'),

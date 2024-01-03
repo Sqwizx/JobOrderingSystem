@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from itertools import groupby
 from django.db.models import Sum, Max
 import json
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 import pytz
 from django.shortcuts import get_object_or_404, render, redirect
@@ -65,15 +65,22 @@ def manager_dashboard_view(request):
     except UserRole.DoesNotExist:
         user_role = None  # Or set a default role if appropriate
 
+ # Restrict access to users with 'production' role
+    if user_role != 'manager':
+        raise Http404("Page not found.")
+
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+        # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -161,12 +168,15 @@ def worker_dashboard(request):
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+                # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -249,12 +259,15 @@ def update_worker_dashboard_table(request):
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+                # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -336,15 +349,22 @@ def dashboard_view(request):
     except UserRole.DoesNotExist:
         user_role = None  # Or set a default role if appropriate
 
+ # Restrict access to users with 'production' role
+    if user_role != 'production':
+        raise Http404("Page not found.")
+    
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+                # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -425,12 +445,15 @@ def update_dashboard_table(request):
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+                # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -509,12 +532,15 @@ def update_manager_dashboard_table(request):
     for job_order in job_orders:
         # Initialize the variables to store the earliest upcoming or ongoing activity
         earliest_activity = {
-            'recipeName': None,
+            'recipeName': 'None',
             'name': 'Not Started',
             'time': None
         }
 
-        for recipe in job_order.recipes.all():
+                # Filter out recipes that are drafts
+        non_draft_recipes = job_order.recipes.filter(isDraft=False)
+
+        for recipe in non_draft_recipes:
             activities = recipe.activity_recipe.order_by('spongeStart', 'doughStart').all()
 
             for activity in activities:
@@ -626,6 +652,15 @@ def job_order_recipes(request, job_order_id):
 
 def submit_job_order(request, job_order_id):
     try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+ # Restrict access to users with 'production' role
+    if user_role != 'production':
+        raise Http404("Page not found.")
+    
+    try:
         job_order = JobOrder.objects.get(jobOrderId=job_order_id)
     except JobOrder.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
@@ -653,6 +688,15 @@ def submit_job_order(request, job_order_id):
     
 def approve_job_order(request, job_order_id):
     try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+ # Restrict access to users with 'production' role
+    if user_role != 'manager':
+        raise Http404("Page not found.")
+    
+    try:
         job_order = JobOrder.objects.get(jobOrderId=job_order_id)
     except JobOrder.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
@@ -673,6 +717,15 @@ def approve_job_order(request, job_order_id):
 
 def delete_job_order(request, job_order_id):
     try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+ # Restrict access to users with 'production' role
+    if user_role != 'production':
+        raise Http404("Page not found.")
+
+    try:
         job_order = JobOrder.objects.get(jobOrderId=job_order_id)
     except JobOrder.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)
@@ -689,6 +742,7 @@ def delete_job_order(request, job_order_id):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def edit_joborder(request, job_order_id):
+    
     # Get the specific Job Order or return a 404 if not found
     job_order = get_object_or_404(JobOrder, jobOrderId=job_order_id)
 
@@ -712,7 +766,10 @@ def edit_joborder(request, job_order_id):
         user_role = UserRole.objects.get(user=request.user).role
     except UserRole.DoesNotExist:
         user_role = None  # Or set a default role if appropriate
-
+        
+    # Restrict access to users with 'production' role
+    if user_role != 'production' and user_role != 'manager':
+        raise Http404("Page not found.")
     # Prepare context
     context = {
         'job_order': job_order,

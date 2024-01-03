@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect
 
 from users.models import UserRole
@@ -18,6 +18,10 @@ def recipe_dashboard(request):
         # Handle the case where the user role is not set
         pass
 
+     # Restrict access to users with 'production' role
+    if user_role != 'production' and user_role != 'manager':
+        raise Http404("Page not found.")
+    
     context = {
         'recipes': recipes,
         'user_role': user_role,

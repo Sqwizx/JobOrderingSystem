@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+   <head>
+      <meta charset="UTF-8">
+      <title>Create Wrap Line | Farmland Bakery (M) Sdn. Bhd.</title>
+      {% load static %}
+      <link rel="stylesheet" href="{% static 'css/create.css' %}">
+      <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+      <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+      <!-- Boxicons CDN Link -->
+      <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css' rel='stylesheet'>
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/css/OverlayScrollbars.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.1/js/OverlayScrollbars.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script>
+   </head>
+   <body>
+      {% csrf_token %}
+      <div id="scrollContainer" class="scroll-area">
+         {% include 'sidebar.html' %}
+         <section class="home-section">
+            {% include 'wrapline_header.html' %}
+            <div class="main-content">
+               <button id="change-date"><i class="fa-regular fa-calendar fa-bounce"></i> Change Start Date</button>
+               <div class="container">
+                  <div class="left-column">
+                     <div class="big-card">
+                        <div class="tab">
+                           {% for info in date_info %}
+                           {% if forloop.first %}
+                           <button id="first-tablink"  data-day="{{ info.day }}" class="tablinks active">
+                           <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
+                           </button>
+                           {% else %}
+                           <button data-day="{{ info.day }}" class="tablinks">
+                           <span class="date-text">{{ info.date }}</span> <br> {{ info.day }}
+                           </button>
+                           {% endif %}
+                           {% endfor %}
+                        </div>
+                        {% for info in date_info %}
+                        <div id="{{ info.day }}" class="tabcontent" {% if forloop.first %} style="display: block;" {% endif %}>
+                        <p id="recipe-list">Recipe List</p>
+                        <div class="content-container">
+                           <div class="card">
+                              <div class="first-column">
+                                 <div class="tab-recipes" id="recipe-tabs-{{ forloop.counter0 }}">
+                                    <!-- Existing recipe tabs go here -->
+                                 </div>
+                                 <button class="add-recipe-tab" id="add-recipe-button-{{ forloop.counter0 }}">+ Add Recipe</button>
+                              </div>
+                           </div>
+                           <div class="second-column">
+                              <div class="form-container" id="recipe-details">
+                              <!-- Recipe details form will be dynamically added here -->
+                              </div>
+                              {% if forloop.first %}
+                              <div class="footer" id="footer">
+                                <button class="save-all-button">Save</button>
+                              </div>
+                              {% endif %}
+                           </div>
+                        </div>
+                     </div>
+                     <div id="myModal-{{ forloop.counter0 }}" class="modal">
+                        <!-- Modal content -->
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <span class="close" data-index="{{ forloop.counter0 }}">&times;</span>
+                              <h1>Add Recipe</h1>
+                           </div>
+                           <form id="recipeForm">
+                              <div class="search-container">
+                                 <label for="searchField">Search Recipes</label>
+                                 <input type="text" id="searchField-{{ forloop.counter0 }}" name="searchQuery" autocomplete="off">
+                                 <div id="searchResults-{{ forloop.counter0 }}" class="searchResults"></div>
+                              </div>
+                              <br><b>Or</b><br>
+                              <label for="recipeName">Recipe Name</label>
+                              <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
+                              <label for="cycleTime">Cycle Time Variable</label>
+                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br>
+
+                              <!-- HIDDEN INPUTS -->
+                              <input type="hidden" id="prodRate-{{ forloop.counter0 }}" name="prodRate">
+                              <input type="hidden" id="batchSize-{{ forloop.counter0 }}" name="batchSize">
+                              
+                              <input type="submit" value="Submit">
+                           </form>
+                        </div>
+                     </div>
+                     {% endfor %}
+                  </div>
+               </div>
+               <div class="right-column">
+                  <div class="small-card" id="product-list">
+                     <p id="small-header">Product List</p>
+                     <div class="product-container">
+                        <!-- This is where product items will be displayed -->
+                     </div>
+                  </div>
+                  <div id="productModal" class="modal">
+                     <div class="modal-content" id="productModalContent">
+                        <div id="modal-header">
+                           <span class="close" id="closeProductModal">&times;</span>
+                           <h1>Add Products</h1>
+                        </div>
+                        <form id="productForm">
+                           <div class="left-div">
+                              <label for="productName">Product Name</label><br>
+                              <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                              <label for="salesOrder">Sales Order</label><br>
+                              <input type="number" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
+                              <div class="product-price-group">
+                                 <label for="productPrice">Product Price</label>
+                                 <div class="price-container">
+                                    <select id="currency" name="currency">
+                                       <option value="SGD">SGD</option>
+                                       <option value="MYR">MYR</option>
+                                    </select>
+                                    <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0">
+                                 </div>
+                              </div><br>
+                              <div class="client-color-group">
+                                 <label for="client">Client/Color</label>
+                                 <div class="client-color-container">
+                                    <select id="client" name="client">
+                                       <option value="GFS">GFS</option>
+                                       <option value="GBKL">GBKL</option>
+                                    </select>
+                                    <input type="text" id="colorSet" name="colorSet" disabled placeholder="Color Set">
+                                 </div>
+                                 <br>
+                                 <label for="expiryDate">Expiry Date</label>
+                                 <input type="text" id="expiryDate" name="expiryDate" placeholder="N/A" required autocomplete="off">
+                              </div><br>
+                              <label for="weight">Weight Value</label><br>
+                              <div class="weight-value">
+                                 <select id="weight" name="weight">
+                                    <option value="20" data-weight="300">300g</option>
+                                    <option value="20" data-weight="400">400g</option>
+                                    <option value="15" data-weight="500">500g</option>
+                                    <option value="12" data-weight="600">600g</option>
+                                </select><br>
+                              </div>
+                           </div>
+                           <div class="right-div">
+                              <label for="saleDate">Sale Date</label><br>
+                              <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
+                              <label for="noOfSlices">No. of Slices</label><br>
+                              <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+                              <label for="thickness">Thickness</label><br>
+                              <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+                              <label for="tray">Total Tray</label><br>
+                              <input type="number" id="tray" name="tray" required autocomplete="off" disabled><br><br>
+                              <label for="trolley">Total Trolley</label><br>
+                              <input type="number" id="trolley" name="trolley" required autocomplete="off" disabled><br><br>
+                              <label for="remarks">Remarks</label><br>
+                              <textarea id="remarks" name="remarks" rows="7" cols="60"></textarea><br><br>
+                              <input type="submit" value="Submit">
+                           </div>
+                        </form>
+                     </div>
+                  </div>
+                  <div id="alertModal" class="modal">
+                     <div class="modal-content">
+                        <div class="modal-header">
+                           <span class="close" id="closeAlertModal">&times;</span>
+                           <h1>Confirm Delete</h1>
+                        </div>
+                        <p>Are you sure you want to delete the recipe <strong id="alertModalNamePlaceholder">[Recipe Name]</strong>? Click confirm to delete recipe</p>
+                        <br>
+                        <button id="confirmDelete">Confirm</button>
+                        <button id="cancelDelete">Cancel</button>
+                     </div>
+                  </div>
+                  <div id="warningModal" class="modal">
+                     <div class="modal-content">
+                        <div class="modal-header">
+                           <span class="close" id="closeWarningModal">&times;</span>
+                           <h1>No Products Added</h1>
+                        </div>
+                        <p>You have not added any products for <strong id="warningModalNamePlaceholder">[Recipe Name]</strong>. Please add products before creating another recipe.</p>
+                        <br>
+                        <button id="okayWarningModal">Okay</button>
+                     </div>
+                  </div>
+                  <div id="summaryModal" class="modal">
+                     <div class="modal-content" id="summaryModalContent">
+                        <div class="modal-header">
+                           <span class="close" id="closeSummaryModal">&times;</span>
+                           <h1>Job Order Summary</h1>
+                        </div>
+                       <div id="summaryContent"></div>
+                       <button id="confirmSave">Confirm Save</button>
+                     </div>
+                   </div>
+                  <div class="small-card" id="tracker">
+                     <p id="small-header">Progress Tracker</p>
+                     <div id="progressContainer">
+                         <div class="progressStep" id="spongeStartProgress">
+                             <span class="progressLabel">Sponge Start</span>
+                             <span class="timeValue" id="spongeStartTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="spongeEndProgress">
+                             <span class="progressLabel">Sponge End</span>
+                             <span class="timeValue" id="spongeEndTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="doughStartProgress">
+                             <span class="progressLabel">Dough Start</span>
+                             <span class="timeValue" id="doughStartTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="doughEndProgress">
+                             <span class="progressLabel">Dough End</span>
+                             <span class="timeValue" id="doughEndTimeTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="firstLoafPackedProgress">
+                             <span class="progressLabel">First Loaf Packed</span>
+                             <span class="timeValue" id="firstLoafPackedTracker">--:--</span>
+                         </div>
+                         <div class="progressStep" id="cutOffProgress">
+                           <span class="progressLabel">Cut Off Time</span>
+                           <span class="timeValue" id="cutOffTimeTracker">--:--</span>
+                       </div>
+                         <div id="progressLine"></div>
+                         <div id="progressLineOverlay"></div>
+                     </div>
+                 </div>
+            </div>
+      </div>
+      </section>
+      <script src="{% static 'js/sidebar.js' %}"></script>
+      <script src="{% static 'js/calendar.js' %}"></script>
+      <script src="{% static 'js/scrollbar.js' %}"></script>
+      <script src="{% static 'js/create_wrapline.js' %}"></script>
+      </div>
+   </body>
+</html>

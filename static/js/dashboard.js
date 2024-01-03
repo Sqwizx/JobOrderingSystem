@@ -96,6 +96,17 @@ $(document).on("click", ".clickable-row", function () {
 
 // Call updateDashboardTable immediately and set an interval to update it every 1 minute
 $(document).ready(function () {
+    $('#createJobOrderButton').click(function () {
+        $('#dropdownContent').toggle();
+    });
+
+    // Optional: Close the dropdown if the user clicks outside of it
+    $(window).click(function (event) {
+        if (!event.target.matches('#createJobOrderButton')) {
+            $('.dropdown-content').hide();
+        }
+    });
+
     updateDashboardTable();
     setInterval(updateDashboardTable, 60000); // Update every 1 minute
 });

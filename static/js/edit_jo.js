@@ -234,6 +234,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${year}-${month}-${day}`;
     }
 
+    let recipeCreated = false;
+    let recipeId = null;
+
     function submitRecipeForm() {
         var jobOrderId = document.getElementById('jobOrderId').value;
         var tabIndex = document.getElementById('tabIndex').value;
@@ -268,6 +271,8 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => response.json())
             .then(data => {
+                recipeCreated = true;
+                recipeId = data.recipe_id;
                 console.log('Success:', data);
                 window.location.reload();
                 recipeModal.style.display = 'none';
@@ -278,6 +283,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Handle errors, such as showing an error message to the user
             });
     }
+
+    window.addEventListener('beforeunload', function (e) {
+        if (recipeCreated && recipeId) {
+            // Call the server to delete the recipe if it is still a draft
+            fetch('/delete_recipe_if_draft/' + recipeId + '/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                }
+            });
+        }
+    });
 
     document.getElementById('recipeModalForm').addEventListener('submit', function (event) {
         event.preventDefault(); // Prevent the default form submission
@@ -1256,6 +1274,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (event.target == modal) {
                 // Close the modal
                 modal.style.display = "none";
+            }
+        }
+    }
+
+    document.getElementById('createJobOrderButton').addEventListener('click', function () {
+        var dropdownContent = document.getElementById('dropdownContent');
+        dropdownContent.style.display = dropdownContent.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Optional: Close the dropdown if the user clicks outside of it
+    window.onclick = function (event) {
+        if (!event.target.matches('#createJobOrderButton')) {
+            var dropdowns = document.getElementsByClassName('dropdown-content');
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.style.display === 'block') {
+                    openDropdown.style.display = 'none';
+                }
             }
         }
     }

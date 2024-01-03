@@ -5,15 +5,26 @@ from recipes.models import Recipe
 from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from datetime import datetime, timedelta
 
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+
+from users.models import UserRole
 from .models import RecipeMapping, JobOrder, Activity, Product
 
 @login_required
-def create_joborder(request):
+def create_breadline(request):
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+
+ # Restrict access to users with 'production' role
+    if user_role != 'production':
+        raise Http404("Page not found.")
+    
     if request.method == 'GET' and 'selected_date' in request.GET:
         selected_date = request.GET.get('selected_date')
         current_date = datetime.strptime(selected_date, '%Y-%m-%d')
@@ -24,7 +35,30 @@ def create_joborder(request):
         current_date = datetime.now()
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         date_info = [{'date': (current_date + timedelta(days=i)).strftime('%d'), 'day': days[(current_date + timedelta(days=i)).weekday()]} for i in range(7)]
-        return render(request, 'create_joborder.html', {'date_info': date_info, 'current_date': current_date})
+        return render(request, 'create_breadline.html', {'date_info': date_info, 'current_date': current_date, 'user_role': user_role})
+
+@login_required
+def create_wrapline(request):
+    try:
+        user_role = UserRole.objects.get(user=request.user).role
+    except UserRole.DoesNotExist:
+        user_role = None  # Or set a default role if appropriate
+    
+     # Restrict access to users with 'production' role
+    if user_role != 'production':
+        raise Http404("Page not found.")
+
+    if request.method == 'GET' and 'selected_date' in request.GET:
+        selected_date = request.GET.get('selected_date')
+        current_date = datetime.strptime(selected_date, '%Y-%m-%d')
+        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        date_info = [{'date': (current_date + timedelta(days=i)).strftime('%d'), 'day': days[(current_date + timedelta(days=i)).weekday()]} for i in range(7)]
+        return JsonResponse({'date_info': date_info, 'current_date': current_date.strftime('%Y-%m-%d')})
+    else:
+        current_date = datetime.now()
+        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        date_info = [{'date': (current_date + timedelta(days=i)).strftime('%d'), 'day': days[(current_date + timedelta(days=i)).weekday()]} for i in range(7)]
+        return render(request, 'create_wrapline.html', {'date_info': date_info, 'current_date': current_date, 'user_role': user_role})
 
 @login_required
 @require_POST

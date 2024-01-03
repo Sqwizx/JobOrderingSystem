@@ -366,6 +366,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initial update and interval setup
     updateProgress();
     setInterval(updateProgress, 60000); // Update every minute
+
+    document.getElementById('createJobOrderButton').addEventListener('click', function () {
+        var dropdownContent = document.getElementById('dropdownContent');
+        dropdownContent.style.display = dropdownContent.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Optional: Close the dropdown if the user clicks outside of it
+    window.onclick = function (event) {
+        if (!event.target.matches('#createJobOrderButton')) {
+            var dropdowns = document.getElementsByClassName('dropdown-content');
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.style.display === 'block') {
+                    openDropdown.style.display = 'none';
+                }
+            }
+        }
+    }
 });
 
 const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
