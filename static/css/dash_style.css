@@ -264,6 +264,44 @@
     }
 }
 
+.top-menu {
+    display: flex;
+    align-items: center;
+}
+
+.search-container {
+    position: relative;
+    /* This makes child absolute positioning relative to this container */
+}
+
+#searchResults {
+    position: absolute;
+    /* Positions the dropdown relative to the search-container */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    /* Ensure it's on top of other content */
+    max-height: 300px;
+    overflow-y: auto;
+    top: 69px;
+    width: 246px;
+    /* Position right below the input */
+}
+
+.search-item {
+    padding: 10px 15px;
+    size: 12px;
+    cursor: pointer;
+}
+
+.search-item:hover {
+    background-color: rgba(4, 66, 168, .2);
+    transition: background-color 0.3s ease-out;
+}
+
 /* Style for the header section */
 .home-section .header {
     display: flex;
@@ -284,6 +322,7 @@
     border-radius: 5px;
     outline: none;
     transition: border-color 0.3s;
+    z-index: 2;
 }
 
 .home-section .top-menu input[type="text"]:focus {
@@ -366,4 +405,32 @@
 
 .dropdown-content a:hover {
     background-color: #f1f1f1
+}
+
+.sort-filter-container {
+    display: flex;
+    justify-content: left;
+    margin-bottom: 5px;
+}
+
+.sort-filter-container>div {
+    margin-right: 20px;
+}
+
+.sort-filter-container label {
+    font-size: 0.8em;
+}
+
+.sort-filter-container select {
+    background-color: transparent !important;
+    border: transparent !important;
+    font-size: 0.8em;
+    size: 0.8em;
+    padding: 5px;
+    height: auto;
+}
+
+.sort-filter-container select {
+    padding: 5px;
+    margin-left: 2px;
 }

@@ -30,6 +30,11 @@
             <div class="form-group">
                 <input type="password" id="password" name="password" placeholder="Password" autocomplete=off required class="with-icon lock-icon">
             </div>
+            {% if messages %}
+            {% for message in messages %}
+              <div class="error">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
             <button type="submit">Login</button>
         </form>
     </div>

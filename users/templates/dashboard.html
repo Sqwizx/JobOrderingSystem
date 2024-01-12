@@ -17,6 +17,33 @@
   <section class="home-section">
     {% include 'header.html' %}
     <div class="main-content">
+      <div class="sort-filter-container">
+        <div class="sort-by">
+          <label for="sortBy">Sort by:</label>
+          <select id="sortBy">
+            <option value="status">Status</option>
+            <option value="createdDate">Created Date</option>
+            <option value="estTime">Estimated Time</option>
+          </select>
+        </div>
+      
+        <div class="order">
+          <label for="order">Order:</label>
+          <select id="order">
+            <option value="ascending">Ascending</option>
+            <option value="descending">Descending</option>
+          </select>
+        </div>
+      
+        <div class="show-lines">
+          <label for="showLines">Show:</label>
+          <select id="showLines">
+            <option value="all">All</option>
+            <option value="breadLine">Bread Line</option>
+            <option value="wrapLine">Wrap Line</option>
+          </select>
+        </div>
+      </div>
       {% include 'dashboard_table.html' %}
     </div>
   </section>

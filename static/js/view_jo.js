@@ -384,6 +384,68 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escapes special characters
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+
+
+    searchInput.addEventListener('keyup', function () {
+        const query = this.value;
+        const escapedQuery = escapeRegExp(query);
+
+        if (query.length > 0) {
+            searchResults.style.display = 'block';
+
+            fetch('/search/?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    searchResults.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const regex = new RegExp(escapedQuery, 'gi');
+                            const highlightedText = item.jobOrderId.replace(regex, match => `<strong>${match}</strong>`);
+                            const div = document.createElement('div');
+                            div.className = 'search-item';
+                            div.innerHTML = highlightedText;
+                            div.dataset.jobOrderId = item.jobOrderId;
+                            div.dataset.jobOrderStatus = item.jobOrderStatus; // If you're using jobOrderStatus
+                            searchResults.appendChild(div);
+                        });
+                    } else {
+                        searchResults.innerHTML = '<div class="search-item">No Results Found</div>';
+                    }
+                });
+        } else {
+            searchResults.innerHTML = '';
+            searchResults.style.display = 'none';
+        }
+    });
+
+    searchResults.addEventListener('click', function (event) {
+        const target = event.target;
+        if (target.classList.contains('search-item')) {
+            const jobOrderId = target.dataset.jobOrderId;
+            const jobOrderStatus = target.dataset.jobOrderStatus; // Retrieve job order status
+
+            // Store in localStorage
+            localStorage.setItem('jobOrderId', jobOrderId);
+            localStorage.setItem('jobOrderStatus', jobOrderStatus);
+
+            // Redirect to the correct URL
+            window.location.href = '/details/' + jobOrderId + '/';
+        }
+    });
+
+    searchInput.addEventListener('focus', function () {
+        if (this.value.length > 0) {
+            searchResults.style.display = 'block';
+        }
+    });
+
 });
 
 const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;

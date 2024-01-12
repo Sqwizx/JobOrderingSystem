@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'joborders',
     'channels',
     'recipes',
+    'purchaseorder',
 ]
 
 MIDDLEWARE = [

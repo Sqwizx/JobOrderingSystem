@@ -28,7 +28,7 @@
           {% else %}
               <a href="{% url 'worker_dashboard' %}">
           {% endif %}
-              <i class='bx bx-grid-alt'></i>
+          <i class='bx bx-briefcase' ></i>
               <span class="links_name">Job Order</span>
           </a>
           <span class="tooltip">Job Order</span>
@@ -36,7 +36,7 @@
       {% if user_role != 'packaging' and user_role != 'mixing' %}
       <li>
        <a href="{% url 'recipe_dashboard' %}">
-         <i class='bx bx-user' ></i>
+        <i class='bx bx-book-content'></i>
          <span class="links_name">Recipe</span>
        </a>
        <span class="tooltip">Recipe</span>
@@ -44,17 +44,18 @@
     {% endif %}
      <li>
        <a href="{% url 'archives' %}">
-         <i class='bx bx-chat' ></i>
+        <i class='bx bx-box' ></i>
          <span class="links_name">Archives</span>
        </a>
        <span class="tooltip">Archive</span>
      </li>
      <li>
-       <a href="#">
-         <i class='bx bx-pie-chart-alt-2' ></i>
-         <span class="links_name">Notification</span>
+      <!-- url 'podashboard'  -->
+       <a href="">
+        <i class='bx bx-cart' ></i>
+         <span class="links_name">Purchase Order</span>
        </a>
-       <span class="tooltip">Notification</span>
+       <span class="tooltip">Purchase Order</span>
      </li>
      <li class="profile">
          <div class="profile-details">

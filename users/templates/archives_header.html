@@ -6,14 +6,20 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-<div class="header">
-    <div class="text">Job Order Archives</div>
-    <div class="top-menu">
-        <input type="text" placeholder="Search Job Orders">
-        <a href="{% url 'create_joborder' %}">
-        <button id="createJobOrderButton" data-user-id="{{ request.user.id }}">Create Job Order</button>
-         </a>
+    <div class="header">
+        <div class="text">Archives</div>
+        <div class="top-menu">
+            <input type="text" placeholder="Search Job Orders">
+            {% if user_role == 'production' %}
+            <div class="dropdown">
+                <button id="createJobOrderButton">Create Job Order</button>
+                <div id="dropdownContent" class="dropdown-content">
+                    <a href="{% url 'create_breadline' %}">Bread Line</a>
+                    <a href="{% url 'create_wrapline' %}">Wrap Line</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
-</div>
 </body>
 </html>

@@ -23,6 +23,7 @@ let isSaving = false;
 let gapValuesByTabIdx = {};
 
 document.addEventListener('DOMContentLoaded', function () {
+    generateSummaryReport();
 
     checkFormsAndToggleSaveButton()
 
@@ -269,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Assuming displayRecipeDetails is a function that updates the UI with the new recipe details
         displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
-        setActiveTabByName(recipeName);
+        setActiveTabByName(recipeName, index);
     }
 
     function handleNewRecipe(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable) {
@@ -277,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
         displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
-        setActiveTabByName(recipeName);
+        setActiveTabByName(recipeName, index);
         checkAndToggleProductModalButton();
         checkAndToggleTrackerVisibility();
     }
@@ -330,11 +331,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modal) modal.style.display = 'none';
     }
 
-    function setActiveTabByName(recipeName) {
+    function setActiveTabByName(recipeName, tabIndex) {
         let buttons = document.querySelectorAll('.tablinks-recipes');
         for (let button of buttons) {
             let buttonName = button.textContent.split('Delete')[0].trim(); // This will give you the recipeName
-            if (buttonName === recipeName && !button.classList.contains('opened')) {
+            let buttonTabIndex = parseInt(button.getAttribute('data-tab-index')); // Assuming you have data-tab-index attribute
+
+            if (buttonName === recipeName && buttonTabIndex === tabIndex && !button.classList.contains('opened')) {
                 setActiveTab(button);
                 break;
             }
@@ -1244,6 +1247,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function generateSummaryReport() {
         let summary = '';
         let unfilledFields = false;
+        const headersToMark = new Set();
+
+        console.log('Generating Summary Report with the following data:', allFormsData);
 
         // Group forms by production date
         const formsByDate = {};
@@ -1265,10 +1271,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 day: 'numeric'
             });
 
+            let headerId = 'header-' + productionDate;
+
             // Start of the date details
             summary += `
             <details>
-                <summary>${formattedDate}</summary>
+                <summary id="${headerId}">${formattedDate}</summary>
                 <div class="date-details">
             `;
 
@@ -1289,6 +1297,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 variableKeys.forEach((key, index) => {
                     const value = formData[key];
                     const isEmptyOrNull = value === '' || value === null;
+                    if (isEmptyOrNull && key !== 'products') {
+                        unfilledFields = true;
+                        headersToMark.add(headerId); // Add header ID to the set
+                    }
                     summary += `<div class="form-field ${isEmptyOrNull ? 'empty' : ''}"><span class="field-key"><b>${key}</b></span><span class="field-value ${isEmptyOrNull ? 'empty' : ''}">${value}</span></div>`;
                     if (isEmptyOrNull && key !== 'products') {
                         unfilledFields = true;
@@ -1350,6 +1362,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         document.getElementById('summaryContent').innerHTML = summary;
+
+        // Mark the headers with unfilled fields
+        headersToMark.forEach(headerId => {
+            document.getElementById(headerId).classList.add('unfilled-header');
+        });
+
         document.getElementById('confirmSave').disabled = unfilledFields;
     }
 
@@ -1644,7 +1662,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
     // Function to handle the creation and displaying of the recipe form
     function displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, tabIdx, timeVariable) {
         var currentRecipeDetailsContainer = recipeTabsContainer[tabIdx].querySelector('.form-container');
@@ -1912,7 +1929,8 @@ document.addEventListener('DOMContentLoaded', function () {
         productForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
-            let currentForm = document.querySelector('.recipe-form');
+            let currentFormId = `recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
+            let currentForm = document.getElementById(currentFormId);
             var formData = getProductFormData();
             calculateTrayAndTrolley()
 
@@ -1954,6 +1972,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
                 updateTotalValues(activeRecipe.name, activeRecipe.tabIndex);
                 handleBatchCalculations(activeRecipe.name, activeRecipe.tabIndex);
+
                 if (currentForm) {
                     collectFormData(currentForm);
                 }
@@ -2087,22 +2106,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return iconContainer;
     }
 
-    function printProductsByRecipe() {
+    function printProductsByRecipe(recipeName, tabIndex) {
         let productContainer = createProductContainer('.small-card');
         productContainer.innerHTML = '';
 
-        if (activeRecipe.name) {
-            let recipeName = activeRecipe.name;
-            let tabIndex = activeRecipe.tabIndex;
-
-            if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
-                productsByRecipe[tabIndex][recipeName].forEach(function (product, index) {
-                    let productItem = createProductItem(product, tabIndex, recipeName, index);
-                    productContainer.appendChild(productItem);
-                });
-            }
+        if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
+            productsByRecipe[tabIndex][recipeName].forEach(function (product, index) {
+                let productItem = createProductItem(product, tabIndex, recipeName, index);
+                productContainer.appendChild(productItem);
+            });
         }
     }
+
 
     function handleBatchCalculations(recipeName, tabIndex) {
         let currentRecipeFormId = `recipeForm-${recipeName}-${tabIndex}`;

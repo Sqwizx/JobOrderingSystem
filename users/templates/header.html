@@ -9,8 +9,11 @@
     <div class="header">
         <div class="text">Dashboard</div>
         <div class="top-menu">
-            <input type="text" placeholder="Search Job Orders">
-            {% if user_role != 'mixing' and user_role != 'packaging' %}
+            <input type="text" id="searchInput" placeholder="Search Job Orders">
+            <div id="searchResults" class="search-dropdown">
+                <!-- Search results will appear here -->
+            </div>
+            {% if user_role == 'production' %}
             <div class="dropdown">
                 <button id="createJobOrderButton">Create Job Order</button>
                 <div id="dropdownContent" class="dropdown-content">

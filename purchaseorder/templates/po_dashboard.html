@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <title> Purchase Order | Farmland Bakery (M) Sdn. Bhd. </title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/dash_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/table_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/create.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <!-- Boxicons CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   </head>
+<body>
+  {% include 'sidebar.html' %}
+  <section class="home-section">
+    {% include 'po_header.html' %}
+    <div class="main-content">
+      {% include 'po_table.html' %}
+    </div>
+  </section>
+  
+  <div id="poModal" class="modal">
+    <div class="modal-content" id="poModalContent">
+        <div id="modal-header">
+            <span class="close" id="closePOModal">&times;</span>
+            <h1>Add Purchase Order</h1>
+        </div>
+        <!--  url 'create_po'  -->
+        <form id="poForm" method="post" action="">
+            {% csrf_token %}
+            <label for="poDeadline">PO Deadline</label><br>
+            <input type="text" id="poDeadline" name="poDeadline" required><br><br>
+
+            <div id="clientsSection">
+                <h2>Clients</h2>
+                <div class="clientField" id="clientField_1">
+                    <input type="text" name="clientName[]" placeholder="Client Name" required>
+                    <input type="number" name="poCarton[]" placeholder="PO Carton" required>
+                    <span class="deleteClient" onclick="deleteClientField(1)">x</span>
+                </div>
+            </div>
+            <button type="button" id="addClientButton">Add Client</button><br><br>
+
+            <input type="submit" id="createPOSubmit" value="Create PO">
+        </form>
+    </div>
+</div>
+
+<div id="recipeEditModal" class="modal">
+  <div class="modal-content" id="recipeEditModalContent">
+      <div id="modal-header">
+          <span class="close" id="closeRecipeEditModal">&times;</span>
+          <h1>Create New Recipe</h1>
+      </div>
+      <form id="recipeEditProfileForm" method="post" action="{% url 'update_recipe' %}">
+          {% csrf_token %}
+          <input type="hidden" name="recipeId" id="recipeId" value="{{ recipe.id }}">
+          <div class="left-div">
+              <label for="recipeName">Recipe Name</label><br>
+              <input type="text" id="recipeName" name="recipeName" required autocomplete="off"><br><br>
+              <label for="productionRate">Production Rate</label><br>
+              <input type="number" id="productionRate" name="productionRate" required autocomplete="off"><br><br>
+          </div>
+          <div class="right-div">
+              <label for="stdBatchSize">Standard Batch Size</label><br>
+              <input type="number" id="stdBatchSize" name="stdBatchSize" required autocomplete="off"><br><br>
+              <label for="cycleTimeVariable">Cycle Time Variable</label><br>
+              <input type="text" id="cycleTimeVariable" name="cycleTimeVariable" required autocomplete="off" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" placeholder="00:00:00" value="00:00:00"><br><br>
+              <input type="submit" id="createRecipeSubmit" value="Create Recipe">
+          </div>
+        </form>
+  </div>
+</div>
+  <script src="{% static 'js/sidebar.js' %}"></script>
+  <script src="{% static 'js/recipe.js' %}"></script>
+</body>
+</html>

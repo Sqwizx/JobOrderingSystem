@@ -9,17 +9,20 @@
     <div class="header">
       <div class="text" id="jobOrderInfo"></div>
       <div class="top-menu">
-          <input type="text" placeholder="Search Job Orders">
-          {% if user_role != 'mixing' and user_role != 'packaging' %}
-          <div class="dropdown">
-              <button id="createJobOrderButton">Create Job Order</button>
-              <div id="dropdownContent" class="dropdown-content" style="display:none;">
-                  <a href="{% url 'create_breadline' %}" data-user-id="{{ request.user.id }}">Bread Line</a>
-                  <a href="{% url 'create_wrapline' %}" data-user-id="{{ request.user.id }}">Wrap Line</a>
-              </div>
-          </div>
-          {% endif %}
-      </div>
+        <input type="text" id="searchInput" placeholder="Search Job Orders">
+        <div id="searchResults" class="search-dropdown">
+            <!-- Search results will appear here -->
+        </div>
+        {% if user_role == 'production' %}
+        <div class="dropdown">
+            <button id="createJobOrderButton">Create Job Order</button>
+            <div id="dropdownContent" class="dropdown-content">
+                <a href="{% url 'create_breadline' %}" data-user-id="{{ request.user.id }}">Bread Line</a>
+                <a href="{% url 'create_wrapline' %}" data-user-id="{{ request.user.id }}">Wrap Line</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
   </div>
   
     <script>

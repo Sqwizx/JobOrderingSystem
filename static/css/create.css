@@ -1114,3 +1114,7 @@ details>div.date-details>details>div.form-details>div.form-column>div.form-field
 .searchResults div:hover {
     background-color: rgba(4, 66, 168, 0.2);
 }
+
+.unfilled-header {
+    color: red;
+}

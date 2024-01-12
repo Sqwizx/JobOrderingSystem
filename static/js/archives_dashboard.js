@@ -83,8 +83,25 @@ function formatDate(date) {
 // Event delegation for handling click event on table rows
 $(document).on("click", ".clickable-row", function () {
     const jobOrderId = $(this).data("job-order-id"); // Retrieve the job order ID
+    const jobOrderStatus = $(this).find('.status-button').text().trim(); // Retrieve the job order status from the row
+
     localStorage.setItem("jobOrderId", jobOrderId); // Store job order ID in localStorage
+    localStorage.setItem("jobOrderStatus", jobOrderStatus); // Store job order status in localStorage
     window.location.href = `/details/${jobOrderId}/`; // Redirect to the details page
+});
+
+// Call updateDashboardTable immediately and set an interval to update it every 1 minute
+$(document).ready(function () {
+    $('#createJobOrderButton').click(function () {
+        $('#dropdownContent').toggle();
+    });
+
+    // Optional: Close the dropdown if the user clicks outside of it
+    $(window).click(function (event) {
+        if (!event.target.matches('#createJobOrderButton')) {
+            $('.dropdown-content').hide();
+        }
+    });
 });
 
 // Call updateDashboardTable immediately and set an interval to update it every 1 minute
@@ -92,3 +109,4 @@ $(document).on("click", ".clickable-row", function () {
 //     updateDashboardTable();
 //     setInterval(updateDashboardTable, 60000); // Update every 1 minute
 // });
+
