@@ -434,3 +434,129 @@
     padding: 5px;
     margin-left: 2px;
 }
+
+.modal button {
+    border: none
+}
+
+.modal input[type="submit"] {
+    width: 100%;
+    padding: 10px 15px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    border: none;
+}
+
+.modal input[type="text"]:focus {
+    border-color: #0442a8
+}
+
+
+#newProductForm .left-div,
+#newProductForm .right-div {
+    align-items: center;
+    flex: 1;
+    box-sizing: border-box
+}
+
+
+#newProductForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+#productModalContent .right-div textarea {
+    resize: none
+}
+
+.form-columns {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    overflow: hidden;
+    width: 100%;
+}
+
+.right-div {
+    flex: 1;
+    padding: 10px;
+    position: relative;
+
+    /* Add position relative to the columns */
+}
+
+.left-div {
+    flex: 1;
+    padding: 10px;
+    position: relative;
+    /* Add position relative to the columns */
+}
+
+.product-price-group {
+    display: flex;
+    flex-direction: column
+}
+
+.price-container {
+    display: flex;
+    align-items: start;
+    margin-bottom: -10px;
+}
+
+.price-container select,
+.price-container input[type="number"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.price-container input[type="number"]:focus,
+.price-container select:focus {
+    border-color: #0442a8
+}
+
+.price-container select {
+    width: 100px;
+    margin-right: 10px
+}
+
+.weight-value {
+    display: flex;
+    align-items: start
+}
+
+.weight-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.weight-value select:focus {
+    border-color: #0442a8
+}
+
+.client-value {
+    display: flex;
+    align-items: start
+}
+
+.client-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.client-value select:focus {
+    border-color: #0442a8
+}

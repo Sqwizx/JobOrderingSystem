@@ -65,7 +65,7 @@ class Activity(models.Model):
         # Assuming there's a ForeignKey from Activity to Recipe
         return f"{self.recipe.recipeId}'s Activity"
 
-class Product(models.Model):
+class ProductMapping(models.Model):
     productId = models.CharField(max_length=50, unique=True, null=True)
     productName = models.CharField(max_length=100, null=True)
     productSalesOrder = models.PositiveIntegerField(null=True)
@@ -73,8 +73,8 @@ class Product(models.Model):
     productPrice = models.DecimalField(max_digits=10, decimal_places=2)
     client = models.CharField(max_length=100, null=True)
     colorSet = models.CharField(max_length=100, null=True)
-    productExpDate = models.DateTimeField(null=True)
-    productSaleDate = models.DateTimeField(null=True)
+    productExpDate = models.DateField(null=True)
+    productSaleDate = models.DateField(null=True)
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)
     noOfSlices = models.PositiveIntegerField(null=True)
     thickness = models.PositiveIntegerField(null=True)

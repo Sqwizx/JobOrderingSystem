@@ -71,6 +71,82 @@
         </form>
   </div>
 </div>
+
+<div id="productModal" class="modal product-modal">
+  <div class="modal-content" id="productModalContent">
+     <div id="modal-header">
+        <span class="close" id="closeProductModal">&times;</span>
+        <h1>Recipe Product</h1>
+     </div>
+     <div id="addProductSection">
+     <form id="newProductForm">
+      <input type="hidden" id="recipeId" name="recipeId">
+      <div class="form-columns">
+          <div class="left-div">
+              <!-- Product Name -->
+              <label for="productName">Product Name</label><br>
+              <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+  
+              <!-- Product Price Group -->
+              <div class="product-price-group">
+                  <label for="productPrice">Product Price</label>
+                  <div class="price-container">
+                      <select id="currency" name="currency">
+                          <option value="SGD">SGD</option>
+                          <option value="MYR">MYR</option>
+                      </select>
+                      <input type="number" id="productPrice" step="0.01" name="productPrice">
+                  </div>
+              </div><br>
+  
+              <!-- Weight Value -->
+              <label for="client">Client</label><br>
+              <div class="client-value">
+                  <select id="client" name="client">
+                      <option value="GFS">GFS</option>
+                      <option value="GBKL">GBKL</option>
+                  </select><br>
+              </div><br>
+          </div>
+  
+          <div class="right-div">
+              <!-- Number of Slices -->
+              <label for="noOfSlices">No. of Slices</label><br>
+              <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+  
+              <!-- Thickness -->
+              <label for="thickness">Thickness</label><br>
+              <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+
+              <!-- Weight Value -->
+              <label for="weight">Weight Value</label><br>
+              <div class="weight-value">
+                  <select id="weight" name="weight">
+                      <option value="20" data-weight="300">300g</option>
+                      <option value="20" data-weight="400">400g</option>
+                      <option value="15" data-weight="500">500g</option>
+                      <option value="12" data-weight="600">600g</option>
+                  </select><br>
+              </div><br>
+              
+              <input type="submit" value="Add New Product">
+          </div>
+      </div>
+  </form>
+  </div>
+  <br>
+  <hr>
+  <br>
+  <div id="productListSection">
+    <div id="modal-header">
+      <h1>Product List</h1>
+   </div>
+    <div id="productList">
+      <!-- Product list will be dynamically inserted here -->
+    </div>                                         
+  </div>
+</div>
+</div>
   <script src="{% static 'js/sidebar.js' %}"></script>
   <script src="{% static 'js/recipe.js' %}"></script>
 </body>

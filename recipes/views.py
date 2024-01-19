@@ -1,9 +1,10 @@
+import json
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 
 from users.models import UserRole
-from .models import Recipe
+from .models import Product, Recipe
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 
@@ -104,3 +105,47 @@ def delete_recipe(request):
             return JsonResponse({'success': False, 'message': 'Recipe not found'})
 
     return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+def get_product(request, recipe_id):
+    recipe = get_object_or_404(Recipe, recipeName=recipe_id)
+    products = Product.objects.filter(recipe=recipe).values(
+        'productName', 'currency', 'productPrice', 'client', 
+        'weight', 'noOfSlices', 'thickness'
+    )
+    return JsonResponse(list(products), safe=False)
+
+def add_recipeproduct(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            recipe_id = data.get('recipeId') 
+            recipe = Recipe.objects.get(pk=recipe_id)
+            product = Product.objects.create(
+            productName=data.get('productName'),
+            currency=data.get('currency'),
+            productPrice=data.get('productPrice'),
+            client=data.get('client'),
+            weight=data.get('weight'),
+            noOfSlices=data.get('noOfSlices'),
+            thickness=data.get('thickness'),
+            recipe=recipe
+        )
+
+            return JsonResponse({
+        'status': 'success',
+        'productName': product.productName,
+        'currency': product.currency,
+        'productPrice': product.productPrice,
+        'currency': product.currency,
+        'client': product.client,
+        'weight': product.weight,
+        'noOfSlices': product.noOfSlices,
+        'thickness': product.thickness,
+})
+
+        except Recipe.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Recipe not found'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

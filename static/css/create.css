@@ -38,6 +38,12 @@
     flex-direction: column
 }
 
+a {
+    text-decoration: none;
+    color: #000;
+    font-size: small;
+}
+
 #product-list {
     height: 300px
 }
@@ -719,6 +725,24 @@ select option {
 }
 
 .weight-value select:focus {
+    border-color: #0442a8
+}
+
+.product-value {
+    display: flex;
+    align-items: start
+}
+
+.product-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.product-value select:focus {
     border-color: #0442a8
 }
 

@@ -178,9 +178,9 @@
                                                         data-currency="{{ product.currency }}"
                                                         data-client="{{ product.client }}"
                                                         data-color-set="{{ product.colorSet }}"
-                                                        data-expiry-date="{{ product.productExpDate }}"
+                                                        data-expiry-date="{{ product.productExpDate | date:"l, d M Y" }}"
                                                         data-weight="{{ product.weight }}"
-                                                        data-sale-date="{{ product.productSaleDate }}"
+                                                        data-sale-date="{{ product.productSaleDate | date:"l, d M Y"  }}"
                                                         data-no-of-slices="{{ product.noOfSlices }}"
                                                         data-thickness="{{ product.thickness }}"
                                                         data-tray="{{ product.tray }}"
@@ -200,7 +200,7 @@
                                             </div>
                                         </div>
                                     {% endfor %}
-                                    <button type="button" class="add-product-button" data-recipe-id="{{ recipe.recipeId }}" data-recipe-date="{{ recipe.recipeProdDate }}" id="add-product">+ Add Product for {{recipe.recipeName}}</button>
+                                    <button type="button" class="add-product-button" data-recipe-id="{{ recipe.recipeId }}" data-recipe-date="{{ recipe.recipeProdDate }}" data-recipe-name="{{ recipe.recipeName }}" id="add-product">+ Add Product for {{recipe.recipeName}}</button>
                                 {% endfor %}
                             {% endfor %}
                         </div>
@@ -285,7 +285,7 @@
                         <input type="hidden" id="recipeId" name="recipeId">
                         <!-- Product Name -->
                         <label for="productName">Product Name</label><br>
-                        <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                        <input type="text" id="productName" name="productName" required autocomplete="off" disabled><br><br>
                         
                         <!-- Sales Order -->
                         <label for="productSalesOrder">Sales Order</label><br>
@@ -295,11 +295,11 @@
                         <div class="product-price-group">
                             <label for="productPrice">Product Price</label>
                             <div class="price-container">
-                                <select id="currency" name="currency">
+                                <select id="currency" name="currency" disabled>
                                     <option value="SGD">SGD</option>
                                     <option value="MYR">MYR</option>
                                 </select>
-                                <input type="number" id="productPrice" step="0.01" name="productPrice">
+                                <input type="number" id="productPrice" step="0.01" name="productPrice" disabled>
                             </div>
                         </div><br>
             
@@ -307,7 +307,7 @@
                         <div class="client-color-group">
                             <label for="client">Client/Color</label>
                             <div class="client-color-container">
-                                <select id="client" name="client">
+                                <select id="client" name="client" disabled>
                                     <option value="GFS">GFS</option>
                                     <option value="GBKL">GBKL</option>
                                 </select>
@@ -323,7 +323,7 @@
                         <!-- Weight Value -->
                         <label for="weight">Weight Value</label><br>
                         <div class="weight-value">
-                            <select id="weight" name="weight">
+                            <select id="weight" name="weight" disabled>
                                 <option value="20" data-weight="300">300g</option>
                                 <option value="20" data-weight="400">400g</option>
                                 <option value="15" data-weight="500">500g</option>
@@ -339,11 +339,11 @@
             
                         <!-- Number of Slices -->
                         <label for="noOfSlices">No. of Slices</label><br>
-                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+                        <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off" disabled><br><br>
             
                         <!-- Thickness -->
                         <label for="thickness">Thickness</label><br>
-                        <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+                        <input type="text" id="thickness" name="thickness" required autocomplete="off" disabled><br><br>
             
                         <!-- Total Tray -->
                         <label for="tray">Total Tray</label><br>
@@ -373,8 +373,10 @@
                 <div class="form-columns">
                     <div class="left-div">
                         <!-- Product Name -->
-                        <label for="newProductName">Product Name</label><br>
-                        <input type="text" id="newProductName" name="newProductName" required autocomplete="off"><br><br>
+                        <label for="productName">Product Name</label><br>
+                        <div class="product-value">
+                        <select id="productDropdown" name="productDropdown"></select>
+                        </div><br>
                         
                         <!-- Sales Order -->
                         <label for="newProductSalesOrder">Sales Order</label><br>
@@ -384,11 +386,11 @@
                         <div class="product-price-group">
                             <label for="newProductPrice">Product Price</label>
                             <div class="price-container">
-                                <select id="newCurrency" name="currency">
+                                <select id="newCurrency" name="currency" disabled>
                                     <option value="SGD">SGD</option>
                                     <option value="MYR">MYR</option>
                                 </select>
-                                <input type="number" id="newProductPrice" step="0.01" name="newProductPrice">
+                                <input type="number" id="newProductPrice" step="0.01" name="newProductPrice" disabled>
                             </div>
                         </div><br>
             
@@ -396,7 +398,7 @@
                         <div class="client-color-group">
                             <label for="newClient">Client/Color</label>
                             <div class="client-color-container">
-                                <select id="newClient" name="client">
+                                <select id="newClient" name="client" disabled>
                                     <option value="GFS">GFS</option>
                                     <option value="GBKL">GBKL</option>
                                 </select>
@@ -412,7 +414,7 @@
                         <!-- Weight Value -->
                         <label for="newWeight">Weight Value</label><br>
                         <div class="weight-value">
-                            <select id="newWeight" name="newWeight">
+                            <select id="newWeight" name="newWeight" disabled>
                                 <option value="20" data-weight="300">300g</option>
                                 <option value="20" data-weight="400">400g</option>
                                 <option value="15" data-weight="500">500g</option>
@@ -428,11 +430,11 @@
             
                         <!-- Number of Slices -->
                         <label for="newNoOfSlices">No. of Slices</label><br>
-                        <input type="number" id="newNoOfSlices" name="newNoOfSlices" required autocomplete="off"><br><br>
+                        <input type="number" id="newNoOfSlices" name="newNoOfSlices" required autocomplete="off" disabled><br><br>
             
                         <!-- Thickness -->
                         <label for="newThickness">Thickness</label><br>
-                        <input type="text" id="newThickness" name="newThickness" required autocomplete="off"><br><br>
+                        <input type="text" id="newThickness" name="newThickness" required autocomplete="off" disabled><br><br>
             
                         <!-- Total Tray -->
                         <label for="newTray">Total Tray</label><br>

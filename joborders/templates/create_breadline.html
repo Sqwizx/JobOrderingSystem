@@ -79,12 +79,11 @@
                                  <input type="text" id="searchField-{{ forloop.counter0 }}" name="searchQuery" autocomplete="off">
                                  <div id="searchResults-{{ forloop.counter0 }}" class="searchResults"></div>
                               </div>
-                              <br><b>Or</b><br>
+                              <span style="color:gray; font-size: small;">Search recipes to add to the job order or <a href="{% url 'recipe_dashboard' %}"><u>Manage Job Order</u></a></span><br>
                               <label for="recipeName">Recipe Name</label>
-                              <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off"><br>
+                              <input type="text" id="recipeName-{{ forloop.counter0 }}" name="recipeName" required autocomplete="off" readonly><br>
                               <label for="cycleTime">Cycle Time Variable</label>
-                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00"><br>
-
+                              <input type="text" id="timeVariable-{{ forloop.counter0 }}" name="timeVariable" required placeholder="00:00:00" readonly><br>
                               <!-- HIDDEN INPUTS -->
                               <input type="hidden" id="prodRate-{{ forloop.counter0 }}" name="prodRate">
                               <input type="hidden" id="batchSize-{{ forloop.counter0 }}" name="batchSize">
@@ -111,24 +110,26 @@
                         </div>
                         <form id="productForm">
                            <div class="left-div">
-                              <label for="productName">Product Name</label><br>
-                              <input type="text" id="productName" name="productName" required autocomplete="off"><br><br>
+                              <label for="productName">Product Name</label>
+                              <div class="product-value">
+                              <select id="productDropdown" name="productDropdown"></select>
+                              </div><br>
                               <label for="salesOrder">Sales Order</label><br>
                               <input type="number" id="salesOrder" name="salesOrder" required autocomplete="off"><br><br>
                               <div class="product-price-group">
                                  <label for="productPrice">Product Price</label>
                                  <div class="price-container">
-                                    <select id="currency" name="currency">
+                                    <select id="currency" name="currency" disabled>
                                        <option value="SGD">SGD</option>
                                        <option value="MYR">MYR</option>
                                     </select>
-                                    <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0">
+                                    <input type="number" id="productPrice" step="00.01" name="productPrice" value="0.0" disabled>
                                  </div>
                               </div><br>
                               <div class="client-color-group">
                                  <label for="client">Client/Color</label>
                                  <div class="client-color-container">
-                                    <select id="client" name="client">
+                                    <select id="client" name="client" disabled>
                                        <option value="GFS">GFS</option>
                                        <option value="GBKL">GBKL</option>
                                     </select>
@@ -140,7 +141,7 @@
                               </div><br>
                               <label for="weight">Weight Value</label><br>
                               <div class="weight-value">
-                                 <select id="weight" name="weight">
+                                 <select id="weight" name="weight" disabled>
                                     <option value="20" data-weight="300">300g</option>
                                     <option value="20" data-weight="400">400g</option>
                                     <option value="15" data-weight="500">500g</option>
@@ -152,9 +153,9 @@
                               <label for="saleDate">Sale Date</label><br>
                               <input type="text" id="saleDate" name="saleDate" placeholder="N/A" required autocomplete="off"><br><br>
                               <label for="noOfSlices">No. of Slices</label><br>
-                              <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off"><br><br>
+                              <input type="number" id="noOfSlices" name="noOfSlices" required autocomplete="off" disabled><br><br>
                               <label for="thickness">Thickness</label><br>
-                              <input type="text" id="thickness" name="thickness" required autocomplete="off"><br><br>
+                              <input type="text" id="thickness" name="thickness" required autocomplete="off" disabled><br><br>
                               <label for="tray">Total Tray</label><br>
                               <input type="number" id="tray" name="tray" required autocomplete="off" disabled><br><br>
                               <label for="trolley">Total Trolley</label><br>

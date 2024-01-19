@@ -10,6 +10,8 @@ const PACKING = 5 * 60; // 5 minutes
 
 let isFormSubmission = false;
 
+var temporaryProducts = [];
+
 document.addEventListener('DOMContentLoaded', function () {
 
     initializeRecipeCalculations();
@@ -287,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('beforeunload', function (e) {
         if (recipeCreated && recipeId) {
             // Call the server to delete the recipe if it is still a draft
-            fetch('/delete_recipe_if_draft/' + recipeId + '/', {
+            fetch('/draft/' + recipeId + '/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -307,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () {
             var recipeId = this.getAttribute('data-recipe-id');
             var recipeDateAttribute = this.getAttribute('data-recipe-date');
+            var recipeNameAttribute = this.getAttribute('data-recipe-name');
             var selectedClient = document.getElementById('client').value;
 
             if (recipeDateAttribute && selectedClient !== null) {
@@ -315,6 +318,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 var dayName = dayOfWeek[recipeDate.getDay()]; // Get the day name
                 var selectedColor = getColorForClient(selectedClient, dayName);
                 updateColorSetField(selectedColor); // Update the colorSetField with the selected color
+
+                // Fetch products related to the recipeName
+                fetch('/get_products_by_recipe/' + encodeURIComponent(recipeNameAttribute) + '/')
+                    .then(response => response.json())
+                    .then(products => {
+                        // Populate dropdown or other elements in modal with the products
+                        // Example:
+                        var productDropdown = document.getElementById('productDropdown');
+                        productDropdown.innerHTML = '';
+
+                        // Add a default option as placeholder
+                        var defaultOption = document.createElement('option');
+                        defaultOption.textContent = 'Select a product';
+                        defaultOption.value = '';
+                        defaultOption.disabled = true;
+                        defaultOption.selected = true;
+                        defaultOption.hidden = true; // Hide this option in the dropdown list
+                        productDropdown.appendChild(defaultOption);
+
+                        products.forEach(product => {
+                            let option = document.createElement('option');
+                            option.value = product.id;
+                            option.textContent = product.productName;
+                            productDropdown.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching products:', error);
+                    });
             } else {
                 console.error("Recipe date or selected client is not set. Cannot update the ColorSetField.");
             }
@@ -322,6 +354,32 @@ document.addEventListener('DOMContentLoaded', function () {
             openAddProductModal(); // Open the modal without passing recipeId
             prepareAddProductForm(recipeId); // Prepare the form with recipeId
         });
+    });
+
+    document.getElementById('productDropdown').addEventListener('change', function () {
+        var productId = this.value;
+
+        // Only proceed if a valid product ID is selected
+        if (productId) {
+            fetch('/product_dropdown/' + productId + '/')
+                .then(response => response.json())
+                .then(product => {
+                    // Populate the form with the product details
+                    document.getElementById('newCurrency').value = product.currency;
+                    document.getElementById('newProductPrice').value = product.productPrice;
+                    document.getElementById('newClient').value = product.client;
+                    var weightDropdown = document.getElementById('newWeight');
+                    Array.from(weightDropdown.options).forEach(option => {
+                        if (parseInt(option.getAttribute('data-weight')) === parseInt(product.weight)) {
+                            option.selected = true;  // Select
+                        }
+                    });
+                    document.getElementById('newNoOfSlices').value = product.noOfSlices;
+                    document.getElementById('newThickness').value = product.thickness;
+                    // Populate other fields as needed
+                })
+                .catch(error => console.error('Error fetching product details:', error));
+        }
     });
 
 
@@ -682,14 +740,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateStdTime(batchesInput, cycleTimeInput, stdTimeInput, recipeId) {
         console.log('calculating stdTime [ORI]', cycleTimeInput);
         if (batchesInput && cycleTimeInput && stdTimeInput) {
-            const batches = parseInt(batchesInput, 10) || 0;
+            const batches = parseInt(batchesInput);
             const cycleTimeSeconds = convertToSeconds(cycleTimeInput);
-            const additionalTime = Math.round(batches / 16) * 720; // Example calculation
+            const additionalTime = Math.floor(batches / 16) * 720; // Example calculation
 
             const totalStdTimeSeconds = batches * cycleTimeSeconds + additionalTime;
+            console.log(`Batches: ${batches}`);
+            console.log(`Cycle Time: ${cycleTimeSeconds}`);
+            console.log('Additional Time WO 720:', Math.floor(batches / 16))
+            console.log(`Additional Time: ${additionalTime}`);
             stdTimeInput.value = convertToHHMMSS(totalStdTimeSeconds);
 
-            console.log('cycleTimeInput [SECOND]:', cycleTimeInput);
+            console.log('cycleTimeInput [HH:MM:SS]:', stdTimeInput.value);
 
             // Update the activity times based on the new stdTime
             updateActivityTimesBasedOnStdTime(stdTimeInput.value, recipeId);
@@ -697,7 +759,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function calculateCycleTime(batchSize, productionRate, timeVariable, cycleTimeInput) {
+        console.log('CALCULATING CYCLE TIME');
         console.log(`Time Variable: ${timeVariable} for calculateCycleTime`);
+        console.log(`Production Rate: ${productionRate}`)
+        console.log(`Batch Size: ${batchSize}`)
 
         let timeVariableInSeconds;
 
@@ -721,6 +786,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function calculateCycleTimeSearch(batchSize, productionRate, timeVariable) {
         let timeVariableInSeconds;
+        console.log('timeVariableInSeconds [SEARCH]:', timeVariable)
 
         if (typeof timeVariable === 'string') {
             timeVariableInSeconds = convertToSeconds(timeVariable);
@@ -765,9 +831,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addNewProduct(recipeId) {
-        isFormSubmission = true;
         // Get the data from the form
-        var newProductName = document.getElementById("newProductName").value;
+        // Get the selected product option
+        var selectedProductOption = document.querySelector('#productDropdown option:checked');
+        var newProductName = selectedProductOption ? selectedProductOption.textContent : '';
+        var newProductId = recipeId + '_' + newProductName; // Replace spaces in productName
         var newProductSalesOrder = document.getElementById("newProductSalesOrder").value;
         var newCurrency = document.getElementById("newCurrency").value;
         var newProductPrice = document.getElementById("newProductPrice").value;
@@ -781,13 +849,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var newTray = document.getElementById("newTray").value;
         var newTrolley = document.getElementById("newTrolley").value;
         var newRemarks = document.getElementById("newRemarks").value;
-        var csrfToken = getCookie('csrftoken');
 
         newExpiryDate = newExpiryDate ? newExpiryDate : null;
         newSaleDate = newSaleDate ? newSaleDate : null;
 
         // Create a JSON object with the data
         var data = {
+            productId: newProductId,
             productName: newProductName,
             productSalesOrder: newProductSalesOrder,
             currency: newCurrency,
@@ -802,29 +870,117 @@ document.addEventListener('DOMContentLoaded', function () {
             tray: newTray,
             trolley: newTrolley,
             productRemarks: newRemarks,
-            recipeId: recipeId
+            recipeId: recipeId,
+            activity: getActivityData(recipeId)
         };
 
-        // Create a new XMLHttpRequest
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/add_product/", true); // Update with the correct URL
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+        temporaryProducts.push(data);
+        displayNewProductInUI(data);
+        updateRecipeDetailsOnFrontEnd(recipeId);
+        updateRecipeCalculations(recipeId)
 
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                // Handle success response
-                alert("Product added successfully!");
-                window.location.reload();
-            } else {
-                // Handle error response
-                var responseJson = JSON.parse(xhr.responseText);
-                alert("Error adding new product: " + responseJson.error);
-            }
-        };
+        console.log("New Product Data:", data);
 
-        // Send the JSON data as the request body
-        xhr.send(JSON.stringify(data));
+        var modal = document.getElementById('newProductModal');
+        modal.style.display = 'none';
+    }
+
+    function displayNewProductInUI(product) {
+        // Find the specific product container for the recipe
+        var specificProductListContainer = document.querySelector(".product-container");
+
+        var matchingForm = document.querySelector(`form[data-recipe-id='${product.recipeId}']`);
+        var recipeProdDate = matchingForm ? matchingForm.querySelector(`#dateTimePicker-${product.recipeId}`).value : '';
+
+        // Create new product item element
+        var productItem = document.createElement('div');
+        productItem.className = 'product-item';
+        productItem.setAttribute('data-recipe-id', product.recipeId);
+        productItem.setAttribute('data-product-id', product.productId);
+
+        // Add product details (product name and client)
+        var productContent = `
+        <div class="product-content-container">
+            <div class="product-info-container">
+                <p>${product.productName}</p>
+                <p style="color: gray; font-size: 14px;">${product.client}</p>
+            </div>
+            <div class="icon-container">
+                <i class="fa fa-edit product-icon" aria-hidden="true"
+                   data-product-id="${product.productId}"
+                   data-product-name="${product.productName}"
+                   data-sales-order="${product.productSalesOrder}"
+                   data-product-price="${product.productPrice}"
+                   data-currency="${product.currency}"
+                   data-client="${product.client}"
+                   data-color-set="${product.colorSet}"
+                   data-expiry-date="${product.productExpDate}"
+                   data-weight="${product.weight}"
+                   data-sale-date="${product.productSaleDate}"
+                   data-no-of-slices="${product.noOfSlices}"
+                   data-thickness="${product.thickness}"
+                   data-tray="${product.tray}"
+                   data-trolley="${product.trolley}"
+                   data-remarks="${product.productRemarks}"
+                   data-recipe-id="${product.recipeId}"
+                   data-recipe-date="${product.recipeProdDate}"
+                   onclick="populateAndShowProductModal(this)">
+                </i>
+                <i class="fa fa-trash product-icon" aria-hidden="true"
+                   data-product-id="${product.productId}"
+                   onclick="openProductAlertModal(this)">
+                </i>
+            </div>
+        </div>`;
+
+        productItem.innerHTML = productContent;
+
+        // Now you can use querySelector on productItem
+        var editIcon = productItem.querySelector('i.fa-edit');
+        if (editIcon) {
+            editIcon.setAttribute('data-recipe-date', recipeProdDate);
+        }
+
+        // Find the "Add Product" button for the specific recipe
+        var addProductButton = specificProductListContainer.querySelector(`button.add-product-button[data-recipe-id='${product.recipeId}']`);
+
+        // Insert the new product item before the "Add Product" button
+        specificProductListContainer.insertBefore(productItem, addProductButton);
+    }
+
+    function updateRecipeDetailsOnFrontEnd(recipeId) {
+        // Find the specific recipe form using the provided recipeId
+        var recipeForm = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}']`);
+
+        if (!recipeForm) return; // Exit if the recipe form is not found
+
+        // Initialize totals
+        var totalSalesOrder = 0;
+        var totalTray = 0;
+        var totalTrolley = 0;
+
+        // Find all products related to this recipe
+        var productItems = document.querySelectorAll(`.product-item[data-recipe-id='${recipeId}']`);
+
+        productItems.forEach(function (item) {
+            var salesOrder = parseInt(item.querySelector('.fa-edit').getAttribute('data-sales-order'), 10) || 0;
+            var tray = parseInt(item.querySelector('.fa-edit').getAttribute('data-tray'), 10) || 0;
+            var trolley = parseInt(item.querySelector('.fa-edit').getAttribute('data-trolley'), 10) || 0;
+
+            // Sum up the values
+            totalSalesOrder += salesOrder;
+            totalTray += tray;
+            totalTrolley += trolley;
+        });
+
+        // Update the UI with the calculated totals
+        var totalSalesOrderField = recipeForm.querySelector(`#salesOrder-${recipeId}`);
+        var totalTrayField = recipeForm.querySelector(`#totalTray-${recipeId}`);
+        var totalTrolleyField = recipeForm.querySelector(`#totalTrolley-${recipeId}`);
+
+        if (totalSalesOrderField) totalSalesOrderField.value = totalSalesOrder;
+        if (totalTrayField) totalTrayField.value = totalTray;
+        if (totalTrolleyField) totalTrolleyField.value = totalTrolley;
     }
 
     function openAddProductModal() {
@@ -880,78 +1036,83 @@ document.addEventListener('DOMContentLoaded', function () {
         calculateTrayAndTrolley(newSalesOrderElement, newWeightElement, newClientElement, newTrayElement, newTrolleyElement);
     });
 
-    function updateProduct(productId, recipeId) {
-        isFormSubmission = true;
-        // Get the data from the form
-        var productName = document.getElementById("productName").value;
-        var productSalesOrder = document.getElementById("productSalesOrder").value;
-        var currency = document.getElementById("currency").value;
-        var productPrice = document.getElementById("productPrice").value;
-        var client = document.getElementById("client").value;
-        var colorSet = document.getElementById("colorSet").value;
-        var expiryDate = document.getElementById("expiryDate").value;
-        var saleDate = document.getElementById("saleDate").value;
-        var noOfSlices = document.getElementById("noOfSlices").value;
-        var thickness = document.getElementById("thickness").value;
-        var tray = document.getElementById("tray").value;
-        var trolley = document.getElementById("trolley").value;
-        var remarks = document.getElementById("remarks").value;
-        var csrfToken = getCookie('csrftoken');
-        var weightSelect = document.getElementById("weight");
-        var selectedWeightOption = weightSelect.options[weightSelect.selectedIndex];
-        var weight = selectedWeightOption.getAttribute("data-weight");
+    function updateProduct() {
+        // Get the productId and recipeId from the modal
+        var productId = document.getElementById("productId").value;
+        var recipeId = document.getElementById("recipeId").value;
 
-        expiryDate = expiryDate ? expiryDate : null;
-        saleDate = saleDate ? saleDate : null;
+        // Get the edit button for the current product
+        var editButton = document.querySelector(`i.fa-edit[data-product-id='${productId}']`);
 
-        // Create a JSON object with the data
-        var data = {
-            productId: productId,
-            productName: productName,
-            productSalesOrder: productSalesOrder,
-            currency: currency,
-            productPrice: productPrice,
-            client: client,
-            colorSet: colorSet,
-            expiryDate: expiryDate,
-            saleDate: saleDate,
-            weight: weight,
-            noOfSlices: noOfSlices,
-            thickness: thickness,
-            tray: tray,
-            trolley: trolley,
-            productRemarks: remarks,
-            recipeId: recipeId
-        };
+        // Get old values from the edit button's data-attributes
+        var oldProductSalesOrder = parseInt(editButton.getAttribute('data-sales-order'), 10) || 0;
+        var oldTray = parseInt(editButton.getAttribute('data-tray'), 10) || 0;
+        var oldTrolley = parseInt(editButton.getAttribute('data-trolley'), 10) || 0;
 
+        // Get the updated values from the modal
+        var updatedProductSalesOrder = parseInt(document.getElementById("productSalesOrder").value, 10) || 0;
+        var updatedTray = parseInt(document.getElementById("tray").value, 10) || 0;
+        var updatedTrolley = parseInt(document.getElementById("trolley").value, 10) || 0;
 
-        // Create a new XMLHttpRequest
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/update_product/" + productId + "/", true); // Update with the correct URL
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+        // Find the specific recipe form using the provided recipeId
+        var recipeForm = document.querySelector(`.recipe-form[data-recipe-id='${recipeId}']`);
+        if (!recipeForm) return; // Exit if the recipe form is not found
 
-        xhr.onload = function () {
-            if (xhr.status === 200) {
-                // Handle success response
-                alert("Product updated successfully!");
-                window.location.reload();
-            } else {
-                // Handle error response
-                var responseJson = JSON.parse(xhr.responseText);
-                alert("Error updating product: " + responseJson.error);
-            }
-        };
+        // Get the current totals
+        var totalSalesOrderField = recipeForm.querySelector(`#salesOrder-${recipeId}`);
+        var totalTrayField = recipeForm.querySelector(`#totalTray-${recipeId}`);
+        var totalTrolleyField = recipeForm.querySelector(`#totalTrolley-${recipeId}`);
 
-        // Send the JSON data as the request body
-        xhr.send(JSON.stringify(data));
+        var totalSalesOrder = parseInt(totalSalesOrderField.value, 10) || 0;
+        var totalTray = parseInt(totalTrayField.value, 10) || 0;
+        var totalTrolley = parseInt(totalTrolleyField.value, 10) || 0;
+
+        // Adjust the totals based on the old and new values
+        totalSalesOrder = totalSalesOrder - oldProductSalesOrder + updatedProductSalesOrder;
+        totalTray = totalTray - oldTray + updatedTray;
+        totalTrolley = totalTrolley - oldTrolley + updatedTrolley;
+
+        // Update the UI with the recalculated totals
+        if (totalSalesOrderField) totalSalesOrderField.value = totalSalesOrder;
+        if (totalTrayField) totalTrayField.value = totalTray;
+        if (totalTrolleyField) totalTrolleyField.value = totalTrolley;
+
+        var updatedSaleDate = document.getElementById("saleDate").value;
+        var updatedExpiryDate = document.getElementById("expiryDate").value;
+        var updatedRemarks = document.getElementById("remarks").value;
+
+        // Update the edit button's data-attributes with the new values
+        editButton.setAttribute('data-sales-order', updatedProductSalesOrder);
+        editButton.setAttribute('data-tray', updatedTray);
+        editButton.setAttribute('data-trolley', updatedTrolley);
+        editButton.setAttribute('data-sale-date', updatedSaleDate);
+        editButton.setAttribute('data-expiry-date', updatedExpiryDate);
+        editButton.setAttribute('data-remarks', updatedRemarks);
+
+        updateRecipeCalculations(recipeId)
+
+        var modal = document.getElementById('productModal');
+        modal.style.display = 'none';
+    }
+
+    function updateRecipeCalculations(recipeId) {
+        const salesOrderInput = document.querySelector(`#salesOrder-${recipeId}`);
+        const wasteInput = document.querySelector(`#waste-${recipeId}`);
+        const batchSizeInput = document.querySelector(`#batchSize-${recipeId}`);
+        const batchesInput = document.querySelector(`#batches-${recipeId}`);
+        const productionRateInput = document.querySelector(`#productionRate-${recipeId}`);
+        const cycleTimeInput = document.querySelector(`#cycleTime-${recipeId}`);
+        const stdTimeInput = document.querySelector(`#stdTime-${recipeId}`);
+        const timeVariableInput = document.querySelector(`#timeVariable-${recipeId}`);
+
+        calculateBatchesToProduce(salesOrderInput.value, wasteInput.value, batchSizeInput.value, batchesInput);
+        calculateCycleTime(batchSizeInput.value, productionRateInput.value, timeVariableInput.value, cycleTimeInput);
+        calculateStdTime(batchesInput.value, cycleTimeInput.value, stdTimeInput, recipeId);
     }
 
     document.getElementById("productForm").addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent the default form submission
-        var productId = document.getElementById("productId").value; // Get the productId from the hidden field
-        var recipeId = document.getElementById("recipeId").value; // Get the recipeId from the hidden field
-        updateProduct(productId, recipeId); // Call the updateProduct function with the product ID and recipe ID
+        updateProduct();
     });
 
     // Attach event listeners to each stdTime input field in the recipe forms
@@ -1423,7 +1584,6 @@ document.querySelectorAll("[id=recipeName]").forEach(function (input) {
     });
 });
 
-
 function populateAndShowProductModal(editButton) {
     // Retrieve product data from "hidden"
     var recipeId = editButton.getAttribute('data-recipe-id');
@@ -1472,7 +1632,7 @@ function populateAndShowProductModal(editButton) {
     document.getElementById('thickness').value = thickness;
     document.getElementById('tray').value = tray;
     document.getElementById('trolley').value = trolley;
-    document.getElementById('remarks').textContent = remarks;
+    document.getElementById('remarks').value = remarks;
     document.getElementById("productId").value = productId;
     document.getElementById("recipeId").value = recipeId;
 
@@ -1495,14 +1655,13 @@ function populateAndShowProductModal(editButton) {
 
         flatpickr(el, {
             altInput: true,
-            altFormat: "l, d M Y H:i",
-            dateFormat: "Y-m-d H:i",
+            altFormat: "l, d M Y",
+            dateFormat: "Y-m-d",
             defaultDate: formattedSaleDate,
             minDate: "today", // Set the minDate to the formatted date
             // other options you want to set
         });
     });
-
 
     // Initialize Flatpickr for Expiry Date
     document.querySelectorAll('#expiryDate').forEach(function (el) {
@@ -1511,14 +1670,13 @@ function populateAndShowProductModal(editButton) {
 
         flatpickr(el, {
             altInput: true,
-            altFormat: "l, d M Y H:i",
-            dateFormat: "Y-m-d H:i",
+            altFormat: "l, d M Y",
+            dateFormat: "Y-m-d",
             defaultDate: formattedExpiryDate,
             minDate: "today", // Set the minDate to the formatted date
             // other options you want to set
         });
     });
-
 
     console.log('expiryDate (after conversion):', formatDate(expiryDate));
     console.log('saleDate (after conversion):', formatDate(saleDate));
@@ -1591,7 +1749,6 @@ clientElement.addEventListener('input', function () {
     calculateTrayAndTrolley(salesOrderElement, weightElement, clientElement, trayElement, trolleyElement);
 });
 
-
 function getColorForClient(client, dayOfWeek) {
     switch (client) {
         case "GFS":
@@ -1635,6 +1792,7 @@ function submitJobOrder(jobOrderId) {
     const url = `/update/${jobOrderId}/`; // Replace with the correct URL
     let recipes = [];
     isFormSubmission = true;
+    let allProducts = collectAllProductData();
 
     // Collect recipes data
     document.querySelectorAll('.recipe-form').forEach(form => {
@@ -1659,8 +1817,10 @@ function submitJobOrder(jobOrderId) {
         recipes.push(recipeData);
     });
 
-    const data = { recipes: recipes };
-    console.log(data);
+    const data = {
+        recipes: recipes,
+        products: allProducts // Add the temporaryProducts to the data being sent
+    };
 
     fetch(url, {
         method: 'POST',
@@ -1698,7 +1858,38 @@ function getActivityData(recipeId) {
     return activityData;
 }
 
-// Example function to get CSRF token from cookies
+function collectAllProductData() {
+    let allProducts = [];
+
+    // Select all product-edit icons
+    document.querySelectorAll('.product-item').forEach(productItem => {
+        let editIcon = productItem.querySelector('i.fa-edit');
+        if (editIcon) {
+            let productData = {
+                productId: editIcon.getAttribute('data-product-id'),
+                productName: editIcon.getAttribute('data-product-name'),
+                productSalesOrder: editIcon.getAttribute('data-sales-order'),
+                productPrice: editIcon.getAttribute('data-product-price'),
+                currency: editIcon.getAttribute('data-currency'),
+                client: editIcon.getAttribute('data-client'),
+                colorSet: editIcon.getAttribute('data-color-set'),
+                expiryDate: editIcon.getAttribute('data-expiry-date'),
+                saleDate: editIcon.getAttribute('data-sale-date'),
+                weight: editIcon.getAttribute('data-weight'),
+                noOfSlices: editIcon.getAttribute('data-no-of-slices'),
+                thickness: editIcon.getAttribute('data-thickness'),
+                tray: editIcon.getAttribute('data-tray'),
+                trolley: editIcon.getAttribute('data-trolley'),
+                productRemarks: editIcon.getAttribute('data-remarks'),
+                recipeId: editIcon.getAttribute('data-recipe-id'),
+                // ... include other attributes as needed ...
+            };
+            allProducts.push(productData);
+        }
+    });
+    return allProducts;
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -1724,59 +1915,47 @@ function openProductAlertModal(productElement) {
     document.getElementById('alertProductNamePlaceholder').textContent = productName;
     document.getElementById('alertRecipeNamePlaceholder').textContent = recipeName;
     document.getElementById('productConfirmDelete').setAttribute('data-product-id', productId);
-
     document.getElementById('productAlertModal').style.display = 'block';
 }
 
-// Attach event listener to Confirm Delete button
 document.getElementById('productConfirmDelete').addEventListener('click', function () {
     var productId = this.getAttribute('data-product-id');
+    // Get the edit button for the current product
+    var editButton = document.querySelector(`i.fa-edit[data-product-id='${productId}']`);
+    if (!editButton) {
+        console.error('Edit button not found for product', productId);
+        return;
+    }
 
-    // AJAX call to delete the product
-    fetch(`/delete_product/${productId}/`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert(data.message);
+    var recipeId = editButton.getAttribute('data-recipe-id');
 
-                var productElement = document.querySelector(`.product-item[data-product-id='${productId}']`);
-                var recipeId = productElement.getAttribute('data-recipe-id');
-                productElement.remove();
+    // Parse and subtract product values from recipe totals
+    var trayToRemove = parseInt(editButton.getAttribute('data-tray')) || 0;
+    var trolleyToRemove = parseInt(editButton.getAttribute('data-trolley')) || 0;
+    var salesOrderToRemove = parseInt(editButton.getAttribute('data-sales-order')) || 0;
 
-                var recipeTotalTrayElement = document.querySelector(`#totalTray-${recipeId}`);
-                var recipeTotalTrolleyElement = document.querySelector(`#totalTrolley-${recipeId}`);
-                var recipeTotalSalesElement = document.querySelector(`#salesOrder-${recipeId}`);
+    var recipeTotalTrayElement = document.querySelector(`#totalTray-${recipeId}`);
+    var recipeTotalTrolleyElement = document.querySelector(`#totalTrolley-${recipeId}`);
+    var recipeTotalSalesElement = document.querySelector(`#salesOrder-${recipeId}`);
 
-                // Ensure values are numeric and default to 0 if not
-                var currentTray = parseInt(recipeTotalTrayElement.value) || 0;
-                var currentTrolley = parseInt(recipeTotalTrolleyElement.value) || 0;
-                var currentSales = parseInt(recipeTotalSalesElement.value) || 0;
-                var trayRemoved = parseInt(data.trayRemoved) || 0;
-                var trolleyRemoved = parseInt(data.trolleyRemoved) || 0;
-                var salesOrderRemoved = parseInt(data.salesOrderRemoved) || 0;
+    var currentTray = parseInt(recipeTotalTrayElement.value) || 0;
+    var currentTrolley = parseInt(recipeTotalTrolleyElement.value) || 0;
+    var currentSales = parseInt(recipeTotalSalesElement.value) || 0;
 
-                // Calculate new values
-                var newTotalTray = Math.max(0, currentTray - trayRemoved);
-                var newTotalTrolley = Math.max(0, currentTrolley - trolleyRemoved);
-                var newTotalSales = Math.max(0, currentSales - salesOrderRemoved);
+    recipeTotalTrayElement.value = Math.max(0, currentTray - trayToRemove);
+    recipeTotalTrolleyElement.value = Math.max(0, currentTrolley - trolleyToRemove);
+    recipeTotalSalesElement.value = Math.max(0, currentSales - salesOrderToRemove);
 
-                // Update the elements with new values
-                recipeTotalTrayElement.value = newTotalTray;
-                recipeTotalTrolleyElement.value = newTotalTrolley;
-                recipeTotalSalesElement.value = newTotalSales;
-            } else if (data.error) {
-                alert(data.error);
-            }
-            document.getElementById('productAlertModal').style.display = 'none';
-        })
-        .catch(error => console.error('Error:', error));
+    // Remove the product item from the UI
+    var productElement = document.querySelector(`.product-item[data-product-id='${productId}']`);
+    if (productElement) {
+        productElement.remove();
+    }
+
+    // Close the modal
+    document.getElementById('productAlertModal').style.display = 'none';
 });
+
 
 // Close modal functionality
 document.querySelector('.modal-close').addEventListener('click', function () {

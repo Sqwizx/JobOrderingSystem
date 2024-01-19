@@ -19,7 +19,7 @@ urlpatterns = [
     path('product/<str:product_id>/', views.get_product_details, name='product_details'),
 
     # EDIT JOB ORDER - PRODUCTS
-    path('add_product/', views.add_product, name='add_product'),
+    # path('add_product/', views.add_product, name='add_product'),
     path('delete_product/<str:product_id>/', views.delete_product, name='delete_product'),
     path('update_product/<str:product_id>/', views.update_product, name='update_product'),
     
@@ -33,6 +33,8 @@ urlpatterns = [
     path('create_breadline/', views.create_breadline, name='create_breadline'),
     path('save_recipes/', views.save_recipes, name='save_recipes'),
     path('create_wrapline/', views.create_wrapline, name='create_wrapline'),
+    path('get_products_by_recipe/<str:recipe_name>/', views.get_products_by_recipe, name='get_products_by_recipe'),
+    path('product_dropdown/<int:product_id>/', views.product_dropdown, name='product_dropdown'),
 
     # MANAGER
     path('approve/<str:job_order_id>/', views.approve_joborder, name='approve_job_order'),

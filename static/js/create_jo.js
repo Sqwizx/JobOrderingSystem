@@ -21,6 +21,9 @@ var formTracker = [];
 let allFormsData = {};
 let isSaving = false;
 let gapValuesByTabIdx = {};
+let lastSpongeStartTimeByTabIndex = {};
+let nextTabNewSpongeStartTime = null;
+
 
 document.addEventListener('DOMContentLoaded', function () {
     generateSummaryReport();
@@ -713,11 +716,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var cycleTimeLabel = createLabelElement(cycleTimeInput.id, "Cycle Time");
 
         var spongeStartTimePicker = createInputElement("text", `spongeStartTime-${uniqueFormId}`, "spongeStartTime");
+        // Determine the default date for flatpickr
+        console.log("Is first form:", isFirstForm, "nextTabNewSpongeStartTime:", nextTabNewSpongeStartTime);
+
+        // Determine the default date for flatpickr
+        var defaultStartDate = isFirstForm && nextTabNewSpongeStartTime ? nextTabNewSpongeStartTime : yesterdayDefaultDateTime;
+
         flatpickr(spongeStartTimePicker, {
             enableTime: true,
-            dateFormat: "d/m/Y H:i",
-            defaultDate: yesterdayDefaultDateTime,
-            minDate: yesterdayMinDate(tabIdx),
+            dateFormat: "d M Y H:i",
+            altFormat: "l, d M Y H:i",
+            defaultDate: defaultStartDate,
+            minDate: defaultStartDate,
             onValueUpdate: function (selectedDates) {
                 if (selectedDates.length > 0) {
 
@@ -844,7 +854,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isFirstForm) {
             spongeStartTimePicker.disabled = false;
             gapInput.disabled = false;
-            spongeStartTimePicker.value = yesterdayDefaultDateTime;
+            // Use nextTabNewSpongeStartTime if available, otherwise default to yesterday's date
+            var defaultStartDate = nextTabNewSpongeStartTime ? new Date(nextTabNewSpongeStartTime) : new Date(yesterdayDefaultDateTime);
+            spongeStartTimePicker.value = defaultStartDate;
             firstFormTracker[tabIdx] = true;
         } else {
             spongeStartTimePicker.disabled = true;
@@ -1590,7 +1602,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Check if the clicked element has the class 'add-product-button'
         if (event.target.classList.contains('add-product-button')) {
-            // Your logic when the button is clicked:
             if (activeRecipe.name && activeRecipe.tabIndex !== null) {
                 var currentRecipeName = activeRecipe.name;
                 var currentTabIndex = activeRecipe.tabIndex;
@@ -1610,6 +1621,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 var minDateValue = addDaysToDate(currentTabIndex);
                 var defaultExpiryDate = addDaysToDate(currentTabIndex); // Logic to get default expiry date
 
+                // Fetch products related to the recipeName
+                fetch('/get_products_by_recipe/' + encodeURIComponent(currentRecipeName) + '/')
+                    .then(response => response.json())
+                    .then(products => {
+                        // Populate dropdown or other elements in modal with the products
+                        // Example:
+                        var productDropdown = document.getElementById('productDropdown');
+                        productDropdown.innerHTML = '';
+
+                        // Add a default option as placeholder
+                        var defaultOption = document.createElement('option');
+                        defaultOption.textContent = 'Select a product';
+                        defaultOption.value = '';
+                        defaultOption.disabled = true;
+                        defaultOption.selected = true;
+                        defaultOption.hidden = true; // Hide this option in the dropdown list
+                        productDropdown.appendChild(defaultOption);
+
+                        products.forEach(product => {
+                            let option = document.createElement('option');
+                            option.value = product.id;
+                            option.textContent = product.productName;
+                            productDropdown.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching products:', error);
+                    });
+
                 initializeFlatpickr(saleDateInput, defaultSaleDate, minDateValue);
                 initializeFlatpickr(expiryDateInput, defaultExpiryDate, minDateValue);
                 updateAddProductButtonDisplay();
@@ -1618,6 +1658,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(`Not found`);
                 return;
             }
+        }
+    });
+
+    document.getElementById('productDropdown').addEventListener('change', function () {
+        var productId = this.value;
+
+        // Only proceed if a valid product ID is selected
+        if (productId) {
+            fetch('/product_dropdown/' + productId + '/')
+                .then(response => response.json())
+                .then(product => {
+                    // Populate the form with the product details
+                    document.getElementById('currency').value = product.currency;
+                    document.getElementById('productPrice').value = product.productPrice;
+                    document.getElementById('client').value = product.client;
+                    var weightDropdown = document.getElementById('weight');
+                    Array.from(weightDropdown.options).forEach(option => {
+                        if (parseInt(option.getAttribute('data-weight')) === parseInt(product.weight)) {
+                            option.selected = true;  // Select
+                        }
+                    });
+                    document.getElementById('noOfSlices').value = product.noOfSlices;
+                    document.getElementById('thickness').value = product.thickness;
+                    // Populate other fields as needed
+                })
+                .catch(error => console.error('Error fetching product details:', error));
         }
     });
 
@@ -1761,11 +1827,55 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTrackerDisplay(uniqueFormId)
         }
 
+        var newTabIndex = Array.from(document.querySelectorAll('.tablinks')).indexOf(event.currentTarget);
+
+        if (newTabIndex > 0) {
+            var prevTabIndex = newTabIndex - 1;
+
+            // Fetch the last form's sponge end time in the previous tab index
+            var lastFormInPrevTab = getLastFormInTab(prevTabIndex);
+            var lastSpongeEndTime = lastFormInPrevTab ? lastFormInPrevTab.querySelector('[name="spongeEndTime"]').value : null;
+
+            // Fetch the gap value (assuming it's consistent across the tab)
+            var gapValue = lastFormInPrevTab ? lastFormInPrevTab.querySelector('[name="gap"]').value : "00:00:00";
+
+            console.log("Last Sponge End Time:", lastSpongeEndTime, "Gap Value:", gapValue);
+
+            let newSpongeStartTime = calculateNewSpongeStartTimeWithEnd(lastSpongeEndTime, gapValue);
+            if (newSpongeStartTime) {
+                lastSpongeStartTimeByTabIndex[day] = newSpongeStartTime;
+                nextTabNewSpongeStartTime = newSpongeStartTime;
+                console.log("nextTabNewSpongeStartTime set to:", nextTabNewSpongeStartTime);
+
+            }
+        }
+
         checkAndToggleProductModalButton();
 
         checkAndToggleTrackerVisibility();
 
         activateFirstRecipeInMainTab(day);
+    }
+
+    function getLastFormInTab(tabIndex) {
+        var allForms = Array.from(document.querySelectorAll('form[id^="recipeForm-"]'));
+        var formsInTab = allForms.filter(form => {
+            var parts = form.id.split('-');
+            return parts.length === 3 && parseInt(parts[2]) === tabIndex;
+        });
+        return formsInTab.length > 0 ? formsInTab[formsInTab.length - 1] : null;
+    }
+
+    function calculateNewSpongeStartTimeWithEnd(spongeEndTime, gap) {
+        if (spongeEndTime) {
+            let lastTime = new Date(spongeEndTime);
+            let gapInSeconds = convertToSeconds(gap); // Convert gap to seconds
+            var newSpongeStartTime = new Date(lastTime.getTime() + gapInSeconds * 1000);
+            console.log("New Sponge Start Time:", newSpongeStartTime);
+            return newSpongeStartTime;
+        }
+        console.log("No new start time")
+        return null; // or some default start time
     }
 
     function activateFirstRecipeInMainTab(day) {
@@ -1905,9 +2015,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var selectedWeightOption = document.querySelector('#weight option:checked');
         var weightData = selectedWeightOption.getAttribute('data-weight');
 
+        // Get the selected product option
+        var selectedProductOption = document.querySelector('#productDropdown option:checked');
+        var productName = selectedProductOption ? selectedProductOption.textContent : '';
+
         // Rest of the form data
         return {
-            productName: document.getElementById('productName').value,
+            productName: productName,
             client: document.getElementById('client').value,
             colorSet: document.getElementById('colorSet').value,
             expiryDate: document.getElementById('expiryDate').value ? document.getElementById('saleDate').value : null,
@@ -2281,9 +2395,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Add event listener for Product Name input
-    document.getElementById("productName").addEventListener("input", function () {
-        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
-    });
+    // document.getElementById("productName").addEventListener("input", function () {
+    //     this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    // });
 
     // const steps = [
     //     'spongeStartProgress',

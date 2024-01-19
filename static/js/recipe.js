@@ -166,4 +166,210 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // Select all icons with the 'fa-book' class and attach a click event listener
+    document.querySelectorAll('.fa-book').forEach(icon => {
+        icon.addEventListener('click', function () {
+            // Retrieve the recipeId from the clicked icon
+            let recipeId = this.getAttribute('data-recipe-id');
+            let recipeName = this.getAttribute('data-recipe-name');
+            console.log('This is recipe Name:', recipeName + ' with Id:', recipeId);
+
+            // Set the recipeId in the hidden input of the modal's form
+            document.getElementById('recipeId').value = recipeId;
+
+            // Fetch products associated with this recipe
+            fetchProductsForRecipe(recipeId, recipeName);
+            openProductModal();
+        });
+    });
+
+    function openProductModal() {
+        // Your code to display the modal, e.g., setting the display style to 'block'
+        document.getElementById('productModal').style.display = 'block';
+    }
+
+
+    // Event listener for closing the modal
+    document.getElementById('closeProductModal').addEventListener('click', function () {
+        document.getElementById('productModal').style.display = 'none';
+    });
+
+    document.getElementById('newProductForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Get the selected option in the weight dropdown
+        let selectedWeightOption = document.querySelector('#weight option:checked');
+        let weightValue = selectedWeightOption.getAttribute('data-weight');
+
+        let formData = {
+            recipeId: document.getElementById('recipeId').value,
+            productName: document.getElementById('productName').value,
+            currency: document.getElementById('currency').value,
+            productPrice: document.getElementById('productPrice').value,
+            client: document.getElementById('client').value,
+            weight: weightValue,
+            noOfSlices: document.getElementById('noOfSlices').value,
+            thickness: document.getElementById('thickness').value
+        };
+
+        fetch('/add_recipeproduct/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken() // Ensure you have a function to get CSRF token
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Handle success (e.g., display a success message, clear the form)
+                    appendProductToTable(data)
+                    console.log('Product added successfully:', data.productName);
+                } else {
+                    // Handle errors
+                    console.error('Error adding product:', data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+    function appendProductToTable(productData) {
+        var productListTable = document.querySelector('#productList table');
+        var noProductsRow = productListTable.querySelector('.no-products');
+
+        // If there's a 'No products' row, remove it
+        if (noProductsRow) {
+            noProductsRow.remove();
+        }
+
+        // Append the new product
+        productListTable.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${productData.productName}</td>
+                <td>${productData.currency} ${productData.productPrice}</td>
+                <td>${productData.client}</td>
+                <td>${productData.weight}</td>
+                <td>${productData.noOfSlices}</td>
+                <td>${productData.thickness}</td>
+                <td>
+                    <button onclick="editProduct(${productData.product_id})">Edit</button>
+                    <button onclick="deleteProduct(${productData.product_id})">Delete</button>
+                </td>
+            </tr>
+        `);
+    }
+
+    //Formatting
+    document.getElementById("productPrice").addEventListener("input", function () {
+        let val = this.value.replace(/[^0-9]/g, '');
+
+        // Ensure there are exactly 4 digits
+        while (val.length < 4) {
+            val = '0' + val;
+        }
+
+        // Reconstruct the value so that the entered digits replace the zeros from right to left
+        let formattedValue = (parseInt(val.substring(0, 2)) + '.' + parseInt(val.substring(2, 4))).toString();
+
+        this.value = formattedValue;
+    });
+
+    // Add event listener for Recipe Name input
+    document.querySelectorAll("[id^=recipeName-]").forEach(function (input) {
+        // Convert to uppercase and restrict non-alphanumeric on input event
+        input.addEventListener("input", function (e) {
+            this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+        });
+    });
+
+    // Add event listener for Product Name input
+    document.getElementById("productName").addEventListener("input", function () {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+
 });
+
+function getCsrfToken() {
+    // Get all cookies from the document and split into individual items
+    let cookies = document.cookie.split(';');
+
+    // Look for the "csrftoken" cookie and return its value
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        let cookieParts = cookie.split('=');
+        if (cookieParts[0] === 'csrftoken') {
+            return cookieParts[1];
+        }
+    }
+    return ''; // Return an empty string if not found
+}
+
+function fetchProductsForRecipe(recipeId, recipeName) {
+    // AJAX request to fetch products
+    fetch('/get_product/' + recipeName + '/') // Update with the correct URL
+        .then(response => response.json())
+        .then(products => {
+            let productListHtml;
+
+            if (products.length > 0) {
+
+                productListHtml = `<table>
+                                <thead>
+                                  <tr>
+                                    <th>Product Name</th>
+                                    <th>Product Price</th>
+                                    <th>Client</th>
+                                    <th>Weight</th>
+                                    <th>No. Slices</th>
+                                    <th>Thickness</th>
+                                    <th>Actions</th>
+                                  </tr>
+                                  <thead>`;
+
+                productListHtml += products.map(product =>
+                    `<tbody><tr>
+                    <td>${product.productName}</td>
+                    <td>${product.currency} ${product.productPrice}</td>
+                    <td>${product.client}</td>
+                    <td>${product.weight}</td>
+                    <td>${product.noOfSlices}</td>
+                    <td>${product.thickness}</td>
+                    <td>
+                        <button onclick="editProduct(${product.id})">Edit</button>
+                        <button onclick="deleteProduct(${product.id})">Delete</button>
+                    </td>
+                </tr><tbody>`
+                ).join('');
+
+                productListHtml += `</table>`;
+            } else {
+                productListHtml = `<table>
+                                <thead>
+                                  <tr>
+                                    <th>Product Name</th>
+                                    <th>Product Price</th>
+                                    <th>Client</th>
+                                    <th>Weight</th>
+                                    <th>No. Slices</th>
+                                    <th>Thickness</th>
+                                    <th>Actions</th>
+                                  </tr>
+                                  <thead>`;
+
+                productListHtml +=
+                    `<tbody><tr>
+                    <td colspan="7">No products found for recipe ID: ${recipeName}</td>
+                </tr><tbody>`;
+
+                productListHtml += `</table>`;
+            }
+
+            document.getElementById('productList').innerHTML = productListHtml;
+        })
+        .catch(error => {
+            console.error('Error fetching products:', error);
+            // Handle errors here
+            document.getElementById('productList').innerHTML = `<p>Error loading products for recipe ID: ${recipeName}</p>`;
+        });
+}

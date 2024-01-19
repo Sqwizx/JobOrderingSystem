@@ -7,16 +7,18 @@ from django.db.models import Sum
 from django.utils import timezone
 from users.models import UserRole
 from django.db import transaction
-from recipes.models import Recipe
 from collections import defaultdict
+from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta
+from recipes.models import Product, Recipe
 from django.http import Http404, JsonResponse
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import RecipeMapping, JobOrder, Activity, Product, Revision
+from .models import RecipeMapping, JobOrder, Activity, ProductMapping, Revision
 
 #COMMON FUNCTIONS
 def search_recipes(request):
@@ -184,7 +186,7 @@ def edit_joborder(request, job_order_id):
 
     return render(request, 'edit_joborder.html', context)
 
-def activate_joborder(job_order_id):
+def activate_joborder(request, job_order_id):
     try:
         job_order = JobOrder.objects.get(jobOrderId=job_order_id)
         job_order.jobOrderStatus = 'ACTIVE'
@@ -222,9 +224,9 @@ def archive_joborder(request, job_order_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
-def get_product_details(product_id):
+def get_product_details(request, product_id):
     try:
-        product = Product.objects.get(productId=product_id)
+        product = ProductMapping.objects.get(productId=product_id)
         product_data = {
             'productName': product.productName,
             'productSalesOrder': product.productSalesOrder,
@@ -243,62 +245,80 @@ def get_product_details(product_id):
         }
         return JsonResponse(product_data, safe=False, encoder=DjangoJSONEncoder)
     except ObjectDoesNotExist:
-        return JsonResponse({'error': 'Product not found'}, status=404)
+        return JsonResponse({'error': 'ProductMapping not found'}, status=404)
 
 #EDIT JOB ORDER FUNCTIONS - PRODUCTS
-def add_product(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            recipe = RecipeMapping.objects.get(recipeId=data["recipeId"])
+# def add_product(request):
+#     if request.method == "POST":
+#         try:
+#             data = json.loads(request.body)
+#             recipe = RecipeMapping.objects.get(recipeId=data["recipeId"])
 
-            # Convert productSalesOrder to integer
-            product_sales_order = int(data.get("productSalesOrder", 0))
+#             # Convert productSalesOrder to integer
+#             product_sales_order = int(data.get("productSalesOrder", 0))
 
-            # Generate productId
-            productId = "{}_{}".format(data["recipeId"], data["productName"])
+#             # Generate productId
+#             productId = "{}_{}".format(data["recipeId"], data["productName"])
 
-            # Create the new product
-            Product.objects.create(
-                productId=productId,
-                productName=data["productName"],
-                productSalesOrder=product_sales_order,
-                currency=data["currency"],
-                productPrice=data["productPrice"],
-                client=data["client"],
-                colorSet=data["colorSet"],
-                productExpDate=data.get("expiryDate", None),
-                productSaleDate=data.get("saleDate", None),
-                weight=data["weight"],
-                noOfSlices=data["noOfSlices"],
-                thickness=data["thickness"],
-                tray=data["tray"],
-                trolley=data["trolley"],
-                productRemarks=data["productRemarks"],
-                recipe=recipe
-            )
+#             # Create the new product
+#             ProductMapping.objects.create(
+#                 productId=productId,
+#                 productName=data["productName"],
+#                 productSalesOrder=product_sales_order,
+#                 currency=data["currency"],
+#                 productPrice=data["productPrice"],
+#                 client=data["client"],
+#                 colorSet=data["colorSet"],
+#                 productExpDate=data.get("expiryDate", None),
+#                 productSaleDate=data.get("saleDate", None),
+#                 weight=data["weight"],
+#                 noOfSlices=data["noOfSlices"],
+#                 thickness=data["thickness"],
+#                 tray=data["tray"],
+#                 trolley=data["trolley"],
+#                 productRemarks=data["productRemarks"],
+#                 recipe=recipe
+#             )
 
-            # Recalculate totals for the recipe
-            total_tray = recipe.products.aggregate(total_tray=Sum('tray'))['total_tray'] or 0
-            total_trolley = recipe.products.aggregate(total_trolley=Sum('trolley'))['total_trolley'] or 0
+#             # Recalculate totals for the recipe
+#             total_tray = recipe.products.aggregate(total_tray=Sum('tray'))['total_tray'] or 0
+#             total_trolley = recipe.products.aggregate(total_trolley=Sum('trolley'))['total_trolley'] or 0
 
-            # Update recipe total sales, tray, and trolley
-            recipe.recipeTotalSales = (recipe.recipeTotalSales or 0) + product_sales_order
-            recipe.recipeTotalTray = total_tray
-            recipe.recipeTotalTrolley = total_trolley
-            recipe.save()
+#             # Update recipe total sales, tray, and trolley
+#             recipe.recipeTotalSales = (recipe.recipeTotalSales or 0) + product_sales_order
+#             recipe.recipeTotalTray = total_tray
+#             recipe.recipeTotalTrolley = total_trolley
+#             recipe.save()
 
-            return JsonResponse({"message": "New product added successfully"})
+#                      # Assuming you're getting activity_data from the request's JSON body
+#             activity_data = data.get('activity', {})
 
-        except ObjectDoesNotExist:
-            return JsonResponse({"error": "Recipe not found"}, status=404)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+#             # Get or create the activity associated with this recipe
+#             activity, created = Activity.objects.get_or_create(recipe=recipe)
+
+#             # Update the activity fields
+#             for field in ['spongeStart', 'spongeEnd', 'doughStart', 'doughEnd', 'firstLoafPacked', 'cutOffTime']:
+#                 time_str = activity_data.get(field, '')
+#                 if time_str:
+#                     try:
+#                         setattr(activity, field, datetime.strptime(time_str, '%A, %d %b %Y %H:%M'))
+#                     except ValueError:
+#                         # Handle the incorrect format or set to None
+#                         setattr(activity, field, None)
+
+#             activity.save()
+
+#             return JsonResponse({"message": "New product added successfully"})
+
+#         except ObjectDoesNotExist:
+#             return JsonResponse({"error": "Recipe not found"}, status=404)
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=500)
 
 def delete_product(request, product_id):
     if request.method == "DELETE":
         try:
-            product = Product.objects.get(productId=product_id)
+            product = ProductMapping.objects.get(productId=product_id)
             recipe = product.recipe
 
             tray_removed = product.tray
@@ -316,13 +336,13 @@ def delete_product(request, product_id):
             # Now delete the product
             product.delete()
             return JsonResponse({
-                "message": "Product deleted successfully",
+                "message": "ProductMapping deleted successfully",
                 "trayRemoved": tray_removed,
                 "trolleyRemoved": trolley_removed,
                 "salesOrderRemoved": sales_order_removed
             })
-        except Product.DoesNotExist:
-            return JsonResponse({"error": "Product not found"}, status=404)
+        except ProductMapping.DoesNotExist:
+            return JsonResponse({"error": "ProductMapping not found"}, status=404)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
@@ -330,7 +350,7 @@ def update_product(request, product_id):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            product = Product.objects.get(productId=product_id)
+            product = ProductMapping.objects.get(productId=product_id)
             recipe = product.recipe
 
             # Convert the sales order values to integers
@@ -370,10 +390,28 @@ def update_product(request, product_id):
             recipe.recipeTotalTrolley = total_trolley
             recipe.save()
 
-            return JsonResponse({"message": "Product updated successfully"})
+          # Assuming you're getting activity_data from the request's JSON body
+            activity_data = data.get('activity', {})
+
+            # Get or create the activity associated with this recipe
+            activity, created = Activity.objects.get_or_create(recipe=recipe)
+
+            # Update the activity fields
+            for field in ['spongeStart', 'spongeEnd', 'doughStart', 'doughEnd', 'firstLoafPacked', 'cutOffTime']:
+                time_str = activity_data.get(field, '')
+                if time_str:
+                    try:
+                        setattr(activity, field, datetime.strptime(time_str, '%A, %d %b %Y %H:%M'))
+                    except ValueError:
+                        # Handle the incorrect format or set to None
+                        setattr(activity, field, None)
+
+            activity.save()
+
+            return JsonResponse({"message": "ProductMapping updated successfully"})
 
         except ObjectDoesNotExist:
-            return JsonResponse({"error": "Product not found"}, status=404)
+            return JsonResponse({"error": "ProductMapping not found"}, status=404)
         except KeyError as e:
             return JsonResponse({"error": f"Missing field: {str(e)}"}, status=400)
         except Exception as e:
@@ -467,11 +505,26 @@ def delete_recipedraft(recipe_id):
 
     return JsonResponse({"message": "No action taken"})
 
+def parse_time(time_str, default_value=timedelta()):
+    try:
+        hours, minutes, seconds = map(int, time_str.split(':'))
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    except ValueError:
+        return default_value
+
 def update_joborder(request, job_order_id):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            JobOrder.objects.get(jobOrderId=job_order_id)
+            
+             # Log the received product data for debugging
+            print("Received products:", data.get('products', []))
+
+            job_order = get_object_or_404(JobOrder, jobOrderId=job_order_id)
+            frontend_product_ids = set([p['productId'] for p in data.get('products', [])])
+
+            # Log the frontend product IDs for debugging
+            print("Frontend product IDs:", frontend_product_ids)
 
             for recipe_data in data.get('recipes', []):
                 recipe_id = recipe_data['recipeId']
@@ -480,29 +533,27 @@ def update_joborder(request, job_order_id):
                 recipe.recipeProdRate = recipe_data.get('prodRate', recipe.recipeProdRate)
                 recipe.recipeBatchSize = recipe_data.get('batchSize', recipe.recipeBatchSize)
                 recipe.recipeTotalSales = recipe_data.get('totalSales', recipe.recipeTotalSales)
-                recipe.recipeBatches = recipe_data.get('batches', recipe.recipeBatches)
+                if 'batches' in recipe_data and recipe_data['batches'].isdigit():
+                    recipe.recipeBatches = int(recipe_data['batches'])
                 recipe.recipeWaste = recipe_data.get('waste', recipe.recipeWaste)
-                recipe.recipeBeltNo = recipe_data.get('beltNo', recipe.recipeBeltNo)
+                if 'beltNo' in recipe_data and recipe_data['beltNo'].isdigit():
+                    recipe.recipeBeltNo = int(recipe_data['beltNo'])
                 recipe.recipeGap = recipe_data.get('gap', recipe.recipeGap)
                 recipe.recipeTotalTray = recipe_data.get('totalTray', recipe.recipeTotalTray)
                 recipe.recipeTotalTrolley = recipe_data.get('totalTrolleyes', recipe.recipeTotalTrolley)
                 recipe.recipeTimeVar = recipe_data.get('timeVariable', recipe.recipeTimeVar)
 
                 # Parse stdTime and cycleTime
-                std_hours, std_minutes, std_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
-                std_time_delta = timedelta(hours=std_hours, minutes=std_minutes, seconds=std_seconds)
+                std_time_delta = parse_time(recipe_data.get('stdTime', '00:00:00'))
                 recipe.recipeStdTime = std_time_delta
 
-                cycle_hours, cycle_minutes, cycle_seconds = map(int, recipe_data.get('cycleTime', '00:00:00').split(':'))
-                cycle_time_delta = timedelta(hours=cycle_hours, minutes=cycle_minutes, seconds=cycle_seconds)
+                cycle_time_delta = parse_time(recipe_data.get('cycleTime', '00:00:00'))
                 recipe.recipeCycleTime = cycle_time_delta
 
-                gap_hours, gap_minutes, gap_seconds = map(int, recipe_data.get('gap', '00:00:00').split(':'))
-                gap_time_delta = timedelta(hours=gap_hours, minutes=gap_minutes, seconds=gap_seconds)
+                gap_time_delta = parse_time(recipe_data.get('gap', '00:00:00'))
                 recipe.recipeGap = gap_time_delta
 
-                timevar_hours, timevar_minutes, timevar_seconds = map(int, recipe_data.get('timeVariable', '00:00:00').split(':'))
-                timevar_time_delta = timedelta(hours=timevar_hours, minutes=timevar_minutes, seconds=timevar_seconds)
+                timevar_time_delta = parse_time(recipe_data.get('timeVariable', '00:00:00'))
                 recipe.recipeTimeVar = timevar_time_delta
 
                 # Parse and save spongeStartTime
@@ -522,10 +573,49 @@ def update_joborder(request, job_order_id):
                 activity.firstLoafPacked = datetime.strptime(activity_data.get('firstLoafPacked', ''), '%A, %d %b %Y %H:%M') if activity_data.get('firstLoafPacked') else None
                 activity.cutOffTime = datetime.strptime(activity_data.get('cutOffTime', ''), '%A, %d %b %Y %H:%M') if activity_data.get('cutOffTime') else None
                 activity.save()
+            
+            for product_data in data.get('products', []):
+                recipe = RecipeMapping.objects.get(recipeId=product_data['recipeId'])
+                product_id = product_data['productId']
+
+                product_exp_date_str = product_data.get('expiryDate')
+                product_sale_date_str = product_data.get('saleDate')
+
+                product_exp_date = parse_date(product_exp_date_str) if product_exp_date_str else None
+                product_sale_date = parse_date(product_sale_date_str) if product_sale_date_str else None
+
+                # Check if the product exists, update it if it does
+                product, created = ProductMapping.objects.update_or_create(
+                    productId=product_id,
+                    defaults={
+                        'productName': product_data['productName'],
+                        'productSalesOrder': product_data.get('productSalesOrder', 0),
+                        'currency': product_data.get('currency', ''),
+                        'productPrice': product_data.get('productPrice', 0),
+                        'client': product_data.get('client', ''),
+                        'colorSet': product_data.get('colorSet', ''),
+                        'productExpDate': product_exp_date,
+                        'productSaleDate': product_sale_date,
+                        'weight': product_data.get('weight', 0),
+                        'noOfSlices': product_data.get('noOfSlices', 0),
+                        'thickness': product_data.get('thickness', 0),
+                        'tray': product_data.get('tray', 0),
+                        'trolley': product_data.get('trolley', 0),
+                        'productRemarks': product_data.get('productRemarks', ''),
+                        'recipe': recipe
+                    }
+                )
+
+            for recipe in job_order.recipes.all():
+                deleted_products = recipe.products.exclude(productId__in=frontend_product_ids)
+                print("Deleting products:", deleted_products)  # Log the products to be deleted
+                deleted_products.delete()
 
             return JsonResponse({"message": "Job order and recipes updated successfully."})
 
         except Exception as e:
+            # Log the exception for debugging
+            print("Error:", str(e))
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"message": "Invalid request"}, status=400)
@@ -602,8 +692,8 @@ def save_recipes(request):
             dough_end = aware.localize(datetime.strptime(recipe_data['doughEndTime'], '%A, %d %b %Y %H:%M'))
             first_loaf_packed = aware.localize(datetime.strptime(recipe_data['firstLoafPacked'], '%A, %d %b %Y %H:%M'))
             cut_off = aware.localize(datetime.strptime(recipe_data['cutOffTime'], '%A, %d %b %Y %H:%M'))
-            std_hours, std_minutes, std_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
             timevar_hours, timevar_minutes, timevar_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
+            std_hours, std_minutes, std_seconds = map(int, recipe_data.get('stdTime', '00:00:00').split(':'))
             cycle_hours, cycle_minutes, cycle_seconds = map(int, recipe_data.get('cycleTime', '00:00:00').split(':'))
             gap_hours, gap_minutes, gap_seconds = map(int, recipe_data.get('gap', '00:00:00').split(':'))
                         
@@ -656,7 +746,7 @@ def save_recipes(request):
                     product_sale_date = aware.localize(datetime.strptime(product_sale_date, '%A, %d %b %Y'))
 
                 product_id = '{}_{}'.format(recipe.recipeId, product_data['name'].replace(' ', ''))
-                Product.objects.create(
+                ProductMapping.objects.create(
                     productId=product_id,
                     recipe=recipe,
                     productName=product_data['name'],
@@ -766,3 +856,29 @@ def get_recipe_details(recipe_id):
         return JsonResponse(recipe_data, safe=False)
     except ObjectDoesNotExist:
         return JsonResponse({'error': 'Recipe not found'}, status=404)
+
+def get_products_by_recipe(request, recipe_name):
+    try:
+        recipe = Recipe.objects.get(recipeName=recipe_name)
+        products = recipe.products.all()
+        products_data = list(products.values('id', 'productName', 'currency', 'productPrice', 'client', 'weight', 'noOfSlices', 'thickness'))
+        return JsonResponse(products_data, safe=False)
+    except Recipe.DoesNotExist:
+        return JsonResponse({'error': 'Recipe not found'}, status=404)
+
+def product_dropdown(request, product_id):
+    try:
+        product = Product.objects.get(pk=product_id)
+        product_data = {
+            'productName': product.productName,
+            'currency': product.currency,
+            'productPrice': product.productPrice,  # Convert decimal to string
+            'client': product.client,
+            'weight': product.weight, # Convert decimal to string
+            'noOfSlices': product.noOfSlices,
+            'thickness': product.thickness,
+            # Add other fields as needed
+            }
+        return JsonResponse(product_data)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'ProductMapping not found'}, status=404)

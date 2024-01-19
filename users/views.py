@@ -72,7 +72,7 @@ def dashboard_view(request):
     now = timezone.now().astimezone(malaysian_tz)
     job_orders_list = []
 
-    job_orders = JobOrder.objects.all().prefetch_related('recipes__activity_recipe')
+    job_orders = JobOrder.objects.exclude(jobOrderStatus="ARCHIVED").prefetch_related('recipes__activity_recipe')
 
     try:
         user_role = UserRole.objects.get(user=request.user).role
@@ -177,7 +177,7 @@ def update_dashboard_table(request):
     now = timezone.now().astimezone(malaysian_tz)
     job_orders_list = []
 
-    job_orders = JobOrder.objects.all().prefetch_related('recipes__activity_recipe')
+    job_orders = JobOrder.objects.exclude(jobOrderStatus="ARCHIVED").prefetch_related('recipes__activity_recipe')
 
     try:
         user_role = UserRole.objects.get(user=request.user).role
