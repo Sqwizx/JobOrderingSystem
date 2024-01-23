@@ -387,6 +387,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
     }
 
+
+    // Add click event listener to the whole window.
+    window.addEventListener('click', function (event) {
+        // Get all modals.
+        var modals = document.querySelectorAll('.modal');
+
+        // Loop through each modal.
+        modals.forEach(function (modal) {
+
+            // Check if the click is outside of this modal's content.
+            if (event.target == modal && modal.style.display === 'block') {
+                // Close the modal.
+                modal.style.display = 'none';
+            }
+        });
+    });
+
     // Initial update and interval setup
     updateProgress();
     setInterval(updateProgress, 60000); // Update every minute

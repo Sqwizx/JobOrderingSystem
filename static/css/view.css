@@ -18,7 +18,8 @@
 
 .left-column {
     display: flex;
-    flex-direction: column
+    flex-direction: column;
+    width: 100%;
 }
 
 .big-card {
@@ -26,20 +27,24 @@
     margin-bottom: 20px;
     border-radius: 10px;
     border: 1px solid rgba(4, 66, 168, 1);
-    overflow: auto
+    overflow: auto;
+    width: 100%;
 }
 
 .right-column {
     display: flex;
-    flex-direction: column
+    flex-direction: column;
+    width: 100%;
 }
 
 #product-list {
-    height: 300px
+    width: 100%;
+    height: 100%;
 }
 
 #tracker {
-    height: 450px
+    width: 100%;
+    height: 100%;
 }
 
 #small-header {
@@ -120,7 +125,8 @@
 .tabcontent {
     display: none;
     padding: 10px 20px 20px 20px;
-    border-top: none
+    border-top: none;
+    width: 100%;
 }
 
 .tabcontent.active {

@@ -976,3 +976,21 @@ select option {
 .status-archived {
     background-color: #9E9E9E;
 }
+
+#confirmDelete {
+    width: 20%;
+    padding: 7px 10px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    margin-right: 5px;
+}
+
+#cancelDelete {
+    width: 20%;
+    padding: 7px 10px;
+    color: red;
+    border: 1px solid red;
+    background-color: rgb(255, 0, 0, 0.2);
+    border-radius: 10px;
+}

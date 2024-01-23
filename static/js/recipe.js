@@ -288,6 +288,42 @@ document.addEventListener("DOMContentLoaded", function () {
         this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
     });
 
+
+    // Function to close modal
+    function closeAllModal(modal) {
+        modal.style.display = 'none';
+    }
+
+    // Function to initialize modals
+    function initializeModals() {
+        // Get all modals
+        var modals = document.querySelectorAll('.modal');
+
+        // Add click event listener to each modal
+        modals.forEach(function (modal) {
+            // When the user clicks anywhere outside of the modal content, close it
+            window.addEventListener('click', function (event) {
+                if (event.target == modal) {
+                    closeAllModal(modal);
+                }
+            });
+        });
+    }
+
+    // Get all close buttons
+    var closeButtons = document.querySelectorAll('.modal-close');
+
+    // Add click event listener to close buttons to close the modal
+    closeButtons.forEach(function (btn) {
+        btn.onclick = function () {
+            var modal = btn.closest('.modal');
+            closeAllModal(modal);
+        }
+    });
+
+    // Call the function to initialize modals
+    initializeModals();
+
 });
 
 function getCsrfToken() {
@@ -336,7 +372,6 @@ function fetchProductsForRecipe(recipeId, recipeName) {
                     <td>${product.noOfSlices}</td>
                     <td>${product.thickness}</td>
                     <td>
-                        <button onclick="editProduct(${product.id})">Edit</button>
                         <button onclick="deleteProduct(${product.id})">Delete</button>
                     </td>
                 </tr><tbody>`

@@ -854,9 +854,20 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isFirstForm) {
             spongeStartTimePicker.disabled = false;
             gapInput.disabled = false;
-            // Use nextTabNewSpongeStartTime if available, otherwise default to yesterday's date
-            var defaultStartDate = nextTabNewSpongeStartTime ? new Date(nextTabNewSpongeStartTime) : new Date(yesterdayDefaultDateTime);
-            spongeStartTimePicker.value = defaultStartDate;
+
+            var defaultStartDate = nextTabNewSpongeStartTime
+                ? new Date(nextTabNewSpongeStartTime)
+                : new Date(yesterdayDefaultDateTime);
+
+            // Initialize flatpickr with the default date
+            flatpickr(spongeStartTimePicker, {
+                enableTime: true,
+                dateFormat: "l, d M Y H:i", // Custom format
+                defaultDate: defaultStartDate, // This should be a Date object or a string in the format "YYYY-MM-DD HH:MM"
+                minDate: defaultStartDate,
+                // ... other options ...
+            });
+
             firstFormTracker[tabIdx] = true;
         } else {
             spongeStartTimePicker.disabled = true;
@@ -2539,6 +2550,42 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+
+    // Function to close modal
+    function closeAllModal(modal) {
+        modal.style.display = 'none';
+    }
+
+    // Function to initialize modals
+    function initializeModals() {
+        // Get all modals
+        var modals = document.querySelectorAll('.modal');
+
+        // Add click event listener to each modal
+        modals.forEach(function (modal) {
+            // When the user clicks anywhere outside of the modal content, close it
+            window.addEventListener('click', function (event) {
+                if (event.target == modal) {
+                    closeAllModal(modal);
+                }
+            });
+        });
+    }
+
+    // Get all close buttons
+    var closeButtons = document.querySelectorAll('.modal-close');
+
+    // Add click event listener to close buttons to close the modal
+    closeButtons.forEach(function (btn) {
+        btn.onclick = function () {
+            var modal = btn.closest('.modal');
+            closeAllModal(modal);
+        }
+    });
+
+    // Call the function to initialize modals
+    initializeModals();
+
 });
 
 window.addEventListener('beforeunload', function (e) {

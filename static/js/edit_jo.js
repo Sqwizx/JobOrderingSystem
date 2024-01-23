@@ -288,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.addEventListener('beforeunload', function (e) {
         if (recipeCreated && recipeId) {
-            // Call the server to delete the recipe if it is still a draft
             fetch('/draft/' + recipeId + '/', {
                 method: 'POST',
                 headers: {
@@ -504,8 +503,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll(`.tablinks-recipes[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
                 document.querySelectorAll(`.product-item[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
                 document.querySelectorAll(`.activity-steps[data-recipe-id='${recipeId}']`).forEach(element => element.remove());
+
+                openFirstRecipeTab();
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    function openFirstRecipeTab() {
+        // Find the currently active tab content
+        var activeTabContent = document.querySelector('.tabcontent[style*="display: block"]');
+        if (!activeTabContent) return;
+
+        // Find the first recipe tab within the active tab content
+        var firstRecipeTab = activeTabContent.querySelector('.tablinks-recipes');
+        if (firstRecipeTab) {
+            // Remove 'opened' class from any previously opened recipe tabs
+            activeTabContent.querySelectorAll('.tablinks-recipes.opened').forEach(function (openedButton) {
+                openedButton.classList.remove('opened');
+            });
+
+            // Add 'opened' class to the first recipe tab and open it
+            firstRecipeTab.classList.add('opened');
+            openRecipeTab(firstRecipeTab.getAttribute('data-recipe-id'));
+        } else {
+            // Handle case where there are no more recipe tabs
+            console.log("No more recipe tabs available in the active tab.");
+        }
     }
 
     function getCookie(name) {
@@ -1518,6 +1541,42 @@ document.addEventListener('DOMContentLoaded', function () {
             searchResults.style.display = 'block';
         }
     });
+
+
+    // Function to close modal
+    function closeAllModal(modal) {
+        modal.style.display = 'none';
+    }
+
+    // Function to initialize modals
+    function initializeModals() {
+        // Get all modals
+        var modals = document.querySelectorAll('.modal');
+
+        // Add click event listener to each modal
+        modals.forEach(function (modal) {
+            // When the user clicks anywhere outside of the modal content, close it
+            window.addEventListener('click', function (event) {
+                if (event.target == modal) {
+                    closeAllModal(modal);
+                }
+            });
+        });
+    }
+
+    // Get all close buttons
+    var closeButtons = document.querySelectorAll('.modal-close');
+
+    // Add click event listener to close buttons to close the modal
+    closeButtons.forEach(function (btn) {
+        btn.onclick = function () {
+            var modal = btn.closest('.modal');
+            closeAllModal(modal);
+        }
+    });
+
+    // Call the function to initialize modals
+    initializeModals();
 });
 
 function formatDate(dateString) {
@@ -1964,6 +2023,10 @@ document.querySelector('.modal-close').addEventListener('click', function () {
 
 document.getElementById('productCancelDelete').addEventListener('click', function () {
     document.getElementById('productAlertModal').style.display = 'none';
+});
+
+document.getElementById('cancelDelete').addEventListener('click', function () {
+    document.getElementById('alertModal').style.display = 'none';
 });
 
 

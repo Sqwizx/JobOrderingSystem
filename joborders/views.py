@@ -494,9 +494,9 @@ def delete_recipe(request, recipe_id):
         except RecipeMapping.DoesNotExist:
             return JsonResponse({"error": "Recipe not found"}, status=404)
 
-def delete_recipedraft(recipe_id):
+def delete_recipedraft(request, recipeId):
     try:
-        recipe = RecipeMapping.objects.get(id=recipe_id)
+        recipe = RecipeMapping.objects.get(recipeId=recipeId)
         if recipe.isDraft and not recipe.products.exists():
             recipe.delete()
             return JsonResponse({"message": "Draft recipe deleted"})
@@ -882,3 +882,11 @@ def product_dropdown(request, product_id):
         return JsonResponse(product_data)
     except Product.DoesNotExist:
         return JsonResponse({'error': 'ProductMapping not found'}, status=404)
+
+@login_required
+def get_job_order_status(request, job_order_id):
+    try:
+        job_order = JobOrder.objects.get(jobOrderId=job_order_id)
+        return JsonResponse({'status': 'success', 'jobOrderStatus': job_order.jobOrderStatus})
+    except JobOrder.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Job Order not found'}, status=404)

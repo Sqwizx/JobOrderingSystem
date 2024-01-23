@@ -446,6 +446,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Add click event listener to the whole window.
+    window.addEventListener('click', function (event) {
+        // Get all modals.
+        var modals = document.querySelectorAll('.modal');
+
+        // Loop through each modal.
+        modals.forEach(function (modal) {
+
+            // Check if the click is outside of this modal's content.
+            if (event.target == modal && modal.style.display === 'block') {
+                // Close the modal.
+                modal.style.display = 'none';
+            }
+        });
+    });
+
 });
 
 const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
@@ -600,14 +616,6 @@ function submitJobOrderAjax(jobOrderId) {
     });
 }
 
-// Optional: Close the modal if the user clicks outside of it
-window.onclick = function (event) {
-    var alertModal = document.getElementById('alertModal');
-    if (event.target == alertModal) {
-        alertModal.style.display = "none";
-    }
-};
-
 function deleteJobOrder(jobOrderId) {
     // Open the confirmDeleteModal instead of sending the AJAX request immediately
     var confirmDeleteModal = document.getElementById('confirmDeleteModal');
@@ -675,7 +683,6 @@ function approveJobOrder(jobOrderId) {
     }
 }
 
-// Extracted the AJAX call into a separate function
 function approveJobOrderAjax(jobOrderId) {
     $.ajax({
         type: "POST",
@@ -686,6 +693,7 @@ function approveJobOrderAjax(jobOrderId) {
         },
         success: function (data) {
             if (data.status === 'success') {
+                localStorage.setItem("jobOrderStatus", "APPROVED"); // Update localStorage
                 window.location.reload();
             } else {
                 console.error(data.message);

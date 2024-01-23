@@ -4,6 +4,7 @@ from joborders import views
 urlpatterns = [
     # COMMON FUNCTIONS
     path('search/', views.search_recipes, name='search_recipes'),
+    path('get_job_order_status/<str:job_order_id>/', views.get_job_order_status, name='get_job_order_status'),
 
     # PRODUCTION
     # VIEW JOB ORDER
@@ -26,7 +27,7 @@ urlpatterns = [
     # EDIT JOB ORDER - RECIPES
     path('add_recipe/<str:job_order_id>/', views.add_recipe, name='add_recipe'),    
     path('delete_recipe/<str:recipe_id>/', views.delete_recipe, name='delete_recipe'),
-    path('draft/<str:recipe_id>/', views.delete_recipedraft, name='draft_recipe'),
+    path('draft/<str:recipeId>/', views.delete_recipedraft, name='delete_recipedraft'),
     path('update/<str:job_order_id>/', views.update_joborder, name='update_joborder'),
   
     # CREATE JOB ORDER
