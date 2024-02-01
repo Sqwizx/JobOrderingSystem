@@ -862,10 +862,48 @@ document.addEventListener('DOMContentLoaded', function () {
             // Initialize flatpickr with the default date
             flatpickr(spongeStartTimePicker, {
                 enableTime: true,
-                dateFormat: "l, d M Y H:i", // Custom format
-                defaultDate: defaultStartDate, // This should be a Date object or a string in the format "YYYY-MM-DD HH:MM"
+                dateFormat: "l, d M Y H:i",
+                defaultDate: defaultStartDate,
                 minDate: defaultStartDate,
-                // ... other options ...
+                onValueUpdate: function (selectedDates) {
+                    if (selectedDates.length > 0) {
+
+                        let formattedDate = formatDateTime(selectedDates[0]);
+
+                        spongeStartTimePicker.value = formattedDate;
+                    }
+                },
+                onChange: function (selectedDates) {
+                    if (selectedDates.length > 0) {
+                        let formattedDate = formatDateTime(selectedDates[0]);
+
+                        // Assuming stdTimeInput holds a value in seconds
+                        let stdTimeElement = document.getElementById(`stdTime-${uniqueFormId}`);
+                        let spongeEndTimeElement = document.getElementById(`spongeEndTime-${uniqueFormId}`);
+
+                        endTimes[tabIdx] = spongeEndTimeElement.value;
+
+                        // Call calculateSpongeEndTime with the formatted start time
+                        calculateSpongeEndTime(tabIdx, formattedDate, stdTimeElement.value, spongeEndTimeElement, uniqueFormId);
+
+                        // If this is the first form, update the subsequent sponge start times
+                        if (!firstFormTracker[tabIdx] || firstFormTracker[tabIdx] === true) {
+                            updateSpongeStartTimes(tabIdx, new Date(spongeEndTimeElement.value));
+                        }
+                        calculateDoughStartTime(spongeStartTimePicker.value, doughStartTime);
+                        calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
+                        calculateFirstLoafPacked(doughStartTime.value, firstLoafPacked);
+                        calculateCutOffTime(firstLoafPacked.value, stdTimeInput.value, cutOffTime);
+                        updateTrackerDisplay(uniqueFormId);
+                    }
+                }
+            });
+            dateTimePicker.value = defaultDateTime;
+            dateTimePicker.addEventListener('change', function () {
+                var dateValue = dateTimePicker.value;
+                savedDateTimeValues[uniqueFormId] = new Date(dateValue);
+                // Manually update the value of the input field
+                dateTimePicker.value = formatDate(savedDateTimeValues[uniqueFormId]);
             });
 
             firstFormTracker[tabIdx] = true;
@@ -2316,9 +2354,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function deleteProduct(tabIndex, recipeName, index) {
         if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
-            productsByRecipe[tabIndex][recipeName].splice(index, 1);  // Remove the product from the array
+            productsByRecipe[tabIndex][recipeName].splice(index, 1); // Remove the product from the array
             printProductsByRecipe(recipeName, tabIndex);
             console.log(`Product deleted: Recipe - ${recipeName}, Tab Index - ${tabIndex}, Index - ${index}`);
+
+            // Trigger recalculations for the recipe form
+            updateTotalValues(recipeName, tabIndex);
+            handleBatchCalculations(recipeName, tabIndex);
+
+            // Assuming you have a function to collect form data and update the view
+            let currentFormId = `recipeForm-${recipeName}-${tabIndex}`;
+            let currentForm = document.getElementById(currentFormId);
+            if (currentForm) {
+                collectFormData(currentForm);
+            }
         }
     }
 
@@ -2404,54 +2453,6 @@ document.addEventListener('DOMContentLoaded', function () {
             this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
         });
     });
-
-    // Add event listener for Product Name input
-    // document.getElementById("productName").addEventListener("input", function () {
-    //     this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
-    // });
-
-    // const steps = [
-    //     'spongeStartProgress',
-    //     'spongeEndProgress',
-    //     'doughStartProgress',
-    //     'doughEndProgress',
-    //     'firstLoafPackedProgress',
-    //     'cutOffProgress'
-    // ];
-
-    // function setProgress(percentage) {
-    //     // Ensure the percentage is within bounds
-    //     const clampedPercentage = Math.max(0, Math.min(100, percentage));
-
-    //     // Update the overlay to cover the inactive part of the progress line
-    //     const progressLineOverlay = document.getElementById('progressLineOverlay');
-    //     progressLineOverlay.style.top = `${clampedPercentage}%`;
-    //     progressLineOverlay.style.height = `${100 - clampedPercentage}%`;
-
-    //     // Activate steps and labels up to the percentage
-    //     steps.forEach(step => {
-    //         const element = document.getElementById(step);
-    //         const label = element.querySelector('.progressLabel'); // Get the label within the step
-    //         const stepPosition = element.offsetTop / progressLineOverlay.parentElement.offsetHeight * 100;
-
-    //         if (stepPosition < clampedPercentage) {
-    //             element.classList.add('active');
-    //             if (label) {
-    //                 label.classList.add('active');
-    //                 label.style.color = '#3498db'; // Blue color for active steps
-    //             }
-    //         } else {
-    //             element.classList.remove('active');
-    //             if (label) {
-    //                 label.classList.remove('active');
-    //                 label.style.color = '#ccc'; // Gray color for inactive steps
-    //             }
-    //         }
-    //     });
-    // }
-
-    // // Example usage:
-    // setProgress(20); // Set progress to 10%   
 
     // Function to handle setting values in the modal fields
     function setModalFieldValues(tabIdx, recipe) {

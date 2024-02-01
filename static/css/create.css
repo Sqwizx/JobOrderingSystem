@@ -213,8 +213,7 @@ a {
 
 .form-container {
     width: 100%;
-    overflow: hidden;
-    height: 100%;
+    overflow: hidden
 }
 
 .left-div {
@@ -337,8 +336,7 @@ a {
 
 #recipeForm {
     display: flex;
-    flex-direction: column;
-    height: 100%;
+    flex-direction: column
 }
 
 .modal input[type="number"],
@@ -372,22 +370,18 @@ a {
 .left-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
-    width: 100%;
+    padding: 10px
 }
 
 .right-div {
     align-items: center;
     flex: 1;
-    padding: 10px;
-    width: 100%;
+    padding: 10px
 }
 
 .recipe-form {
     padding-left: 20px;
-    display: flex;
-    width: 100%;
-    height: 100%;
+    display: flex
 }
 
 .recipe-form input[type="number"],
@@ -594,7 +588,7 @@ select option {
 #productForm {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-between
 }
 
 /* #productForm .form-row {

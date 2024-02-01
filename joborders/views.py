@@ -106,7 +106,7 @@ def submit_joborder(request, job_order_id):
     try:
         with transaction.atomic():
             # Check if the job order is in 'REVISE' status, then update revisions
-            if job_order.jobOrderStatus == 'REVISE':
+            if job_order.jobOrderStatus == 'REVISE' or 'DRAFT':
                 revisions = Revision.objects.filter(jobOrder=job_order)
                 if revisions.exists():
                     revisions.update(ammended=True)
@@ -737,13 +737,17 @@ def save_recipes(request):
 
             # Process and save products for the recipe
             for product_data in recipe_data.get('products', []):
-                product_exp_date = product_data.get('expiryDate')
+                product_exp_date = product_data.get('expiryDate', '')
                 if product_exp_date:
                     product_exp_date = aware.localize(datetime.strptime(product_exp_date, '%A, %d %b %Y'))
+                else:
+                    product_exp_date = None
 
-                product_sale_date = product_data.get('saleDate')
+                product_sale_date = product_data.get('saleDate', '')
                 if product_sale_date:
                     product_sale_date = aware.localize(datetime.strptime(product_sale_date, '%A, %d %b %Y'))
+                else:
+                    product_sale_date = None
 
                 product_id = '{}_{}'.format(recipe.recipeId, product_data['name'].replace(' ', ''))
                 ProductMapping.objects.create(
@@ -833,13 +837,13 @@ def add_revision(request, job_order_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
 
 #WORKER VIEW (PACKAGING)
-def get_recipe_details(recipe_id):
+def get_recipe_details(request, recipe_id):
     try:
         recipe = RecipeMapping.objects.get(recipeId=recipe_id)
         recipe_data = {
             'recipeId': recipe.recipeId,
             'recipeName': recipe.recipeName,
-            'recipeProdDate': recipe.recipeProdDate.strftime("%Y-%m-%d"),
+            'recipeProdDate': recipe.recipeProdDate.strftime("%A, %d %b %Y"),
             'recipeProdRate': recipe.recipeProdRate,
             'recipeBatchSize': recipe.recipeBatchSize,
             'recipeTotalSales': recipe.recipeTotalSales,
@@ -847,7 +851,7 @@ def get_recipe_details(recipe_id):
             'recipeStdTime': str(recipe.recipeStdTime),
             'recipeCycleTime': str(recipe.recipeCycleTime),
             'recipeWaste': float(recipe.recipeWaste) if recipe.recipeWaste else None,
-            'recipeSpongeStartTime': recipe.recipeSpongeStartTime.strftime("%Y-%m-%d %H:%M:%S") if recipe.recipeSpongeStartTime else '',
+            'recipeSpongeStartTime': recipe.recipeSpongeStartTime.strftime("%A, %d %b %Y %H:%M") if recipe.recipeSpongeStartTime else '',
             'recipeTotalTray': recipe.recipeTotalTray,
             'recipeTotalTrolley': recipe.recipeTotalTrolley,
             'recipeBeltNo': recipe.recipeBeltNo,

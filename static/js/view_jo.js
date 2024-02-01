@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.status === 'success') {
                     reviseModal.style.display = 'none';
                     // Consider clearing the textarea after successful submission
+                    window.location.reload();
                     revisionText.value = '';
                 } else {
                     alert('Error: ' + data.message);

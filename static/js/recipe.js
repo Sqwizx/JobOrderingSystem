@@ -225,6 +225,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.status === 'success') {
                     // Handle success (e.g., display a success message, clear the form)
                     appendProductToTable(data)
+                    document.getElementById('newProductForm').reset();
                     console.log('Product added successfully:', data.productName);
                 } else {
                     // Handle errors
@@ -236,28 +237,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function appendProductToTable(productData) {
         var productListTable = document.querySelector('#productList table');
-        var noProductsRow = productListTable.querySelector('.no-products');
+        var noProductsRow = productListTable.querySelector('tr td[colspan="7"]');
 
         // If there's a 'No products' row, remove it
         if (noProductsRow) {
             noProductsRow.remove();
         }
 
-        // Append the new product
-        productListTable.insertAdjacentHTML('beforeend', `
-            <tr>
-                <td>${productData.productName}</td>
-                <td>${productData.currency} ${productData.productPrice}</td>
-                <td>${productData.client}</td>
-                <td>${productData.weight}</td>
-                <td>${productData.noOfSlices}</td>
-                <td>${productData.thickness}</td>
-                <td>
-                    <button onclick="editProduct(${productData.product_id})">Edit</button>
-                    <button onclick="deleteProduct(${productData.product_id})">Delete</button>
-                </td>
-            </tr>
-        `);
+        // Append the new product row
+        var newProductRow = `
+    <tr>
+        <td>${productData.productName}</td>
+        <td>${productData.currency} ${productData.productPrice}</td>
+        <td>${productData.client}</td>
+        <td>${productData.weight}</td>
+        <td>${productData.noOfSlices}</td>
+        <td>${productData.thickness}</td>
+        <td>
+            <button onclick="deleteProduct(${productData.product_id})">Delete</button>
+        </td>
+    </tr>`;
+        productListTable.insertAdjacentHTML('beforeend', newProductRow);
+
     }
 
     //Formatting
