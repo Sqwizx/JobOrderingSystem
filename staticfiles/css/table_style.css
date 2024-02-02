@@ -32,6 +32,8 @@ table td {
 table tbody tr:hover {
     background-color: #0575E6;
     color: #ffffff;
+    cursor: pointer;
+
 }
 
 /* Style for table rows */
@@ -40,3 +42,42 @@ table tbody tr {
     background-color: #ffffff;
     transition: background-color 0.3s;
 }
+
+.status-button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 400;
+    cursor: default;
+}
+
+.status-pending {
+    background-color: #ffcc00;
+}
+
+/* Yellow */
+.status-approved {
+    background-color: #4CAF50;
+}
+
+/* Green */
+.status-active {
+    background-color: #2196F3;
+}
+
+/* Blue */
+.status-revise {
+    background-color: #f44336;
+}
+
+/* Red */
+.status-archived {
+    background-color: #9E9E9E;
+}
+
+.status-draft {
+    background-color: #ffb26e;
+}
+
+/* Grey */

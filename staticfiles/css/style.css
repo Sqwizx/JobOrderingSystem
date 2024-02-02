@@ -99,7 +99,6 @@ body {
     flex-direction: column;
     align-items: center;
     /* Center horizontally */
-    margin-bottom: 10px;
     /* Reduce the margin between form groups */
 }
 
@@ -134,7 +133,7 @@ button {
     border-radius: 10px;
     outline: none;
     transition: border-color 0.3s;
-    margin-bottom: 15px;
+    margin-bottom: 1px;
     /* Add spacing between form elements */
 }
 
@@ -185,4 +184,10 @@ button:hover {
     /* Use a thinner font weight */
     margin-bottom: 0;
     /* Remove the margin to align with the username field */
+}
+
+.error {
+    color: red;
+    margin-bottom: 15px;
+    size: 10px;
 }

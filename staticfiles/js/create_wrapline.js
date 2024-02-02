@@ -21,12 +21,8 @@ var formTracker = [];
 let allFormsData = {};
 let isSaving = false;
 let gapValuesByTabIdx = {};
-let lastSpongeStartTimeByTabIndex = {};
-let nextTabNewSpongeStartTime = null;
-
 
 document.addEventListener('DOMContentLoaded', function () {
-    generateSummaryReport();
 
     checkFormsAndToggleSaveButton()
 
@@ -273,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Assuming displayRecipeDetails is a function that updates the UI with the new recipe details
         displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
-        setActiveTabByName(recipeName, index);
+        setActiveTabByName(recipeName);
     }
 
     function handleNewRecipe(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable) {
@@ -281,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
         addTabButtonToContainer(newRecipeButton, index);
         setActiveTab(newRecipeButton);
         displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, index, timeVariable);
-        setActiveTabByName(recipeName, index);
+        setActiveTabByName(recipeName);
         checkAndToggleProductModalButton();
         checkAndToggleTrackerVisibility();
     }
@@ -334,13 +330,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modal) modal.style.display = 'none';
     }
 
-    function setActiveTabByName(recipeName, tabIndex) {
+    function setActiveTabByName(recipeName) {
         let buttons = document.querySelectorAll('.tablinks-recipes');
         for (let button of buttons) {
             let buttonName = button.textContent.split('Delete')[0].trim(); // This will give you the recipeName
-            let buttonTabIndex = parseInt(button.getAttribute('data-tab-index')); // Assuming you have data-tab-index attribute
-
-            if (buttonName === recipeName && buttonTabIndex === tabIndex && !button.classList.contains('opened')) {
+            if (buttonName === recipeName && !button.classList.contains('opened')) {
                 setActiveTab(button);
                 break;
             }
@@ -716,18 +710,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var cycleTimeLabel = createLabelElement(cycleTimeInput.id, "Cycle Time");
 
         var spongeStartTimePicker = createInputElement("text", `spongeStartTime-${uniqueFormId}`, "spongeStartTime");
-        // Determine the default date for flatpickr
-        console.log("Is first form:", isFirstForm, "nextTabNewSpongeStartTime:", nextTabNewSpongeStartTime);
-
-        // Determine the default date for flatpickr
-        var defaultStartDate = isFirstForm && nextTabNewSpongeStartTime ? nextTabNewSpongeStartTime : yesterdayDefaultDateTime;
-
         flatpickr(spongeStartTimePicker, {
             enableTime: true,
-            dateFormat: "d M Y H:i",
-            altFormat: "l, d M Y H:i",
-            defaultDate: defaultStartDate,
-            minDate: defaultStartDate,
+            dateFormat: "d/m/Y H:i",
+            defaultDate: yesterdayDefaultDateTime,
+            minDate: yesterdayMinDate(tabIdx),
             onValueUpdate: function (selectedDates) {
                 if (selectedDates.length > 0) {
 
@@ -854,58 +841,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isFirstForm) {
             spongeStartTimePicker.disabled = false;
             gapInput.disabled = false;
-
-            var defaultStartDate = nextTabNewSpongeStartTime
-                ? new Date(nextTabNewSpongeStartTime)
-                : new Date(yesterdayDefaultDateTime);
-
-            // Initialize flatpickr with the default date
-            flatpickr(spongeStartTimePicker, {
-                enableTime: true,
-                dateFormat: "l, d M Y H:i",
-                defaultDate: defaultStartDate,
-                minDate: defaultStartDate,
-                onValueUpdate: function (selectedDates) {
-                    if (selectedDates.length > 0) {
-
-                        let formattedDate = formatDateTime(selectedDates[0]);
-
-                        spongeStartTimePicker.value = formattedDate;
-                    }
-                },
-                onChange: function (selectedDates) {
-                    if (selectedDates.length > 0) {
-                        let formattedDate = formatDateTime(selectedDates[0]);
-
-                        // Assuming stdTimeInput holds a value in seconds
-                        let stdTimeElement = document.getElementById(`stdTime-${uniqueFormId}`);
-                        let spongeEndTimeElement = document.getElementById(`spongeEndTime-${uniqueFormId}`);
-
-                        endTimes[tabIdx] = spongeEndTimeElement.value;
-
-                        // Call calculateSpongeEndTime with the formatted start time
-                        calculateSpongeEndTime(tabIdx, formattedDate, stdTimeElement.value, spongeEndTimeElement, uniqueFormId);
-
-                        // If this is the first form, update the subsequent sponge start times
-                        if (!firstFormTracker[tabIdx] || firstFormTracker[tabIdx] === true) {
-                            updateSpongeStartTimes(tabIdx, new Date(spongeEndTimeElement.value));
-                        }
-                        calculateDoughStartTime(spongeStartTimePicker.value, doughStartTime);
-                        calculateDoughEndTime(doughStartTime.value, stdTimeInput.value, doughEndTime);
-                        calculateFirstLoafPacked(doughStartTime.value, firstLoafPacked);
-                        calculateCutOffTime(firstLoafPacked.value, stdTimeInput.value, cutOffTime);
-                        updateTrackerDisplay(uniqueFormId);
-                    }
-                }
-            });
-            dateTimePicker.value = defaultDateTime;
-            dateTimePicker.addEventListener('change', function () {
-                var dateValue = dateTimePicker.value;
-                savedDateTimeValues[uniqueFormId] = new Date(dateValue);
-                // Manually update the value of the input field
-                dateTimePicker.value = formatDate(savedDateTimeValues[uniqueFormId]);
-            });
-
+            spongeStartTimePicker.value = yesterdayDefaultDateTime;
             firstFormTracker[tabIdx] = true;
         } else {
             spongeStartTimePicker.disabled = true;
@@ -1308,9 +1244,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function generateSummaryReport() {
         let summary = '';
         let unfilledFields = false;
-        const headersToMark = new Set();
-
-        console.log('Generating Summary Report with the following data:', allFormsData);
 
         // Group forms by production date
         const formsByDate = {};
@@ -1332,12 +1265,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 day: 'numeric'
             });
 
-            let headerId = 'header-' + productionDate;
-
             // Start of the date details
             summary += `
             <details>
-                <summary id="${headerId}">${formattedDate}</summary>
+                <summary>${formattedDate}</summary>
                 <div class="date-details">
             `;
 
@@ -1358,10 +1289,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 variableKeys.forEach((key, index) => {
                     const value = formData[key];
                     const isEmptyOrNull = value === '' || value === null;
-                    if (isEmptyOrNull && key !== 'products') {
-                        unfilledFields = true;
-                        headersToMark.add(headerId); // Add header ID to the set
-                    }
                     summary += `<div class="form-field ${isEmptyOrNull ? 'empty' : ''}"><span class="field-key"><b>${key}</b></span><span class="field-value ${isEmptyOrNull ? 'empty' : ''}">${value}</span></div>`;
                     if (isEmptyOrNull && key !== 'products') {
                         unfilledFields = true;
@@ -1423,12 +1350,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         document.getElementById('summaryContent').innerHTML = summary;
-
-        // Mark the headers with unfilled fields
-        headersToMark.forEach(headerId => {
-            document.getElementById(headerId).classList.add('unfilled-header');
-        });
-
         document.getElementById('confirmSave').disabled = unfilledFields;
     }
 
@@ -1651,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Check if the clicked element has the class 'add-product-button'
         if (event.target.classList.contains('add-product-button')) {
+            // Your logic when the button is clicked:
             if (activeRecipe.name && activeRecipe.tabIndex !== null) {
                 var currentRecipeName = activeRecipe.name;
                 var currentTabIndex = activeRecipe.tabIndex;
@@ -1670,35 +1592,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 var minDateValue = addDaysToDate(currentTabIndex);
                 var defaultExpiryDate = addDaysToDate(currentTabIndex); // Logic to get default expiry date
 
-                // Fetch products related to the recipeName
-                fetch('/get_products_by_recipe/' + encodeURIComponent(currentRecipeName) + '/')
-                    .then(response => response.json())
-                    .then(products => {
-                        // Populate dropdown or other elements in modal with the products
-                        // Example:
-                        var productDropdown = document.getElementById('productDropdown');
-                        productDropdown.innerHTML = '';
-
-                        // Add a default option as placeholder
-                        var defaultOption = document.createElement('option');
-                        defaultOption.textContent = 'Select a product';
-                        defaultOption.value = '';
-                        defaultOption.disabled = true;
-                        defaultOption.selected = true;
-                        defaultOption.hidden = true; // Hide this option in the dropdown list
-                        productDropdown.appendChild(defaultOption);
-
-                        products.forEach(product => {
-                            let option = document.createElement('option');
-                            option.value = product.id;
-                            option.textContent = product.productName;
-                            productDropdown.appendChild(option);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching products:', error);
-                    });
-
                 initializeFlatpickr(saleDateInput, defaultSaleDate, minDateValue);
                 initializeFlatpickr(expiryDateInput, defaultExpiryDate, minDateValue);
                 updateAddProductButtonDisplay();
@@ -1707,32 +1600,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(`Not found`);
                 return;
             }
-        }
-    });
-
-    document.getElementById('productDropdown').addEventListener('change', function () {
-        var productId = this.value;
-
-        // Only proceed if a valid product ID is selected
-        if (productId) {
-            fetch('/product_dropdown/' + productId + '/')
-                .then(response => response.json())
-                .then(product => {
-                    // Populate the form with the product details
-                    document.getElementById('currency').value = product.currency;
-                    document.getElementById('productPrice').value = product.productPrice;
-                    document.getElementById('client').value = product.client;
-                    var weightDropdown = document.getElementById('weight');
-                    Array.from(weightDropdown.options).forEach(option => {
-                        if (parseInt(option.getAttribute('data-weight')) === parseInt(product.weight)) {
-                            option.selected = true;  // Select
-                        }
-                    });
-                    document.getElementById('noOfSlices').value = product.noOfSlices;
-                    document.getElementById('thickness').value = product.thickness;
-                    // Populate other fields as needed
-                })
-                .catch(error => console.error('Error fetching product details:', error));
         }
     });
 
@@ -1776,6 +1643,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
 
     // Function to handle the creation and displaying of the recipe form
     function displayRecipeDetails(recipeName, prodRateSubmit, batchSizeSubmit, tabIdx, timeVariable) {
@@ -1876,55 +1744,11 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTrackerDisplay(uniqueFormId)
         }
 
-        var newTabIndex = Array.from(document.querySelectorAll('.tablinks')).indexOf(event.currentTarget);
-
-        if (newTabIndex > 0) {
-            var prevTabIndex = newTabIndex - 1;
-
-            // Fetch the last form's sponge end time in the previous tab index
-            var lastFormInPrevTab = getLastFormInTab(prevTabIndex);
-            var lastSpongeEndTime = lastFormInPrevTab ? lastFormInPrevTab.querySelector('[name="spongeEndTime"]').value : null;
-
-            // Fetch the gap value (assuming it's consistent across the tab)
-            var gapValue = lastFormInPrevTab ? lastFormInPrevTab.querySelector('[name="gap"]').value : "00:00:00";
-
-            console.log("Last Sponge End Time:", lastSpongeEndTime, "Gap Value:", gapValue);
-
-            let newSpongeStartTime = calculateNewSpongeStartTimeWithEnd(lastSpongeEndTime, gapValue);
-            if (newSpongeStartTime) {
-                lastSpongeStartTimeByTabIndex[day] = newSpongeStartTime;
-                nextTabNewSpongeStartTime = newSpongeStartTime;
-                console.log("nextTabNewSpongeStartTime set to:", nextTabNewSpongeStartTime);
-
-            }
-        }
-
         checkAndToggleProductModalButton();
 
         checkAndToggleTrackerVisibility();
 
         activateFirstRecipeInMainTab(day);
-    }
-
-    function getLastFormInTab(tabIndex) {
-        var allForms = Array.from(document.querySelectorAll('form[id^="recipeForm-"]'));
-        var formsInTab = allForms.filter(form => {
-            var parts = form.id.split('-');
-            return parts.length === 3 && parseInt(parts[2]) === tabIndex;
-        });
-        return formsInTab.length > 0 ? formsInTab[formsInTab.length - 1] : null;
-    }
-
-    function calculateNewSpongeStartTimeWithEnd(spongeEndTime, gap) {
-        if (spongeEndTime) {
-            let lastTime = new Date(spongeEndTime);
-            let gapInSeconds = convertToSeconds(gap); // Convert gap to seconds
-            var newSpongeStartTime = new Date(lastTime.getTime() + gapInSeconds * 1000);
-            console.log("New Sponge Start Time:", newSpongeStartTime);
-            return newSpongeStartTime;
-        }
-        console.log("No new start time")
-        return null; // or some default start time
     }
 
     function activateFirstRecipeInMainTab(day) {
@@ -2064,13 +1888,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var selectedWeightOption = document.querySelector('#weight option:checked');
         var weightData = selectedWeightOption.getAttribute('data-weight');
 
-        // Get the selected product option
-        var selectedProductOption = document.querySelector('#productDropdown option:checked');
-        var productName = selectedProductOption ? selectedProductOption.textContent : '';
-
         // Rest of the form data
         return {
-            productName: productName,
+            productName: document.getElementById('productName').value,
             client: document.getElementById('client').value,
             colorSet: document.getElementById('colorSet').value,
             expiryDate: document.getElementById('expiryDate').value ? document.getElementById('saleDate').value : null,
@@ -2092,8 +1912,7 @@ document.addEventListener('DOMContentLoaded', function () {
         productForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
-            let currentFormId = `recipeForm-${activeRecipe.name}-${activeRecipe.tabIndex}`;
-            let currentForm = document.getElementById(currentFormId);
+            let currentForm = document.querySelector('.recipe-form');
             var formData = getProductFormData();
             calculateTrayAndTrolley()
 
@@ -2135,7 +1954,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 printProductsByRecipe(activeRecipe.name, activeRecipe.tabIndex);
                 updateTotalValues(activeRecipe.name, activeRecipe.tabIndex);
                 handleBatchCalculations(activeRecipe.name, activeRecipe.tabIndex);
-
                 if (currentForm) {
                     collectFormData(currentForm);
                 }
@@ -2269,18 +2087,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return iconContainer;
     }
 
-    function printProductsByRecipe(recipeName, tabIndex) {
+    function printProductsByRecipe() {
         let productContainer = createProductContainer('.small-card');
         productContainer.innerHTML = '';
 
-        if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
-            productsByRecipe[tabIndex][recipeName].forEach(function (product, index) {
-                let productItem = createProductItem(product, tabIndex, recipeName, index);
-                productContainer.appendChild(productItem);
-            });
+        if (activeRecipe.name) {
+            let recipeName = activeRecipe.name;
+            let tabIndex = activeRecipe.tabIndex;
+
+            if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
+                productsByRecipe[tabIndex][recipeName].forEach(function (product, index) {
+                    let productItem = createProductItem(product, tabIndex, recipeName, index);
+                    productContainer.appendChild(productItem);
+                });
+            }
         }
     }
-
 
     function handleBatchCalculations(recipeName, tabIndex) {
         let currentRecipeFormId = `recipeForm-${recipeName}-${tabIndex}`;
@@ -2354,20 +2176,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function deleteProduct(tabIndex, recipeName, index) {
         if (productsByRecipe[tabIndex] && productsByRecipe[tabIndex][recipeName]) {
-            productsByRecipe[tabIndex][recipeName].splice(index, 1); // Remove the product from the array
+            productsByRecipe[tabIndex][recipeName].splice(index, 1);  // Remove the product from the array
             printProductsByRecipe(recipeName, tabIndex);
             console.log(`Product deleted: Recipe - ${recipeName}, Tab Index - ${tabIndex}, Index - ${index}`);
-
-            // Trigger recalculations for the recipe form
-            updateTotalValues(recipeName, tabIndex);
-            handleBatchCalculations(recipeName, tabIndex);
-
-            // Assuming you have a function to collect form data and update the view
-            let currentFormId = `recipeForm-${recipeName}-${tabIndex}`;
-            let currentForm = document.getElementById(currentFormId);
-            if (currentForm) {
-                collectFormData(currentForm);
-            }
         }
     }
 
@@ -2453,6 +2264,54 @@ document.addEventListener('DOMContentLoaded', function () {
             this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
         });
     });
+
+    // Add event listener for Product Name input
+    document.getElementById("productName").addEventListener("input", function () {
+        this.value = this.value.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    });
+
+    // const steps = [
+    //     'spongeStartProgress',
+    //     'spongeEndProgress',
+    //     'doughStartProgress',
+    //     'doughEndProgress',
+    //     'firstLoafPackedProgress',
+    //     'cutOffProgress'
+    // ];
+
+    // function setProgress(percentage) {
+    //     // Ensure the percentage is within bounds
+    //     const clampedPercentage = Math.max(0, Math.min(100, percentage));
+
+    //     // Update the overlay to cover the inactive part of the progress line
+    //     const progressLineOverlay = document.getElementById('progressLineOverlay');
+    //     progressLineOverlay.style.top = `${clampedPercentage}%`;
+    //     progressLineOverlay.style.height = `${100 - clampedPercentage}%`;
+
+    //     // Activate steps and labels up to the percentage
+    //     steps.forEach(step => {
+    //         const element = document.getElementById(step);
+    //         const label = element.querySelector('.progressLabel'); // Get the label within the step
+    //         const stepPosition = element.offsetTop / progressLineOverlay.parentElement.offsetHeight * 100;
+
+    //         if (stepPosition < clampedPercentage) {
+    //             element.classList.add('active');
+    //             if (label) {
+    //                 label.classList.add('active');
+    //                 label.style.color = '#3498db'; // Blue color for active steps
+    //             }
+    //         } else {
+    //             element.classList.remove('active');
+    //             if (label) {
+    //                 label.classList.remove('active');
+    //                 label.style.color = '#ccc'; // Gray color for inactive steps
+    //             }
+    //         }
+    //     });
+    // }
+
+    // // Example usage:
+    // setProgress(20); // Set progress to 10%   
 
     // Function to handle setting values in the modal fields
     function setModalFieldValues(tabIdx, recipe) {
@@ -2551,42 +2410,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
-
-    // Function to close modal
-    function closeAllModal(modal) {
-        modal.style.display = 'none';
-    }
-
-    // Function to initialize modals
-    function initializeModals() {
-        // Get all modals
-        var modals = document.querySelectorAll('.modal');
-
-        // Add click event listener to each modal
-        modals.forEach(function (modal) {
-            // When the user clicks anywhere outside of the modal content, close it
-            window.addEventListener('click', function (event) {
-                if (event.target == modal) {
-                    closeAllModal(modal);
-                }
-            });
-        });
-    }
-
-    // Get all close buttons
-    var closeButtons = document.querySelectorAll('.modal-close');
-
-    // Add click event listener to close buttons to close the modal
-    closeButtons.forEach(function (btn) {
-        btn.onclick = function () {
-            var modal = btn.closest('.modal');
-            closeAllModal(modal);
-        }
-    });
-
-    // Call the function to initialize modals
-    initializeModals();
-
 });
 
 window.addEventListener('beforeunload', function (e) {

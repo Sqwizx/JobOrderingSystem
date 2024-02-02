@@ -10,6 +10,10 @@
     height: 100vh
 }
 
+.main-content {
+    overflow-x: hidden;
+}
+
 .container {
     display: grid;
     grid-template-columns: 3fr 1fr;
@@ -34,8 +38,20 @@
     flex-direction: column
 }
 
+a {
+    text-decoration: none;
+    color: #000;
+    font-size: small;
+}
+
 #product-list {
     height: 300px
+}
+
+#progressContainer .timeValue {
+    word-wrap: break-word;
+    max-width: 120px;
+    /* Adjust as needed */
 }
 
 #tracker {
@@ -160,16 +176,30 @@
     background-color: rgba(4, 66, 168, 1);
     color: #FFFFFF;
     border: none;
-    border-radius: 10px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     width: 100px;
     align-self: flex-end;
-    display: none
 }
 
+.disabled-button {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
 
-.save-all-button::after {
+.disabled-button:hover {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
+
+/* .save-all-button::after {
     padding: 10px 25px;
     background-color: rgba(4, 66, 168, 1);
     color: #FFFFFF;
@@ -179,7 +209,7 @@
     font-size: 16px;
     width: 100px;
     align-self: flex-end
-}
+} */
 
 .form-container {
     width: 100%;
@@ -282,8 +312,12 @@
     padding: 20px;
     border: 1px solid rgba(4, 66, 168, 1);
     width: 30%;
-    height: 48%;
+    height: 60%;
     border-radius: 10px
+}
+
+.modal-header {
+    padding-bottom: 5px;
 }
 
 .close {
@@ -325,7 +359,8 @@
     color: #fff;
     background-color: #0442a8;
     border-radius: 10px;
-    transition: all 0.3s ease-in-out
+    transition: all 0.3s ease-in-out;
+    border: none;
 }
 
 .modal input[type="text"]:focus {
@@ -502,22 +537,69 @@ select option {
     border-radius: 10px
 }
 
+#warningModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+.modal-content #warningModal {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 30%;
+    height: 50%;
+    border-radius: 10px
+}
+
+#summaryModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+#summaryModalContent {
+    background-color: #fefefe;
+    margin: 3% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 70%;
+    height: 85%;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden
+}
+
 #productForm {
     display: flex;
     flex-direction: row;
     justify-content: space-between
 }
 
-#productForm .form-row {
+/* #productForm .form-row {
     display: flex;
     justify-content: space-between
-}
+} */
 
 #productForm .left-div,
 #productForm .right-div {
     align-items: center;
     flex: 1;
-
     box-sizing: border-box
 }
 
@@ -646,12 +728,30 @@ select option {
     border-color: #0442a8
 }
 
+.product-value {
+    display: flex;
+    align-items: start
+}
+
+.product-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.product-value select:focus {
+    border-color: #0442a8
+}
+
 #progressContainer {
     margin-top: 20px;
     position: relative;
     width: 100%;
-
-    height: 300px
+    height: 300px;
+    z-index: 1;
 }
 
 #progressLine {
@@ -668,9 +768,7 @@ select option {
     left: 50%;
     top: 0;
     height: 100%;
-
     border-left: 3px solid #ccc;
-
     z-index: 1
 }
 
@@ -708,7 +806,7 @@ select option {
     position: absolute;
     left: 2vw;
     display: block;
-    width: 150px;
+    width: 300px;
     text-align: left;
     top: 51%;
     transform: translateY(-40%);
@@ -744,4 +842,303 @@ select option {
 
 .progressStep.active {
     border-color: #3498db
+}
+
+details>summary {
+    cursor: pointer;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 0.25em;
+    background-color: #f9f9f9;
+    margin-bottom: 0.5em;
+}
+
+details>summary::-webkit-details-marker {
+    display: none;
+}
+
+details>div {
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-top: none;
+}
+
+pre {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Style for the date details */
+details>div.date-details {
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 0.25em;
+    margin-bottom: 0.5em;
+}
+
+/* Style for the form details */
+details>div.date-details>details>div.form-details {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-top: none;
+    margin-bottom: 0.5em;
+}
+
+/* Style for form columns */
+details>div.date-details>details>div.form-details>div.form-column {
+    flex: 1;
+}
+
+/* Style for form fields */
+details>div.date-details>details>div.form-details>div.form-column>div.form-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.2em;
+    padding: 0.2em;
+}
+
+/* Style for variable name and value */
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.field-key,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.field-value {
+    margin-bottom: 0.2em;
+
+    /* Display variable name and value inline */
+}
+
+/* Style for empty or null values */
+details>div.date-details>details>div.form-details>div.form-column>div.form-field.empty>.field-value,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field.empty>.field-key,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>details>div.product-field.empty>.product-key,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>details>div.product-field.empty>.product-value {
+    color: red;
+}
+
+/* Style for the product details container */
+.product-details-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-top: none;
+    margin-bottom: 0.5em;
+}
+
+/* Style for product column */
+.product-column {
+    flex: 1;
+    padding: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+/* Style for product field */
+.product-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.2em;
+    padding: 0.2em;
+}
+
+/* Style for product key and value */
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>.product-form>.product-columns>.product-column>.product-field>.product-key,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>.product-form>.product-columns>.product-column>.product-field>.product-value {
+    display: inline-block;
+    margin-bottom: 0.2em;
+}
+
+/* Style for empty or null values in product */
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>.product-form>.product-columns>.product-column>.product-field.empty>.product-key,
+details>div.date-details>details>div.form-details>div.form-column>div.form-field>.product-details>.product-form>.product-columns>.product-column>.product-field.empty>.product-value {
+    color: red;
+}
+
+#confirmDelete {
+    width: 20%;
+    padding: 7px 10px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    margin-right: 5px;
+}
+
+#cancelDelete {
+    width: 20%;
+    padding: 7px 10px;
+    color: red;
+    border: 1px solid red;
+    background-color: rgb(255, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+#okayWarningModal {
+    width: 20%;
+    padding: 7px 10px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    margin-right: 5px;
+}
+
+#confirmSave {
+    position: relative;
+    width: 15%;
+    padding: 10px 0px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    left: 57vw;
+}
+
+/* Styling for the disabled button */
+#confirmSave[disabled] {
+    background-color: #ccc;
+    /* You can choose a different background color */
+    color: #999;
+    /* You can choose a different text color */
+    cursor: not-allowed;
+}
+
+#recipeModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+#recipeModalContent {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 70%;
+    height: 50%;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden
+}
+
+#recipeProfileForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+#recipeProfileForm .left-div,
+#recipeProfileForm .right-div {
+    align-items: center;
+    flex: 1;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+#createRecipeSubmit {
+    position: relative;
+    width: 30%;
+    padding: 10px 15px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    border: none;
+    left: 22.5vw;
+}
+
+/* EDIT */
+
+#recipeEditModal {
+    display: none;
+    position: fixed;
+    z-index: 102;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, .4)
+}
+
+#recipeEditModalContent {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid rgba(4, 66, 168, 1);
+    width: 70%;
+    height: 50%;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden
+}
+
+#recipeEditProfileForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+#recipeEditProfileForm .left-div,
+#recipeEditProfileForm .right-div {
+    align-items: center;
+    flex: 1;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+#editRecipeSubmit {
+    position: relative;
+    width: 30%;
+    padding: 10px 15px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    border: none;
+    left: 22.5vw;
+}
+
+/* Style search container */
+.search-container {
+    position: relative;
+    /* Create a positioning context for children */
+}
+
+/* Style search results container */
+.searchResults {
+    display: none;
+    /* Hide by default */
+    position: absolute;
+    width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 10px;
+    top: 100%;
+    /* Make sure it's above other content */
+}
+
+/* Style individual search results */
+.searchResults div {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+/* Style hover effect */
+.searchResults div:hover {
+    background-color: rgba(4, 66, 168, 0.2);
+}
+
+.unfilled-header {
+    color: red;
 }

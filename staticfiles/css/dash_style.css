@@ -264,6 +264,44 @@
     }
 }
 
+.top-menu {
+    display: flex;
+    align-items: center;
+}
+
+.search-container {
+    position: relative;
+    /* This makes child absolute positioning relative to this container */
+}
+
+#searchResults {
+    position: absolute;
+    /* Positions the dropdown relative to the search-container */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    /* Ensure it's on top of other content */
+    max-height: 300px;
+    overflow-y: auto;
+    top: 69px;
+    width: 246px;
+    /* Position right below the input */
+}
+
+.search-item {
+    padding: 10px 15px;
+    size: 12px;
+    cursor: pointer;
+}
+
+.search-item:hover {
+    background-color: rgba(4, 66, 168, .2);
+    transition: background-color 0.3s ease-out;
+}
+
 /* Style for the header section */
 .home-section .header {
     display: flex;
@@ -284,6 +322,7 @@
     border-radius: 5px;
     outline: none;
     transition: border-color 0.3s;
+    z-index: 2;
 }
 
 .home-section .top-menu input[type="text"]:focus {
@@ -312,4 +351,212 @@
     min-height: 300px;
     height: 100%;
     /* Set a minimum height for the content area */
+}
+
+.edit-btn {
+    background-color: rgba(4, 66, 168, 1);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-btn {
+    background-color: rgb(168, 4, 4);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+    background-color: rgba(5, 57, 141)
+}
+
+.delete-btn:hover {
+    background-color: rgb(141, 5, 5)
+}
+
+/* Style your dropdown button and dropdown content here */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1
+}
+
+.sort-filter-container {
+    display: flex;
+    justify-content: left;
+    margin-bottom: 5px;
+}
+
+.sort-filter-container>div {
+    margin-right: 20px;
+}
+
+.sort-filter-container label {
+    font-size: 0.8em;
+}
+
+.sort-filter-container select {
+    background-color: transparent !important;
+    border: transparent !important;
+    font-size: 0.8em;
+    size: 0.8em;
+    padding: 5px;
+    height: auto;
+}
+
+.sort-filter-container select {
+    padding: 5px;
+    margin-left: 2px;
+}
+
+.modal button {
+    border: none
+}
+
+.modal input[type="submit"] {
+    width: 100%;
+    padding: 10px 15px;
+    color: #fff;
+    background-color: #0442a8;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    border: none;
+}
+
+.modal input[type="text"]:focus {
+    border-color: #0442a8
+}
+
+
+#newProductForm .left-div,
+#newProductForm .right-div {
+    align-items: center;
+    flex: 1;
+    box-sizing: border-box
+}
+
+
+#newProductForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+#productModalContent .right-div textarea {
+    resize: none
+}
+
+.form-columns {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    overflow: hidden;
+    width: 100%;
+}
+
+.right-div {
+    flex: 1;
+    padding: 10px;
+    position: relative;
+
+    /* Add position relative to the columns */
+}
+
+.left-div {
+    flex: 1;
+    padding: 10px;
+    position: relative;
+    /* Add position relative to the columns */
+}
+
+.product-price-group {
+    display: flex;
+    flex-direction: column
+}
+
+.price-container {
+    display: flex;
+    align-items: start;
+    margin-bottom: -10px;
+}
+
+.price-container select,
+.price-container input[type="number"] {
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.price-container input[type="number"]:focus,
+.price-container select:focus {
+    border-color: #0442a8
+}
+
+.price-container select {
+    width: 100px;
+    margin-right: 10px
+}
+
+.weight-value {
+    display: flex;
+    align-items: start
+}
+
+.weight-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.weight-value select:focus {
+    border-color: #0442a8
+}
+
+.client-value {
+    display: flex;
+    align-items: start
+}
+
+.client-value select {
+    width: 100%;
+    border: 2px solid #ccc;
+    padding: 10px;
+    outline: none;
+    transition: border-color .3s;
+    border-radius: 10px
+}
+
+.client-value select:focus {
+    border-color: #0442a8
 }
