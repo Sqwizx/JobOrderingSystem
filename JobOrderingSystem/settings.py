@@ -24,11 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-m(#+jn_9ko1p^p$-h3%%myss++4#8it4@cv4&#ww4xvuniwrx('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 LOGIN_URL = 'login'
 
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -144,7 +144,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
 
-STATIC_URL = '/static/'
+STATIC_URL = 'https://azzam-fl.s3.amazonaws.com/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
