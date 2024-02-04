@@ -6,7 +6,7 @@
     <title>Login | Farmland Bakery (M) Sdn. Bhd.</title>
     {% load static %}
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
   <div class="container">
@@ -14,7 +14,7 @@
         <h1 class="title">Farmland Bakery (M) Sdn. Bhd.</h1>
         <p class="subtitle">Production Management System</p>
         <div class="image-wrapper">
-            <img src="/static/img/corner.png" alt="Corner Image">
+            <img src="{% static 'img/corner.png' %}" alt="Corner Image">
         </div>
     </div>
     <div class="right-side">
