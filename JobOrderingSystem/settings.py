@@ -12,13 +12,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-env = environ.Env()
-environ.Env.read_env();
 
 
 # Quick-start development settings - unsuitable for production
@@ -49,7 +45,6 @@ INSTALLED_APPS = [
     'channels',
     'recipes',
     'purchaseorder',
-    'storages',
 ]
 
 MIDDLEWARE = [
@@ -86,10 +81,15 @@ WSGI_APPLICATION = 'JobOrderingSystem.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.parse(env('POSTGRES_URL'))
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 30,  # Set timeout to 30 seconds
+        },
+    }
 }
 
 # Use the database to store session data
@@ -143,7 +143,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
 
-STATIC_URL = 'https://azzam-fl.s3.amazonaws.com/'
+STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -151,22 +151,3 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-AWS_ACCESS_KEY_ID = 'AKIAYL52XCMVLIPIDCEM'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_STORAGE_BUCKET_NAME = 'azzam-fl'
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
-AWS_S3_FILE_OVERWRITE = False
-
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
-    },
-}
-
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
