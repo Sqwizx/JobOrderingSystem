@@ -84,13 +84,15 @@ WSGI_APPLICATION = 'JobOrderingSystem.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 30,  # Set timeout to 30 seconds
-        },
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '10.0.2.15',   # Set to the address of your MySQL server
+        'PORT': '3306',        # The default port for MySQL
     }
 }
+
 
 # Use the database to store session data
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
